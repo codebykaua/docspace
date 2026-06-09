@@ -79,26 +79,27 @@
         </section>
 
         <section id="documentView" class="view document-view is-hidden" aria-labelledby="documentTitle">
-            <header class="document-home-header">
-                <div class="document-header-left">
-                    <img class="document-brand-logo" src="assets/LOGO2.png" alt="DocSpace">
-                    <div class="document-greeting">
-                        <span class="document-greeting-icon" aria-hidden="true">
-                            <img id="documentGreetingAvatarImage" class="is-hidden" alt="">
-                            <span id="documentGreetingAvatarFallback"><i data-lucide="hand"></i></span>
-                        </span>
-                        <div>
-                            <p class="document-home-kicker">Bem-vindo de volta</p>
-                            <h1 id="documentTitle">Olá, <span id="documentUserName">usuário</span></h1>
-                            <span class="document-user-email" data-user-email></span>
-                        </div>
-                    </div>
+            <header class="document-home-header app-shell-header">
+                <div class="app-shell-brand">
+                    <img class="app-shell-logo" src="assets/LOGO1.png" alt="DocSpace">
+                    <strong>DocSpace</strong>
                 </div>
-                <div class="document-header-actions">
+
+                <label class="document-search global-document-search app-shell-search">
+                    <i data-lucide="search" aria-hidden="true"></i>
+                    <span class="sr-only">Pesquisar documento</span>
+                    <input id="documentSearch" type="search" placeholder="Buscar documentos, modelos, contratos..." autocomplete="off">
+                    <kbd>Ctrl + K</kbd>
+                </label>
+
+                <div class="document-header-actions app-shell-actions">
+                    <button type="button" id="openUpdatesHistoryButton" class="icon-button updates-shortcut-button" aria-label="Abrir histórico de atualizações">
+                        <i data-lucide="rocket" aria-hidden="true"></i>
+                    </button>
                     <button type="button" class="secondary-button theme-toggle-button" data-system-theme-toggle aria-pressed="false" title="Alternar tema do sistema">
-                            <i data-lucide="sun-moon" aria-hidden="true"></i>
-                            <span>Tema branco</span>
-                        </button>
+                        <i data-lucide="sun-moon" aria-hidden="true"></i>
+                        <span>Tema</span>
+                    </button>
                     <div class="notification-menu">
                         <button type="button" id="notificationButton" class="icon-button notification-button" aria-label="Abrir notificações" aria-expanded="false">
                             <i data-lucide="bell" aria-hidden="true"></i>
@@ -107,13 +108,20 @@
                         <section id="notificationPopover" class="notification-popover is-hidden" aria-label="Notificações">
                             <div class="notification-popover-heading">
                                 <strong>Novidades</strong>
-                                <span>Versão 4.1.1</span>
+                                <span>Versão 4.2.0</span>
                             </div>
-                            <div class="notification-item"><i data-lucide="rocket" aria-hidden="true"></i><span>Versão 4.1.1 disponível</span></div>
-                            <div class="notification-item"><i data-lucide="file-plus-2" aria-hidden="true"></i><span>18 novos modelos rurais e declarações</span></div>
-                            <div class="notification-item"><i data-lucide="eraser" aria-hidden="true"></i><span>Botão Limpar campos nos formulários</span></div>
+                            <div class="notification-item"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Nova tela inicial otimizada</span></div>
+                            <div class="notification-item"><i data-lucide="rocket" aria-hidden="true"></i><span>Versão 4.2.0 disponível</span></div>
+                            <div class="notification-item"><i data-lucide="sparkles" aria-hidden="true"></i><span>Cards mais limpos para web, celular e PC</span></div>
                         </section>
                     </div>
+                    <button type="button" class="profile-mini-button" data-home-nav="profile" aria-label="Abrir perfil">
+                        <span class="document-greeting-icon" aria-hidden="true">
+                            <img id="documentGreetingAvatarImage" class="is-hidden" alt="">
+                            <span id="documentGreetingAvatarFallback"><i data-lucide="user-round"></i></span>
+                        </span>
+                        <i data-lucide="chevron-down" aria-hidden="true"></i>
+                    </button>
                     <button type="button" class="secondary-button home-logout-button" data-logout-button>
                         <i data-lucide="log-out" aria-hidden="true"></i>
                         <span>Sair</span>
@@ -121,94 +129,138 @@
                 </div>
             </header>
 
-            <label class="document-search global-document-search">
-                <i data-lucide="search" aria-hidden="true"></i>
-                <span class="sr-only">Pesquisar documento</span>
-                <input id="documentSearch" type="search" placeholder="Procurar documento..." autocomplete="off">
-            </label>
-
-            <div id="dashboardHomeSection" class="dashboard-home-section" data-home-section="home">
-            <section id="documentPlanCard" class="plan-summary-card" aria-labelledby="documentPlanName">
-                <div class="plan-summary-main">
-                    <span class="plan-summary-icon" aria-hidden="true"><i data-lucide="badge-check"></i></span>
-                    <div>
-                        <p class="plan-summary-label">Seu plano atual</p>
-                        <h2 id="documentPlanName">Plano Básico</h2>
-                        <p id="documentPlanRemaining" class="plan-summary-remaining">Carregando validade...</p>
+            <div id="dashboardHomeSection" class="dashboard-home-section optimized-home" data-home-section="home">
+                <section id="documentPlanCard" class="plan-summary-card home-hero-card" aria-labelledby="documentTitle">
+                    <div class="home-hero-copy">
+                        <p class="document-home-kicker">Bem-vindo de volta</p>
+                        <h1 id="documentTitle">Olá, <span id="documentUserName">usuário</span> <span aria-hidden="true">👋</span></h1>
+                        <p class="home-hero-subtitle">Tudo pronto para você produzir mais hoje.</p>
+                        <span class="document-user-email" data-user-email></span>
+                        <div class="home-hero-badges" aria-label="Status do plano">
+                            <span class="home-status-pill"><i data-lucide="check" aria-hidden="true"></i> Plano ativo</span>
+                            <span class="home-status-pill home-status-pill-muted"><i data-lucide="timer" aria-hidden="true"></i> <span id="documentPlanRemaining">Carregando validade...</span></span>
+                        </div>
                     </div>
-                </div>
-                <div class="plan-summary-progress">
-                    <div class="plan-progress-heading">
-                        <span>Período disponível</span>
-                        <strong id="documentPlanPercent">0%</strong>
-                    </div>
-                    <div class="plan-progress-track" aria-hidden="true"><span id="documentPlanProgress"></span></div>
-                    <p id="documentPlanExpiration">Consultando vencimento...</p>
-                </div>
-                <div id="planActions" class="plan-actions is-hidden" aria-label="Ações do plano">
-                    <button type="button" id="renewPlanButton" class="secondary-button">
-                        <i data-lucide="refresh-cw" aria-hidden="true"></i>
-                        <span>Renovar</span>
-                    </button>
-                    <button type="button" id="changePlanButton">
-                        <i data-lucide="sparkles" aria-hidden="true"></i>
-                        <span>Upgrade</span>
-                    </button>
-                </div>
-            </section>
 
-            <p id="accessStatusMessage" class="access-status" aria-live="polite"></p>
-
-            <section id="recentDocumentsSection" class="recent-documents" aria-labelledby="recentDocumentsTitle">
-                <div class="document-section-heading">
-                    <div>
-                        <p class="document-home-kicker">Continue de onde parou</p>
-                        <h2 id="recentDocumentsTitle">Utilizados recentemente</h2>
+                    <div class="plan-summary-progress home-hero-plan">
+                        <div class="plan-progress-heading">
+                            <span id="documentPlanName">Plano Básico</span>
+                            <strong id="documentPlanPercent">0%</strong>
+                        </div>
+                        <div class="plan-progress-track" aria-hidden="true"><span id="documentPlanProgress"></span></div>
+                        <p id="documentPlanExpiration">Consultando vencimento...</p>
                     </div>
-                </div>
-                <div id="recentDocumentsList" class="dashboard-document-list"></div>
-            </section>
 
-            <section id="popularDocumentsSection" class="popular-documents" aria-labelledby="popularDocumentsTitle">
-                <div class="document-section-heading">
-                    <div>
-                        <p class="document-home-kicker">Acesso rápido</p>
-                        <h2 id="popularDocumentsTitle">Mais utilizados</h2>
+                    <div id="planActions" class="plan-actions is-hidden home-hero-actions" aria-label="Ações do plano">
+                        <button type="button" id="renewPlanButton" class="secondary-button">
+                            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+                            <span>Renovar</span>
+                        </button>
+                        <button type="button" id="changePlanButton">
+                            <i data-lucide="sparkles" aria-hidden="true"></i>
+                            <span>Upgrade</span>
+                        </button>
                     </div>
-                </div>
-                <div class="popular-document-grid">
-                    <button type="button" class="popular-document" data-document-shortcut="comodato">
-                        <i data-lucide="file-text" aria-hidden="true"></i>
-                        <span>Contrato de comodato</span>
-                        <i data-lucide="chevron-right" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="popular-document" data-document-shortcut="posse">
-                        <i data-lucide="sprout" aria-hidden="true"></i>
-                        <span>Declaração de posse</span>
-                        <i data-lucide="chevron-right" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="popular-document" data-document-shortcut="renda-membros">
-                        <i data-lucide="landmark" aria-hidden="true"></i>
-                        <span>Declaração de renda</span>
-                        <i data-lucide="chevron-right" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </section>
+                </section>
 
-            <section class="version-card" aria-labelledby="versionCardTitle">
-                <div class="version-card-icon" aria-hidden="true"><i data-lucide="rocket"></i></div>
-                <div class="version-card-copy">
-                    <p class="document-home-kicker">Novidades da versão</p>
-                    <h2 id="versionCardTitle">Versão 4.1.1</h2>
-                    <div class="version-highlights">
-                        <span><i data-lucide="check" aria-hidden="true"></i> 18 novos modelos adicionados</span>
-                        <span><i data-lucide="check" aria-hidden="true"></i> Limpar campos em todos os documentos</span>
-                        <span><i data-lucide="check" aria-hidden="true"></i> Novos modelos no controle por usuário</span>
+                <p id="accessStatusMessage" class="access-status" aria-live="polite"></p>
+
+                <section class="home-quick-section" aria-labelledby="homeQuickTitle">
+                    <div class="document-section-heading compact-section-heading">
+                        <div>
+                            <p class="document-home-kicker">Acesso rápido</p>
+                            <h2 id="homeQuickTitle">Principais ações</h2>
+                        </div>
+                        <button type="button" class="section-link-button" data-home-action="documents">Ver biblioteca <i data-lucide="arrow-right" aria-hidden="true"></i></button>
                     </div>
-                    <time datetime="2026-06-03">Atualizado em 03/06/2026</time>
-                </div>
-                <button type="button" id="openUpdatesHistoryButton" class="secondary-button">Ver histórico</button>
-            </section>
+                    <div class="home-action-grid">
+                        <button type="button" class="home-action-card home-action-documents" data-home-action="documents">
+                            <span class="home-action-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
+                            <span class="home-action-copy"><strong>Gerador de documentos</strong><span>Abra a área completa do sistema web</span></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="home-action-card home-action-pdf" data-home-action="pdf">
+                            <span class="home-action-icon"><i data-lucide="file-type-2" aria-hidden="true"></i></span>
+                            <span class="home-action-copy"><strong>Ferramentas PDF</strong><span>Comprimir, organizar, OCR, juntar e mais</span></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="home-action-card home-action-pix" data-home-action="billing">
+                            <span class="home-action-icon"><i data-lucide="badge-dollar-sign" aria-hidden="true"></i></span>
+                            <span class="home-action-copy"><strong>Renovar com Pix</strong><span>QR Code e copia-e-cola dentro do app</span></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="home-summary-section" aria-labelledby="homeSummaryTitle">
+                    <div class="document-section-heading compact-section-heading">
+                        <div>
+                            <p class="document-home-kicker">Resumo</p>
+                            <h2 id="homeSummaryTitle">Saldo e atividade</h2>
+                        </div>
+                    </div>
+                    <div class="home-summary-grid">
+                        <article class="home-summary-card">
+                            <span class="home-summary-icon"><i data-lucide="folder-open" aria-hidden="true"></i></span>
+                            <div><span>Docs disponíveis</span><strong id="homeDocumentBalanceCount">0</strong><small>saldo/limite</small></div>
+                        </article>
+                        <article class="home-summary-card home-summary-card-pdf">
+                            <span class="home-summary-icon"><i data-lucide="file-type-2" aria-hidden="true"></i></span>
+                            <div><span>PDF disponíveis</span><strong id="homePdfBalanceCount">0</strong><small>saldo/limite</small></div>
+                        </article>
+                        <article class="home-summary-card home-summary-card-favorite">
+                            <span class="home-summary-icon"><i data-lucide="star" aria-hidden="true"></i></span>
+                            <div><span>Favoritos</span><strong id="homeFavoriteCount">0</strong><small>itens salvos</small></div>
+                        </article>
+                        <article class="home-summary-card home-summary-card-recent">
+                            <span class="home-summary-icon"><i data-lucide="clock-3" aria-hidden="true"></i></span>
+                            <div><span>Recentes</span><strong id="homeRecentCount">0</strong><small>documentos</small></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section id="recentDocumentsSection" class="recent-documents home-recent-section" aria-labelledby="recentDocumentsTitle">
+                    <div class="document-section-heading compact-section-heading">
+                        <div>
+                            <p class="document-home-kicker">Continue de onde parou</p>
+                            <h2 id="recentDocumentsTitle">Documentos recentes</h2>
+                        </div>
+                        <button type="button" class="section-link-button" data-home-action="documents">Ver todos <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                    </div>
+                    <div id="recentDocumentsList" class="dashboard-document-list home-recent-grid"></div>
+                </section>
+
+                <section id="popularDocumentsSection" class="popular-documents home-popular-section" aria-labelledby="popularDocumentsTitle">
+                    <div class="document-section-heading compact-section-heading">
+                        <div>
+                            <p class="document-home-kicker">Biblioteca</p>
+                            <h2 id="popularDocumentsTitle">Documentos populares</h2>
+                        </div>
+                        <button type="button" class="section-link-button" data-home-action="documents">Biblioteca completa <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="popular-document-grid home-category-grid">
+                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="contracts">
+                            <span class="home-category-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
+                            <span><strong>Contratos</strong><small>Modelos de comodato, venda e parceria</small></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="declarations">
+                            <span class="home-category-icon"><i data-lucide="file-badge" aria-hidden="true"></i></span>
+                            <span><strong>Declarações</strong><small>Residência, renda, posse e atividade rural</small></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="powers">
+                            <span class="home-category-icon"><i data-lucide="key-round" aria-hidden="true"></i></span>
+                            <span><strong>Procurações</strong><small>Modelos prontos para representação</small></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="tools">
+                            <span class="home-category-icon"><i data-lucide="settings" aria-hidden="true"></i></span>
+                            <span><strong>Ferramentas</strong><small>PDF, OCR e organização de arquivos</small></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </section>
             </div>
 
             <section id="favoritesSection" class="dashboard-page-section is-hidden" data-home-section="favorites" aria-labelledby="favoritesTitle">
@@ -448,7 +500,7 @@
                     <dl class="profile-details">
                         <div><dt>Plano</dt><dd id="profilePlanName">Consultando...</dd></div>
                         <div><dt>Validade</dt><dd id="profileExpiration">Consultando...</dd></div>
-                        <div><dt>Versão</dt><dd>4.1.1</dd></div>
+                        <div><dt>Versão</dt><dd>4.2.0</dd></div>
                     </dl>
                     <div class="profile-theme-panel profile-system-theme-panel">
                         <div>
@@ -540,6 +592,11 @@
                     </div>
                     <button type="button" id="closeUpdatesHistoryButton" class="icon-button" aria-label="Fechar histórico"><i data-lucide="x"></i></button>
                 </div>
+                <article class="release-note">
+                    <div class="release-note-heading"><strong>Versão 4.2.0</strong><time datetime="2026-06-09">09/06/2026</time></div>
+                    <h3>Tela inicial</h3>
+                    <ul><li>Novo layout otimizado inspirado no painel mobile.</li><li>Hero com plano ativo, progresso e ações de renovação.</li><li>Acesso rápido, resumo, recentes e categorias organizados em cards responsivos.</li></ul>
+                </article>
                 <article class="release-note">
                     <div class="release-note-heading"><strong>Versão 4.1.1</strong><time datetime="2026-06-03">03/06/2026</time></div>
                     <h3>Novos documentos</h3>
@@ -638,14 +695,8 @@
         </div>
 
         <section id="pdfLocalView" class="view pdf-local-view is-hidden" aria-labelledby="pdfLocalTitle">
-            <div class="generator-bar pdf-tools-topbar">
-                <button type="button" class="secondary-button" id="backToDocumentsFromPdfLocalButton">
-                    <i data-lucide="arrow-left" aria-hidden="true"></i>
-                    <span>Voltar</span>
-                </button>
-                <div class="pdf-topbar-brand" aria-label="DocSpace">
-                    <img class="document-brand-logo" src="assets/LOGO2.png" alt="DocSpace">
-                </div>
+            <div class="generator-bar">
+                <button type="button" class="secondary-button" id="backToDocumentsFromPdfLocalButton">Voltar</button>
                 <div class="user-menu">
                     <span data-user-email></span>
                     <button type="button" class="secondary-button theme-toggle-button" data-system-theme-toggle aria-pressed="false" title="Alternar tema do sistema">
@@ -656,12 +707,7 @@
                 </div>
             </div>
 
-            <section class="intro pdf-tools-intro" aria-labelledby="pdfLocalTitle">
-                <div class="pdf-local-breadcrumb" aria-label="Caminho da página">
-                    <span>Início</span>
-                    <i data-lucide="chevron-right" aria-hidden="true"></i>
-                    <span>Ferramentas PDF</span>
-                </div>
+            <section class="intro" aria-labelledby="pdfLocalTitle">
                 <p class="eyebrow">Processamento no navegador</p>
                 <h1 id="pdfLocalTitle">Ferramentas PDF</h1>
                 <p class="descricao">
@@ -678,69 +724,12 @@
                 </div>
 
                 <div id="pdfLocalWorkspace" class="is-hidden">
+                    <div class="pdf-local-note">
+                        <strong>Privacidade local</strong>
+                        <span>Os arquivos não são enviados nem armazenados. Fechar ou atualizar esta página limpa o processamento.</span>
+                    </div>
+
                     <section id="pdfLocalToolsHome" class="pdf-local-tools-home" aria-label="Catálogo de ferramentas PDF">
-                        <div class="pdf-local-stage-layout">
-                            <div class="pdf-local-stage-visual" aria-hidden="true">
-                                <div class="pdf-local-stage-visual-card">
-                                    <i data-lucide="file-text" aria-hidden="true"></i>
-                                    <span>PDF</span>
-                                </div>
-                                <span class="pdf-local-stage-dot pdf-local-stage-dot-a"></span>
-                                <span class="pdf-local-stage-dot pdf-local-stage-dot-b"></span>
-                                <span class="pdf-local-stage-dot pdf-local-stage-dot-c"></span>
-                                <i data-lucide="lock" class="pdf-local-stage-icon pdf-local-stage-icon-a" aria-hidden="true"></i>
-                                <i data-lucide="wand-sparkles" class="pdf-local-stage-icon pdf-local-stage-icon-b" aria-hidden="true"></i>
-                                <i data-lucide="paperclip" class="pdf-local-stage-icon pdf-local-stage-icon-c" aria-hidden="true"></i>
-                            </div>
-
-                            <button type="button" id="pdfLocalQuickStartButton" class="pdf-local-upload-shortcut">
-                                <span class="pdf-local-upload-shortcut-icon"><i data-lucide="cloud-upload" aria-hidden="true"></i></span>
-                                <span class="pdf-local-upload-shortcut-copy">
-                                    <strong>Arraste seu PDF aqui ou clique para selecionar</strong>
-                                    <span>Seus arquivos permanecem neste dispositivo. Nada é enviado.</span>
-                                </span>
-                            </button>
-                        </div>
-
-                        <div class="pdf-local-note">
-                            <div>
-                                <strong>Privacidade local</strong>
-                                <span>Os arquivos não são enviados nem armazenados. Fechar ou atualizar esta página limpa o processamento.</span>
-                            </div>
-                            <span class="pdf-local-note-status"><i data-lucide="check-circle-2" aria-hidden="true"></i> 100% privado</span>
-                        </div>
-
-                        <div class="pdf-local-overview-grid" aria-label="Resumo das ferramentas PDF">
-                            <article class="pdf-local-overview-card">
-                                <span class="pdf-local-overview-icon is-blue"><i data-lucide="file-stack" aria-hidden="true"></i></span>
-                                <div>
-                                    <strong>10</strong>
-                                    <span>Ferramentas disponíveis</span>
-                                </div>
-                            </article>
-                            <article class="pdf-local-overview-card">
-                                <span class="pdf-local-overview-icon is-green"><i data-lucide="shield-check" aria-hidden="true"></i></span>
-                                <div>
-                                    <strong>Uso local</strong>
-                                    <span>Seus arquivos não saem do dispositivo</span>
-                                </div>
-                            </article>
-                            <article class="pdf-local-overview-card">
-                                <span class="pdf-local-overview-icon is-purple"><i data-lucide="file-badge" aria-hidden="true"></i></span>
-                                <div>
-                                    <strong>PDF</strong>
-                                    <span>Formatos suportados PDF</span>
-                                </div>
-                            </article>
-                            <article class="pdf-local-overview-card">
-                                <span class="pdf-local-overview-icon is-orange"><i data-lucide="clock-3" aria-hidden="true"></i></span>
-                                <div>
-                                    <strong>0 recentes</strong>
-                                    <span>Nenhum arquivo processado ainda</span>
-                                </div>
-                            </article>
-                        </div>
-
                         <div class="pdf-local-hero-card">
                             <p class="eyebrow">Todas as ferramentas PDF</p>
                             <h2>Escolha uma ação para o seu arquivo</h2>
@@ -1628,7 +1617,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
-    <script src="script.js?v=83"></script>
+    <script src="script.js?v=84"></script>
     <script src="pdf-preview.js?v=6"></script>
 </body>
 </html>

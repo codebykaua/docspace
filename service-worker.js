@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v97-pdf-layout-light-theme";
+const CACHE_NAME = "docspace-v97-home-otimizada-420";
 
 const APP_ASSETS = [
     "./",
@@ -21,8 +21,8 @@ const APP_ASSETS = [
     "./modelos/declaracao_ufba_membros.docx",
     "./modelos/decrlaracao_renda_membros.docx",
     "./modelos/declaracao_posso.docx",
-    "./modelos/AutodeclaraÃ§Ã£o - SEM REPRESENTAÃ‡ÃƒO.docx",
-    "./modelos/AutodeclaraÃ§Ã£o - COM REPRESENTAÃ‡ÃƒO.docx",
+    "./modelos/Autodeclaração - SEM REPRESENTAÇÃO.docx",
+    "./modelos/Autodeclaração - COM REPRESENTAÇÃO.docx",
     "./modelos/procuracao_consumidor.docx",
     "./modelos/procuracao_normal.docx",
     "./modelos/contrato_honorarios_50.docx",

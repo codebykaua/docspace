@@ -7456,581 +7456,794 @@ body.system-dark-theme .payment-api-placeholder:has(img) span {
     color: #b8c7e6;
 }
 
-/* ===== DOCSPACE PATCH: HOME LIGHT THEME + NOVO LAYOUT PDF ===== */
-
-/* --- Tema claro: home inicial mais legível --- */
-body.system-light-theme.document-home-open {
-    background:
-        radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.10), transparent 28%),
-        radial-gradient(circle at 94% 10%, rgba(14, 165, 233, 0.10), transparent 20%),
-        linear-gradient(180deg, #f8fbff 0%, #f3f6fb 100%) !important;
+/* ===== HOME OTIMIZADA 4.2.0 - LAYOUT WEB + MOBILE ===== */
+body.document-home-open .app {
+    width: min(1340px, calc(100% - 40px));
+    padding-top: 24px;
 }
 
-body.system-light-theme .document-view,
-body.system-light-theme .dashboard-home-section,
-body.system-light-theme .dashboard-page-section,
-body.system-light-theme .document-catalog {
-    color: #0f172a;
+body.document-home-open .document-view {
+    --home-card: rgba(15, 31, 61, 0.78);
+    --home-card-strong: rgba(24, 43, 82, 0.88);
+    --home-border: rgba(148, 163, 184, 0.20);
+    --home-blue: #2563eb;
+    --home-blue-soft: rgba(37, 99, 235, 0.18);
+    --home-cyan: #38bdf8;
+    --home-green: #22c55e;
+    --home-purple: #8b5cf6;
+    --home-text: #f8fafc;
+    --home-muted: #aebdd0;
 }
 
-body.system-light-theme .document-home-kicker,
-body.system-light-theme .access-status,
-body.system-light-theme .version-card-copy time,
-body.system-light-theme .document-card-copy span,
-body.system-light-theme .dashboard-document-item span,
-body.system-light-theme .popular-document span,
-body.system-light-theme .notification-item span,
-body.system-light-theme .document-section-heading p,
-body.system-light-theme .plan-summary-remaining,
-body.system-light-theme .plan-progress-heading span,
-body.system-light-theme #documentPlanExpiration,
-body.system-light-theme .version-highlights span {
-    color: #64748b !important;
-}
-
-body.system-light-theme .document-home-header h1,
-body.system-light-theme .document-section-heading h2,
-body.system-light-theme .version-card h2,
-body.system-light-theme .plan-summary-card h2,
-body.system-light-theme .dashboard-document-item strong,
-body.system-light-theme .popular-document strong,
-body.system-light-theme .document-card-copy strong,
-body.system-light-theme .notification-popover-heading strong {
-    color: #0f172a !important;
-}
-
-body.system-light-theme .document-user-email,
-body.system-light-theme .document-header-actions,
-body.system-light-theme .notification-popover-heading span {
-    color: #6b7280 !important;
-}
-
-body.system-light-theme .document-search {
-    border-color: rgba(148, 163, 184, 0.28) !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08) !important;
-}
-
-body.system-light-theme .document-search input,
-body.system-light-theme .document-search input::placeholder {
-    color: #334155 !important;
-}
-
-body.system-light-theme .document-search svg,
-body.system-light-theme .popular-document svg,
-body.system-light-theme .dashboard-document-item svg,
-body.system-light-theme .document-card-icon,
-body.system-light-theme .version-card-icon,
-body.system-light-theme .plan-summary-icon {
-    color: #2563eb;
-}
-
-body.system-light-theme .plan-summary-card {
-    border-color: rgba(148, 163, 184, 0.24) !important;
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 246, 255, 0.98)) !important;
-    box-shadow: 0 26px 54px rgba(15, 23, 42, 0.08) !important;
-}
-
-body.system-light-theme .plan-progress-track {
-    background: rgba(148, 163, 184, 0.20) !important;
-}
-
-body.system-light-theme .plan-progress-track span {
-    background: linear-gradient(90deg, #2563eb, #22c55e) !important;
-}
-
-body.system-light-theme .version-card,
-body.system-light-theme .dashboard-document-item,
-body.system-light-theme .popular-document,
-body.system-light-theme .document-card,
-body.system-light-theme .bottom-navigation,
-body.system-light-theme .notification-popover {
-    border-color: rgba(148, 163, 184, 0.26) !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08) !important;
-}
-
-body.system-light-theme .version-highlights span i,
-body.system-light-theme .document-status,
-body.system-light-theme .document-open {
-    color: #2563eb !important;
-}
-
-body.system-light-theme .secondary-button,
-body.system-light-theme .icon-button,
-body.system-light-theme .theme-toggle-button,
-body.system-light-theme .home-logout-button {
-    color: #0f172a !important;
-    border-color: rgba(148, 163, 184, 0.26) !important;
-    background: rgba(255, 255, 255, 0.96) !important;
-}
-
-body.system-light-theme .secondary-button:hover,
-body.system-light-theme .icon-button:hover,
-body.system-light-theme .theme-toggle-button:hover {
-    border-color: rgba(37, 99, 235, 0.36) !important;
-    background: #ffffff !important;
-    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.10) !important;
-}
-
-body.system-light-theme .bottom-navigation-item {
-    color: #64748b !important;
-}
-
-body.system-light-theme .bottom-navigation-item.is-active {
-    color: #2563eb !important;
-    background: rgba(37, 99, 235, 0.10) !important;
-}
-
-/* --- Novo visual da página Ferramentas PDF --- */
-.pdf-tools-topbar {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+body.document-home-open .document-home-header.app-shell-header,
+body.system-dark-theme.document-home-open .document-home-header.app-shell-header,
+body.system-light-theme.document-home-open .document-home-header.app-shell-header,
+body.liquid-glass-theme.document-home-open .document-home-header.app-shell-header {
+    position: sticky;
+    top: 14px;
+    z-index: 35;
+    display: grid !important;
+    grid-template-columns: auto minmax(280px, 560px) auto;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
+    margin: 0 0 20px !important;
+    padding: 14px 18px !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 24px !important;
+    background: rgba(6, 15, 34, 0.76) !important;
+    box-shadow: 0 24px 70px rgba(2, 6, 23, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(18px) saturate(145%);
 }
 
-.pdf-topbar-brand {
+.app-shell-brand,
+.app-shell-actions,
+.profile-mini-button,
+.home-status-pill,
+.section-link-button,
+.home-action-card,
+.home-action-copy,
+.home-summary-card,
+.home-category-card,
+.home-category-card > span:not(.home-category-icon),
+.dashboard-document-item-meta,
+.dashboard-document-item-type {
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-.pdf-topbar-brand .document-brand-logo {
-    width: auto;
-    height: 34px;
-}
-
-.pdf-tools-intro {
-    display: grid;
+.app-shell-brand {
     gap: 10px;
+    min-width: 0;
+    color: var(--home-text);
+    font-size: 1.12rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
 }
 
-.pdf-local-breadcrumb {
-    display: inline-flex;
+.app-shell-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+}
+
+.app-shell-search.global-document-search,
+.document-search.app-shell-search {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #94a3b8;
-    font-size: 0.95rem;
+    width: 100%;
+    max-width: 560px;
+    margin: 0;
 }
 
-.pdf-local-breadcrumb svg {
+.app-shell-search input {
+    min-height: 48px;
+    padding-right: 82px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.66);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.app-shell-search kbd {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    padding: 3px 7px;
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 7px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.72);
+    font-size: 0.70rem;
+    font-family: inherit;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.app-shell-actions {
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
+.app-shell-actions .icon-button,
+.profile-mini-button,
+.app-shell-actions .theme-toggle-button,
+.app-shell-actions .home-logout-button {
+    min-height: 42px;
+    border-radius: 13px;
+}
+
+.updates-shortcut-button {
+    color: #bfdbfe;
+}
+
+.profile-mini-button {
+    gap: 7px;
+    min-height: 44px;
+    padding: 4px 8px 4px 4px;
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, 0.68);
+}
+
+.profile-mini-button .document-greeting-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+}
+
+.profile-mini-button > svg {
+    width: 15px;
+    height: 15px;
+    color: #94a3b8;
+}
+
+.optimized-home {
+    display: grid;
+    gap: 24px;
+}
+
+.optimized-home .home-hero-card,
+body.system-dark-theme .optimized-home .home-hero-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(280px, 1.08fr) minmax(260px, 0.92fr) auto;
+    gap: 28px;
+    overflow: hidden;
+    min-height: 186px;
+    padding: clamp(22px, 3vw, 36px);
+    border: 1px solid rgba(96, 165, 250, 0.26);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 12% 15%, rgba(59, 130, 246, 0.36), transparent 28%),
+        radial-gradient(circle at 88% 15%, rgba(37, 99, 235, 0.34), transparent 35%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.72));
+    box-shadow: 0 30px 80px rgba(2, 6, 23, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.optimized-home .home-hero-card::before {
+    content: "";
+    position: absolute;
+    inset: auto -12% -70% 42%;
+    height: 240px;
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.12);
+    filter: blur(4px);
+    transform: rotate(-14deg);
+}
+
+.home-hero-copy,
+.home-hero-plan,
+.home-hero-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.home-hero-copy h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 4.2vw, 3rem);
+    line-height: 1.04;
+    letter-spacing: -0.055em;
+}
+
+.home-hero-subtitle {
+    margin: 9px 0 0;
+    color: #dbeafe;
+    font-size: 1rem;
+}
+
+.home-hero-copy .document-user-email {
+    margin-top: 5px;
+    color: #93c5fd;
+}
+
+.home-hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 20px;
+}
+
+.home-status-pill {
+    gap: 7px;
+    min-height: 34px;
+    padding: 0 13px;
+    border-radius: 999px;
+    color: #dcfce7;
+    background: rgba(16, 185, 129, 0.18);
+    font-size: 0.84rem;
+    font-weight: 850;
+}
+
+.home-status-pill svg {
     width: 15px;
     height: 15px;
 }
 
-.pdf-local-stage-layout {
-    display: grid;
-    grid-template-columns: 180px minmax(0, 1fr);
-    align-items: center;
-    gap: 26px;
-    max-width: 1180px;
-    margin: 0 auto;
-}
-
-.pdf-local-stage-visual {
-    position: relative;
-    min-height: 170px;
-    border-radius: 28px;
-}
-
-.pdf-local-stage-visual-card {
-    position: absolute;
-    top: 22px;
-    left: 26px;
-    display: inline-grid;
-    place-items: center;
-    gap: 6px;
-    width: 82px;
-    height: 82px;
-    border-radius: 22px;
+.home-status-pill-muted {
     color: #dbeafe;
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.75));
-    box-shadow: 0 22px 44px rgba(37, 99, 235, 0.26);
-    transform: rotate(-10deg);
+    background: rgba(148, 163, 184, 0.18);
 }
 
-.pdf-local-stage-visual-card svg {
-    width: 30px;
-    height: 30px;
+.home-hero-plan {
+    align-self: center;
+    padding-left: 30px;
+    border-left: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.pdf-local-stage-visual-card span {
-    font-size: 0.86rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
+.home-hero-plan .plan-progress-heading {
+    margin-bottom: 12px;
+    font-size: 0.92rem;
+    font-weight: 900;
 }
 
-.pdf-local-stage-dot,
-.pdf-local-stage-icon {
-    position: absolute;
-    color: rgba(96, 165, 250, 0.72);
+.home-hero-plan .plan-progress-heading span,
+.home-hero-plan .plan-progress-heading strong {
+    color: #ffffff;
 }
 
-.pdf-local-stage-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: rgba(96, 165, 250, 0.66);
-    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.08);
+.home-hero-plan .plan-progress-track {
+    height: 9px;
+    background: rgba(191, 219, 254, 0.18);
 }
 
-.pdf-local-stage-dot-a { top: 30px; left: 132px; }
-.pdf-local-stage-dot-b { top: 96px; left: 150px; }
-.pdf-local-stage-dot-c { top: 138px; left: 108px; }
-.pdf-local-stage-icon-a { top: 20px; left: 146px; }
-.pdf-local-stage-icon-b { top: 102px; left: 16px; }
-.pdf-local-stage-icon-c { top: 132px; left: 132px; }
-
-.pdf-local-stage-icon svg {
-    width: 18px;
-    height: 18px;
+.home-hero-plan p {
+    color: #bfdbfe;
+    font-size: 0.84rem;
 }
 
-.pdf-local-upload-shortcut {
+.document-view .home-hero-actions {
+    align-self: center;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 18px;
-    width: 100%;
-    padding: 28px 30px;
-    border: 1px solid rgba(96, 165, 250, 0.22);
-    border-radius: 24px;
-    text-align: left;
-    cursor: pointer;
-    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    gap: 9px;
 }
 
-.pdf-local-upload-shortcut:hover {
+.document-view .home-hero-actions button {
+    justify-content: center;
+    min-width: 126px;
+    border-radius: 13px;
+}
+
+.compact-section-heading {
+    margin-bottom: 12px;
+}
+
+.compact-section-heading h2 {
+    font-size: 1.35rem;
+    letter-spacing: -0.035em;
+}
+
+.section-link-button {
+    justify-content: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 0 4px;
+    border: 0;
+    color: #93c5fd;
+    background: transparent;
+    font-size: 0.86rem;
+    font-weight: 850;
+}
+
+.section-link-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.home-action-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.home-action-card,
+.home-summary-card,
+.home-category-card,
+.optimized-home .dashboard-document-item {
+    position: relative;
+    min-width: 0;
+    border: 1px solid var(--home-border);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.84), rgba(15, 23, 42, 0.72));
+    box-shadow: 0 18px 44px rgba(2, 6, 23, 0.22), inset 0 1px 0 rgba(255,255,255,0.05);
+    backdrop-filter: blur(14px);
+}
+
+.home-action-card {
+    justify-content: flex-start;
+    gap: 16px;
+    min-height: 112px;
+    padding: 20px;
+    border-radius: 20px;
+    color: var(--home-text);
+    text-align: left;
+}
+
+.home-action-card:hover,
+.home-summary-card:hover,
+.home-category-card:hover,
+.optimized-home .dashboard-document-item:hover {
+    border-color: rgba(96, 165, 250, 0.54);
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.26), rgba(15, 23, 42, 0.82));
+    box-shadow: 0 24px 58px rgba(2, 6, 23, 0.30);
     transform: translateY(-2px);
 }
 
-.pdf-local-upload-shortcut-icon {
-    display: inline-grid;
-    place-items: center;
-    width: 76px;
-    height: 76px;
-    border-radius: 999px;
-}
-
-.pdf-local-upload-shortcut-icon svg {
-    width: 34px;
-    height: 34px;
-}
-
-.pdf-local-upload-shortcut-copy {
+.home-action-icon,
+.home-summary-icon,
+.home-category-icon {
     display: grid;
-    gap: 6px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 16px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.26);
 }
 
-.pdf-local-upload-shortcut-copy strong {
-    font-size: clamp(1.1rem, 2vw, 1.5rem);
+.home-action-icon {
+    width: 58px;
+    height: 58px;
+}
+
+.home-action-pdf .home-action-icon,
+.home-summary-card-pdf .home-summary-icon {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+
+.home-action-pix .home-action-icon {
+    background: linear-gradient(135deg, #0d9488, #5eead4);
+}
+
+.home-action-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.home-action-copy {
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.home-action-copy strong,
+.home-category-card strong {
+    color: #f8fafc;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.home-action-copy span,
+.home-category-card small {
+    color: var(--home-muted);
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+.home-action-card > svg,
+.home-category-card > svg:last-child {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    color: #93c5fd;
+}
+
+.home-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.home-summary-card {
+    gap: 15px;
+    min-height: 112px;
+    padding: 18px;
+    border-radius: 18px;
+}
+
+.home-summary-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 15px;
+}
+
+.home-summary-card-favorite .home-summary-icon {
+    background: linear-gradient(135deg, #a16207, #facc15);
+}
+
+.home-summary-card-recent .home-summary-icon {
+    background: linear-gradient(135deg, #047857, #22c55e);
+}
+
+.home-summary-icon svg {
+    width: 25px;
+    height: 25px;
+}
+
+.home-summary-card div {
+    min-width: 0;
+}
+
+.home-summary-card span,
+.home-summary-card small {
+    display: block;
+    color: var(--home-muted);
+    font-size: 0.78rem;
     line-height: 1.25;
 }
 
-.pdf-local-upload-shortcut-copy span {
-    line-height: 1.55;
+.home-summary-card strong {
+    display: block;
+    margin: 3px 0;
+    color: #ffffff;
+    font-size: 1.7rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
 }
 
-.pdf-local-note {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px !important;
-}
-
-.pdf-local-note-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    font-weight: 800;
-}
-
-.pdf-local-overview-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    max-width: 1180px;
-    margin: 0 auto;
-}
-
-.pdf-local-overview-card {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
+.home-recent-grid.dashboard-document-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
-    padding: 18px 20px;
-    border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.22);
 }
 
-.pdf-local-overview-card strong {
-    display: block;
-    margin-bottom: 2px;
-    font-size: 1.35rem;
-    letter-spacing: -0.03em;
+.optimized-home .dashboard-document-item {
+    min-height: 82px;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 18px;
 }
 
-.pdf-local-overview-card span {
-    display: block;
-    line-height: 1.45;
-}
-
-.pdf-local-overview-icon {
-    display: inline-grid;
-    place-items: center;
+.optimized-home .dashboard-document-item-icon {
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    color: #ffffff;
+    background: rgba(37, 99, 235, 0.24);
 }
 
-.pdf-local-overview-icon.is-blue { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-.pdf-local-overview-icon.is-green { background: linear-gradient(135deg, #16a34a, #4ade80); }
-.pdf-local-overview-icon.is-purple { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
-.pdf-local-overview-icon.is-orange { background: linear-gradient(135deg, #ea580c, #f59e0b); }
-
-.pdf-local-overview-icon svg {
-    width: 22px;
-    height: 22px;
+.optimized-home .dashboard-document-item > span:nth-child(2) {
+    display: grid;
+    gap: 4px;
+    font-size: 0.92rem;
 }
 
-.pdf-local-view .pdf-local-home-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    max-width: 1180px;
-    margin: 0 auto;
-}
-
-.pdf-local-view .pdf-local-home-grid .pdf-local-tool {
-    min-height: 205px;
-    justify-content: flex-start;
-}
-
-.pdf-local-view .pdf-local-home-grid .pdf-local-tool > span:last-child {
-    max-width: none;
-}
-
-.pdf-local-view .pdf-local-home-grid .pdf-local-tool .pdf-tool-badge,
-.pdf-local-view .pdf-local-home-grid .pdf-local-tool .pdf-tool-quota-badge {
-    font-size: 0.64rem;
-}
-
-/* Tema escuro do PDF tools */
-body.system-dark-theme .pdf-local-breadcrumb,
-body.system-dark-theme .pdf-local-upload-shortcut-copy span,
-body.system-dark-theme .pdf-local-overview-card span {
-    color: #94a3b8;
-}
-
-body.system-dark-theme .pdf-tools-topbar {
-    border-color: rgba(148, 163, 184, 0.16) !important;
-    background: rgba(15, 23, 42, 0.78) !important;
-    box-shadow: 0 16px 42px rgba(2, 6, 23, 0.34) !important;
-}
-
-body.system-dark-theme .pdf-local-upload-shortcut {
-    border-color: rgba(96, 165, 250, 0.20);
-    background: linear-gradient(135deg, rgba(24, 35, 82, 0.86), rgba(11, 20, 48, 0.94));
-    box-shadow: 0 24px 52px rgba(2, 6, 23, 0.28);
-}
-
-body.system-dark-theme .pdf-local-upload-shortcut-icon {
-    color: #dbeafe;
-    background: radial-gradient(circle at 30% 20%, rgba(96, 165, 250, 0.42), rgba(59, 130, 246, 0.16));
-}
-
-body.system-dark-theme .pdf-local-upload-shortcut-copy strong,
-body.system-dark-theme .pdf-local-overview-card strong,
-body.system-dark-theme .pdf-local-note-status,
-body.system-dark-theme .pdf-local-breadcrumb span,
-body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool-heading strong {
+.dashboard-document-item-title {
     color: #f8fafc;
+    font-weight: 900;
+    line-height: 1.2;
 }
 
-body.system-dark-theme .pdf-local-note {
-    border-color: rgba(16, 185, 129, 0.28) !important;
-    background: linear-gradient(90deg, rgba(4, 120, 87, 0.28), rgba(6, 95, 70, 0.18)) !important;
-    color: #d1fae5 !important;
+.dashboard-document-item-meta {
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.77rem;
+    font-weight: 650;
 }
 
-body.system-dark-theme .pdf-local-note strong {
-    color: #a7f3d0 !important;
+.dashboard-document-item-type {
+    justify-content: center;
+    min-width: 42px;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    color: #c7d2fe;
+    background: rgba(99, 102, 241, 0.18);
+    font-size: 0.68rem;
+    font-weight: 900;
 }
 
-body.system-dark-theme .pdf-local-overview-card {
-    border-color: rgba(148, 163, 184, 0.18);
-    background: rgba(15, 23, 42, 0.76);
-    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.24);
+.home-category-grid.popular-document-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
 }
 
-body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool {
-    border-color: rgba(148, 163, 184, 0.18);
-    background: rgba(15, 23, 42, 0.80);
-    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.24);
+.home-category-card.popular-document {
+    min-height: 86px;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 18px;
 }
 
-body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool:hover,
-body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool.is-active:hover {
-    border-color: rgba(96, 165, 250, 0.50);
-    background: rgba(17, 24, 39, 0.92);
-    box-shadow: 0 26px 56px rgba(2, 6, 23, 0.32);
+.home-category-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
 }
 
-body.system-dark-theme .pdf-local-category-tab {
-    border-color: rgba(148, 163, 184, 0.18);
-    background: rgba(15, 23, 42, 0.72);
+.home-category-card:nth-child(2) .home-category-icon {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
 }
 
-body.system-dark-theme .pdf-local-category-tab.is-active {
-    border-color: rgba(96, 165, 250, 0.46);
-    color: #0f172a;
-    background: #bfdbfe;
+.home-category-card:nth-child(3) .home-category-icon {
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
 }
 
-/* Tema claro do PDF tools */
-body.system-light-theme .pdf-tools-topbar {
-    border-color: rgba(148, 163, 184, 0.22) !important;
+.home-category-card:nth-child(4) .home-category-icon {
+    background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+.home-category-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.home-category-card > span:not(.home-category-icon) {
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+}
+
+/* Esconde a biblioteca completa da página inicial: ela abre somente na aba Documentos. */
+#documentCatalogSection[data-home-section="documents"].is-hidden {
+    display: none;
+}
+
+body.system-light-theme.document-home-open .document-view {
+    --home-card: rgba(255, 255, 255, 0.92);
+    --home-card-strong: rgba(255, 255, 255, 0.98);
+    --home-border: #d9e2ef;
+    --home-text: #111827;
+    --home-muted: #64748b;
+}
+
+body.system-light-theme.document-home-open .document-home-header.app-shell-header {
+    background: rgba(255, 255, 255, 0.84) !important;
+    box-shadow: 0 24px 70px rgba(30, 41, 59, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.90) !important;
+}
+
+body.system-light-theme .app-shell-brand,
+body.system-light-theme .home-summary-card strong,
+body.system-light-theme .home-action-copy strong,
+body.system-light-theme .home-category-card strong,
+body.system-light-theme .dashboard-document-item-title {
+    color: #111827 !important;
+}
+
+body.system-light-theme .home-hero-copy h1,
+body.system-light-theme .home-hero-plan .plan-progress-heading span,
+body.system-light-theme .home-hero-plan .plan-progress-heading strong {
+    color: #ffffff !important;
+}
+
+body.system-light-theme .home-action-card,
+body.system-light-theme .home-summary-card,
+body.system-light-theme .home-category-card,
+body.system-light-theme .optimized-home .dashboard-document-item {
+    color: #111827 !important;
     background: rgba(255, 255, 255, 0.94) !important;
-    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 18px 44px rgba(30, 41, 59, 0.09) !important;
 }
 
-body.system-light-theme .pdf-local-breadcrumb,
-body.system-light-theme .pdf-local-overview-card span,
-body.system-light-theme .pdf-local-upload-shortcut-copy span {
-    color: #64748b;
+body.system-light-theme .home-action-card:hover,
+body.system-light-theme .home-summary-card:hover,
+body.system-light-theme .home-category-card:hover,
+body.system-light-theme .optimized-home .dashboard-document-item:hover {
+    background: #ffffff !important;
+    box-shadow: 0 24px 58px rgba(30, 41, 59, 0.13) !important;
 }
 
-body.system-light-theme .pdf-local-upload-shortcut {
-    border-color: rgba(59, 130, 246, 0.18);
-    background: linear-gradient(135deg, rgba(241, 246, 255, 0.98), rgba(232, 240, 255, 0.98));
-    box-shadow: 0 22px 48px rgba(37, 99, 235, 0.10);
+body.liquid-glass-theme.document-home-open .home-action-card,
+body.liquid-glass-theme.document-home-open .home-summary-card,
+body.liquid-glass-theme.document-home-open .home-category-card,
+body.liquid-glass-theme.document-home-open .optimized-home .dashboard-document-item,
+body.liquid-glass-theme.document-home-open .document-home-header.app-shell-header {
+    backdrop-filter: blur(26px) saturate(160%);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.055)) !important;
 }
 
-body.system-light-theme .pdf-local-upload-shortcut-icon {
-    color: #2563eb;
-    background: radial-gradient(circle at 30% 20%, rgba(147, 197, 253, 0.48), rgba(191, 219, 254, 0.28));
+body.liquid-glass-theme.document-home-open .home-hero-card {
+    backdrop-filter: blur(24px) saturate(160%);
 }
 
-body.system-light-theme .pdf-local-upload-shortcut-copy strong,
-body.system-light-theme .pdf-local-overview-card strong {
-    color: #0f172a;
-}
-
-body.system-light-theme .pdf-local-note {
-    border-color: rgba(16, 185, 129, 0.24) !important;
-    background: linear-gradient(90deg, rgba(236, 253, 245, 1), rgba(230, 250, 243, 1)) !important;
-}
-
-body.system-light-theme .pdf-local-note strong {
-    color: #047857 !important;
-}
-
-body.system-light-theme .pdf-local-note-status {
-    color: #047857;
-}
-
-body.system-light-theme .pdf-local-overview-card {
-    background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
-}
-
-body.system-light-theme .pdf-local-category-tab {
-    color: #334155;
-    border-color: rgba(148, 163, 184, 0.24);
-    background: rgba(255, 255, 255, 0.96);
-}
-
-body.system-light-theme .pdf-local-category-tab:hover {
-    color: #2563eb;
-    border-color: rgba(37, 99, 235, 0.24);
-}
-
-body.system-light-theme .pdf-local-category-tab.is-active {
-    border-color: #1d4ed8;
-    color: #ffffff;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-}
-
-body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool {
-    border-color: rgba(148, 163, 184, 0.22);
-    background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
-}
-
-body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool:hover,
-body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool.is-active:hover {
-    border-color: rgba(37, 99, 235, 0.34);
-    box-shadow: 0 24px 50px rgba(37, 99, 235, 0.10);
-}
-
-body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool-heading strong,
-body.system-light-theme .pdf-local-hero-card h2,
-body.system-light-theme .intro h1 {
-    color: #0f172a !important;
-}
-
-body.system-light-theme .pdf-local-hero-card p:not(.eyebrow),
-body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool > span:last-child,
-body.system-light-theme .pdf-local-view .descricao {
-    color: #64748b !important;
-}
-
-@media (max-width: 1200px) {
-    .pdf-local-view .pdf-local-home-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 980px) {
-    .pdf-local-stage-layout,
-    .pdf-local-overview-grid {
-        grid-template-columns: 1fr 1fr;
+@media (max-width: 1100px) {
+    body.document-home-open .document-home-header.app-shell-header {
+        grid-template-columns: auto 1fr;
     }
 
-    .pdf-local-stage-layout {
-        align-items: stretch;
+    .app-shell-search {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        max-width: none !important;
     }
 
-    .pdf-local-stage-visual {
-        min-height: 150px;
+    .app-shell-actions {
+        justify-self: end;
     }
-}
 
-@media (max-width: 720px) {
-    .pdf-tools-topbar {
+    .optimized-home .home-hero-card {
         grid-template-columns: 1fr;
-        justify-items: stretch;
+        gap: 20px;
     }
 
-    .pdf-topbar-brand {
-        justify-content: flex-start;
-        order: -1;
+    .home-hero-plan {
+        padding-left: 0;
+        border-left: 0;
     }
 
-    .pdf-local-stage-layout,
-    .pdf-local-overview-grid,
-    .pdf-local-note {
-        grid-template-columns: 1fr !important;
+    .document-view .home-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
     }
 
-    .pdf-local-stage-visual {
+    .home-summary-grid,
+    .home-category-grid.popular-document-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    body.document-home-open .app {
+        width: min(100% - 22px, 620px);
+        padding-top: 12px;
+    }
+
+    body.document-home-open .document-home-header.app-shell-header {
+        top: 8px;
+        gap: 12px;
+        padding: 12px !important;
+        border-radius: 22px !important;
+    }
+
+    .app-shell-brand strong {
+        font-size: 1rem;
+    }
+
+    .app-shell-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .app-shell-actions {
+        gap: 6px;
+    }
+
+    .updates-shortcut-button,
+    .app-shell-actions .home-logout-button {
+        display: none !important;
+    }
+
+    .app-shell-actions .theme-toggle-button span,
+    .profile-mini-button > svg {
         display: none;
     }
 
-    .pdf-local-upload-shortcut {
-        padding: 22px 18px;
-        grid-template-columns: 1fr;
-        text-align: center;
+    .app-shell-actions .theme-toggle-button,
+    .app-shell-actions .icon-button {
+        width: 42px;
+        padding-inline: 0;
     }
 
-    .pdf-local-upload-shortcut-icon {
-        margin: 0 auto;
+    .app-shell-search kbd {
+        display: none;
     }
 
-    .pdf-local-view .pdf-local-home-grid {
+    .app-shell-search input {
+        padding-right: 14px;
+    }
+
+    .optimized-home {
+        gap: 22px;
+    }
+
+    .optimized-home .home-hero-card {
+        min-height: 0;
+        padding: 24px 20px;
+        border-radius: 26px;
+    }
+
+    .home-hero-copy h1 {
+        font-size: 2rem;
+    }
+
+    .home-hero-badges {
+        margin-top: 16px;
+    }
+
+    .home-action-grid,
+    .home-recent-grid.dashboard-document-list,
+    .home-category-grid.popular-document-grid {
         grid-template-columns: 1fr;
     }
+
+    .home-action-card {
+        min-height: 92px;
+        padding: 16px;
+    }
+
+    .home-action-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .home-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .home-summary-card {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 128px;
+        padding: 15px;
+    }
+
+    .home-summary-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .home-summary-card strong {
+        font-size: 1.55rem;
+    }
+
+    .compact-section-heading {
+        align-items: flex-start;
+    }
+
+    .section-link-button {
+        display: none;
+    }
+
+    .bottom-navigation {
+        border-radius: 22px;
+    }
+}
+
+@media (max-width: 420px) {
+    body.document-home-open .document-home-header.app-shell-header {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .app-shell-brand {
+        gap: 8px;
+    }
+
+    .app-shell-actions .theme-toggle-button {
+        display: none !important;
+    }
+
+    .home-status-pill {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .home-summary-grid {
+        gap: 9px;
+    }
+}
+
+/* Ajuste de prioridade para os ícones dos cards de categoria da home. */
+.home-category-card .home-category-icon {
+    flex: 0 0 auto;
+}
+
+.home-category-card .home-category-icon svg {
+    width: 21px;
+    height: 21px;
+    color: #ffffff;
 }

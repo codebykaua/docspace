@@ -75,6 +75,12 @@ const favoriteDocumentsList = document.getElementById("favoriteDocumentsList");
 const documentGeneratedCount = document.getElementById("documentGeneratedCount");
 const documentFavoriteCount = document.getElementById("documentFavoriteCount");
 const documentModelCount = document.getElementById("documentModelCount");
+const homeDocumentBalanceCount = document.getElementById("homeDocumentBalanceCount");
+const homePdfBalanceCount = document.getElementById("homePdfBalanceCount");
+const homeFavoriteCount = document.getElementById("homeFavoriteCount");
+const homeRecentCount = document.getElementById("homeRecentCount");
+const homeQuickActionButtons = Array.from(document.querySelectorAll("[data-home-action]"));
+const homeCategoryShortcutButtons = Array.from(document.querySelectorAll("[data-document-category-shortcut]"));
 const profileUserName = document.getElementById("profileUserName");
 const profileUserEmail = document.getElementById("profileUserEmail");
 const profilePlanName = document.getElementById("profilePlanName");
@@ -191,7 +197,6 @@ const pdfLocalOperationTitle = document.getElementById("pdfLocalOperationTitle")
 const pdfLocalOperationDescription = document.getElementById("pdfLocalOperationDescription");
 const pdfLocalOperationIcon = document.getElementById("pdfLocalOperationIcon");
 const pdfLocalOperationKicker = document.getElementById("pdfLocalOperationKicker");
-const pdfLocalQuickStartButton = document.getElementById("pdfLocalQuickStartButton");
 const adminAccessCard = document.getElementById("adminAccessCard");
 const adminAccessForm = document.getElementById("adminAccessForm");
 const adminEditingUid = document.getElementById("adminEditingUid");
@@ -2021,10 +2026,6 @@ function configurarFerramentasPdfLocais() {
     });
 
     pdfLocalBackToToolsButton?.addEventListener("click", mostrarHomeFerramentasPdfLocal);
-    pdfLocalQuickStartButton?.addEventListener("click", () => {
-        selecionarFerramentaPdfLocal("merge", { abrirPainel: true });
-        setTimeout(() => pdfLocalFiles?.click(), 120);
-    });
     pdfLocalUpgradeButton.addEventListener("click", abrirAlteracaoPlano);
     pdfLocalFiles.addEventListener("change", lidarMudancaArquivosPdfLocal);
     configurarArrastarSoltarPdfLocal();
@@ -3628,17 +3629,7 @@ function configurarTelaInicialDocumentos() {
     });
 
     documentFilterButtons.forEach((buttonFilter) => {
-        buttonFilter.addEventListener("click", () => {
-            documentCategoryFilter = buttonFilter.dataset.documentFilter || "all";
-
-            documentFilterButtons.forEach((button) => {
-                const ativo = button === buttonFilter;
-                button.classList.toggle("is-active", ativo);
-                button.setAttribute("aria-selected", String(ativo));
-            });
-
-            filtrarDocumentos();
-        });
+        buttonFilter.addEventListener("click", () => aplicarFiltroCategoriaDocumento(buttonFilter.dataset.documentFilter || "all"));
     });
 
     popularDocumentButtons.forEach((buttonShortcut) => {
@@ -3648,6 +3639,60 @@ function configurarTelaInicialDocumentos() {
     homeNavigationButtons.forEach((buttonNav) => {
         buttonNav.addEventListener("click", () => navegarTelaInicialDocumentos(buttonNav.dataset.homeNav));
     });
+
+    homeQuickActionButtons.forEach((buttonAction) => {
+        buttonAction.addEventListener("click", () => {
+            const action = buttonAction.dataset.homeAction;
+
+            if (action === "documents") {
+                navegarTelaInicialDocumentos("documents");
+                return;
+            }
+
+            if (action === "pdf") {
+                abrirTipoDocumento("pdf-local");
+                return;
+            }
+
+            if (action === "billing") {
+                abrirRenovacaoPlano();
+            }
+        });
+    });
+
+    homeCategoryShortcutButtons.forEach((buttonCategory) => {
+        buttonCategory.addEventListener("click", () => {
+            aplicarFiltroCategoriaDocumento(buttonCategory.dataset.documentCategoryShortcut || "all");
+            navegarTelaInicialDocumentos("documents", { focusSearch: false });
+        });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        const teclaBusca = (event.ctrlKey || event.metaKey) && String(event.key || "").toLowerCase() === "k";
+
+        if (!teclaBusca || documentView.classList.contains("is-hidden")) {
+            return;
+        }
+
+        event.preventDefault();
+        navegarTelaInicialDocumentos("documents", { focusSearch: true });
+    });
+
+    filtrarDocumentos();
+}
+
+function aplicarFiltroCategoriaDocumento(categoria) {
+    documentCategoryFilter = categoria || "all";
+
+    documentFilterButtons.forEach((button) => {
+        const ativo = button.dataset.documentFilter === documentCategoryFilter;
+        button.classList.toggle("is-active", ativo);
+        button.setAttribute("aria-selected", String(ativo));
+    });
+
+    if (documentSearch) {
+        documentSearch.value = "";
+    }
 
     filtrarDocumentos();
 }
@@ -3734,6 +3779,7 @@ function aplicarUsoDiarioDocumentos(usage) {
         ? usage
         : { unlimited: true, limit: null, documents: {} };
     atualizarCardsUsoDiario();
+    atualizarDashboardProduto();
     agendarAtualizacaoUsoDiario();
 }
 
@@ -3743,6 +3789,7 @@ function aplicarUsoFerramentasPdf(usage) {
         : { allowed: false, unlimited: false, tools: {} };
     atualizarCartaoPdfLocal();
     atualizarBotoesFerramentasPdf();
+    atualizarDashboardProduto();
 }
 
 function configurarAtualizacaoAutomaticaUsoDiario() {
@@ -4135,7 +4182,13 @@ function criarAtalhoDocumento(tipoDocumento, options = {}) {
     buttonAtalho.className = "dashboard-document-item";
     buttonAtalho.innerHTML = `
         <span class="dashboard-document-item-icon"><i data-lucide="${obterIconeDocumento(tipoDocumento)}" aria-hidden="true"></i></span>
-        <span>${obterTituloDocumento(tipoDocumento)}</span>
+        <span>
+            <span class="dashboard-document-item-title">${escaparHtmlSeguro(obterTituloDocumento(tipoDocumento))}</span>
+            <span class="dashboard-document-item-meta">
+                <span>${tipoDocumento === "pdf-local" ? "Ferramenta disponível" : "Editado recentemente"}</span>
+                <span class="dashboard-document-item-type">${tipoDocumento === "pdf-local" ? "PDF" : "DOCX"}</span>
+            </span>
+        </span>
         <i data-lucide="chevron-right" aria-hidden="true"></i>
     `;
     buttonAtalho.addEventListener("click", () => abrirTipoDocumento(tipoDocumento));
@@ -4174,6 +4227,40 @@ function renderizarAtalhosDocumentos(container, documentos, mensagemVazia, optio
     });
 }
 
+function definirTextoElemento(elemento, valor) {
+    if (elemento) {
+        elemento.textContent = String(valor);
+    }
+}
+
+function calcularSaldoDocumentosHome() {
+    if (usuarioAtualEhAdmin || documentUsage?.unlimited) {
+        return "∞";
+    }
+
+    const saldos = Object.values(documentUsage?.documents || {})
+        .map((quota) => Number(quota?.remaining ?? documentUsage?.limit ?? 0))
+        .filter((valor) => Number.isFinite(valor));
+
+    return Math.max(0, ...saldos, Number(documentUsage?.limit ?? 0));
+}
+
+function calcularSaldoPdfHome() {
+    if (!usuarioPodeUsarFerramentasPdf()) {
+        return 0;
+    }
+
+    if (usuarioAtualEhAdmin || pdfToolUsage?.unlimited) {
+        return "∞";
+    }
+
+    const saldos = Object.values(pdfToolUsage?.tools || {})
+        .map((quota) => Number(quota?.remaining ?? pdfToolUsage?.limit ?? 0))
+        .filter((valor) => Number.isFinite(valor));
+
+    return Math.max(0, ...saldos, Number(pdfToolUsage?.limit ?? 0));
+}
+
 function atualizarDashboardProduto() {
     const favoritos = lerListaArmazenada(FAVORITES_STORAGE_KEY);
     const recentes = lerListaArmazenada(RECENTS_STORAGE_KEY);
@@ -4182,17 +4269,26 @@ function atualizarDashboardProduto() {
     const totalGerados = obterTotalDocumentosGerados();
     const totalModelos = documentTypeButtons.filter((card) => card.dataset.documentType !== "admin" && usuarioPodeAcessarDocumento(card.dataset.documentType)).length;
 
-    documentGeneratedCount.textContent = String(totalGerados);
-    documentFavoriteCount.textContent = String(favoritosLiberados.length);
-    documentModelCount.textContent = String(totalModelos);
+    definirTextoElemento(documentGeneratedCount, totalGerados);
+    definirTextoElemento(documentFavoriteCount, favoritosLiberados.length);
+    definirTextoElemento(documentModelCount, totalModelos);
+    definirTextoElemento(homeDocumentBalanceCount, calcularSaldoDocumentosHome());
+    definirTextoElemento(homePdfBalanceCount, calcularSaldoPdfHome());
+    definirTextoElemento(homeFavoriteCount, favoritosLiberados.length);
+    definirTextoElemento(homeRecentCount, recentesLiberados.length);
 
-    renderizarAtalhosDocumentos(recentDocumentsList, recentesLiberados.filter((tipo) => !favoritosLiberados.includes(tipo)).slice(0, 4), "Seus documentos recentes aparecerão aqui.");
+    renderizarAtalhosDocumentos(recentDocumentsList, recentesLiberados.filter((tipo) => !favoritosLiberados.includes(tipo)).slice(0, 3), "Seus documentos recentes aparecerão aqui.");
     renderizarAtalhosDocumentos(favoriteDocumentsList, favoritosLiberados, "Marque a estrela de um documento para encontrá-lo rapidamente.", { allowRemoveFavorite: true });
 
     popularDocumentButtons.forEach((buttonShortcut) => {
         buttonShortcut.classList.toggle("is-hidden", favoritos.includes(buttonShortcut.dataset.documentShortcut) || !usuarioPodeAcessarDocumento(buttonShortcut.dataset.documentShortcut));
     });
-    popularDocumentsSection.classList.toggle("is-hidden", popularDocumentButtons.every((buttonShortcut) => buttonShortcut.classList.contains("is-hidden")));
+
+    if (popularDocumentButtons.length) {
+        popularDocumentsSection.classList.toggle("is-hidden", popularDocumentButtons.every((buttonShortcut) => buttonShortcut.classList.contains("is-hidden")));
+    } else {
+        popularDocumentsSection.classList.remove("is-hidden");
+    }
 
     document.querySelectorAll("[data-document-favorite]").forEach((buttonFavorito) => {
         const ativo = favoritos.includes(buttonFavorito.dataset.documentFavorite);
@@ -4363,8 +4459,7 @@ function navegarTelaInicialDocumentos(destino, options = {}) {
     });
 
     homeSections.forEach((section) => {
-        const exibirCatalogo = section === documentCatalogSection
-            && (destinoValido === "home" || destinoValido === "documents");
+        const exibirCatalogo = section === documentCatalogSection && destinoValido === "documents";
         section.classList.toggle("is-hidden", !exibirCatalogo && section.dataset.homeSection !== destinoValido);
     });
 
