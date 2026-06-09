@@ -8247,3 +8247,243 @@ body.liquid-glass-theme.document-home-open .home-hero-card {
     height: 21px;
     color: #ffffff;
 }
+
+
+
+
+/* ===== AJUSTE SEGURO - ÁREA FERRAMENTAS PDF ===== */
+
+.pdf-local-view .generator-bar {
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px !important;
+    border-radius: 22px !important;
+}
+
+.pdf-local-view .intro {
+    max-width: 940px;
+    margin: 0 auto 28px;
+    text-align: center;
+}
+
+.pdf-local-view .intro h1 {
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    letter-spacing: -0.06em;
+}
+
+.pdf-local-view .descricao {
+    max-width: 760px;
+    margin: 12px auto 0;
+    font-size: clamp(1rem, 1.5vw, 1.16rem);
+    line-height: 1.65;
+}
+
+.pdf-local-view .pdf-local-panel {
+    width: min(100%, 1380px);
+    margin: 0 auto;
+    padding: clamp(18px, 2.5vw, 34px);
+    border-radius: 28px;
+}
+
+.pdf-local-note {
+    display: grid !important;
+    gap: 6px !important;
+    max-width: 1120px;
+    margin: 0 auto 26px !important;
+    padding: 16px 20px !important;
+    border-radius: 18px !important;
+    line-height: 1.5;
+}
+
+.pdf-local-note strong {
+    font-size: 1rem;
+}
+
+.pdf-local-tools-home {
+    gap: 28px !important;
+}
+
+.pdf-local-hero-card {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 28px;
+    border-radius: 28px;
+    text-align: center;
+}
+
+.pdf-local-hero-card h2 {
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    letter-spacing: -0.045em;
+}
+
+.pdf-local-hero-card p:not(.eyebrow) {
+    max-width: 720px;
+    margin: 12px auto 0;
+    line-height: 1.6;
+}
+
+.pdf-local-category-tabs {
+    justify-content: center;
+    gap: 12px !important;
+    margin: 6px 0 22px !important;
+}
+
+.pdf-local-category-tab {
+    min-height: 42px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-weight: 900;
+}
+
+.pdf-local-view .pdf-local-home-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    max-width: 1180px;
+    margin: 0 auto;
+    gap: 22px;
+}
+
+.pdf-local-view .pdf-local-home-grid .pdf-local-tool {
+    min-height: 205px;
+    padding: 26px 22px;
+    border-radius: 22px;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.pdf-local-view .pdf-local-home-grid .pdf-local-tool:hover {
+    transform: translateY(-4px);
+}
+
+.pdf-local-tool-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+}
+
+.pdf-local-tool-heading {
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pdf-local-home-grid .pdf-local-tool-heading strong {
+    font-size: 1.08rem;
+}
+
+.pdf-local-view .pdf-local-home-grid .pdf-local-tool > span:last-child {
+    max-width: none;
+    line-height: 1.5;
+}
+
+/* Tema escuro */
+body.system-dark-theme .pdf-local-view .pdf-local-panel,
+body.system-dark-theme .pdf-local-hero-card {
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    background: rgba(15, 23, 42, 0.70) !important;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28) !important;
+}
+
+body.system-dark-theme .pdf-local-note {
+    border-color: rgba(16, 185, 129, 0.28) !important;
+    background: linear-gradient(90deg, rgba(4, 120, 87, 0.28), rgba(6, 95, 70, 0.18)) !important;
+    color: #d1fae5 !important;
+}
+
+body.system-dark-theme .pdf-local-note strong {
+    color: #a7f3d0 !important;
+}
+
+body.system-dark-theme .pdf-local-hero-card h2,
+body.system-dark-theme .pdf-local-home-grid .pdf-local-tool-heading strong {
+    color: #f8fafc !important;
+}
+
+body.system-dark-theme .pdf-local-hero-card p:not(.eyebrow),
+body.system-dark-theme .pdf-local-home-grid .pdf-local-tool > span:last-child {
+    color: #94a3b8 !important;
+}
+
+body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    background: rgba(15, 23, 42, 0.82) !important;
+    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.24) !important;
+}
+
+body.system-dark-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool:hover {
+    border-color: rgba(96, 165, 250, 0.48) !important;
+    box-shadow: 0 26px 56px rgba(2, 6, 23, 0.34) !important;
+}
+
+/* Tema claro */
+body.system-light-theme .pdf-local-view,
+body.system-light-theme .pdf-local-view .intro h1,
+body.system-light-theme .pdf-local-hero-card h2,
+body.system-light-theme .pdf-local-home-grid .pdf-local-tool-heading strong {
+    color: #0f172a !important;
+}
+
+body.system-light-theme .pdf-local-view .descricao,
+body.system-light-theme .pdf-local-hero-card p:not(.eyebrow),
+body.system-light-theme .pdf-local-home-grid .pdf-local-tool > span:last-child {
+    color: #64748b !important;
+}
+
+body.system-light-theme .pdf-local-view .pdf-local-panel,
+body.system-light-theme .pdf-local-hero-card {
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.system-light-theme .pdf-local-note {
+    border-color: rgba(16, 185, 129, 0.22) !important;
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+}
+
+body.system-light-theme .pdf-local-note strong {
+    color: #047857 !important;
+}
+
+body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool {
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    background: #ffffff !important;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07) !important;
+}
+
+body.system-light-theme .pdf-local-view .pdf-local-home-grid .pdf-local-tool:hover {
+    border-color: rgba(37, 99, 235, 0.34) !important;
+    box-shadow: 0 24px 50px rgba(37, 99, 235, 0.10) !important;
+}
+
+body.system-light-theme .pdf-local-category-tab {
+    color: #334155 !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    background: #ffffff !important;
+}
+
+body.system-light-theme .pdf-local-category-tab.is-active {
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+}
+
+/* Responsivo */
+@media (max-width: 1200px) {
+    .pdf-local-view .pdf-local-home-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .pdf-local-view .pdf-local-home-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pdf-local-view .generator-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pdf-local-hero-card {
+        padding: 22px 16px;
+    }
+}

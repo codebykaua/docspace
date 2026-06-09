@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v97-home-otimizada-420";
+const CACHE_NAME = "docspace-v99-pdf-css-safe";
 
 const APP_ASSETS = [
     "./",
