@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar administrador</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="control-shell">
+        <section class="auth-card">
+            <p class="eyebrow">Configuração inicial</p>
+            <h1>Criar administrador</h1>
+            <p class="auth-copy">
+                Use esta tela apenas uma vez para criar o primeiro administrador do sistema.
+            </p>
+
+            <form id="setupAdminForm" class="auth-form">
+                <label class="field">
+                    <span>Setup token</span>
+                    <input id="setupToken" type="password" required autocomplete="off">
+                </label>
+
+                <label class="field">
+                    <span>Nome</span>
+                    <input id="setupName" type="text" value="Kaua Lucas" required autocomplete="name">
+                </label>
+
+                <label class="field">
+                    <span>E-mail administrador</span>
+                    <input id="setupEmail" type="email" value="kaualucasfrancasantos@gmail.com" required autocomplete="email">
+                </label>
+
+                <label class="field">
+                    <span>Senha que você vai usar para entrar</span>
+                    <input id="setupPassword" type="password" minlength="6" required autocomplete="new-password">
+                </label>
+
+                <button id="setupButton" class="primary-button" type="submit">Criar administrador</button>
+                <p id="setupMessage" class="message" role="status"></p>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE_URL = "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev";
+        const form = document.getElementById("setupAdminForm");
+        const button = document.getElementById("setupButton");
+        const message = document.getElementById("setupMessage");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            message.textContent = "";
+            message.className = "message";
+            button.disabled = true;
+            button.textContent = "Criando...";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/setup`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        setupToken: document.getElementById("setupToken").value.trim(),
+                        name: document.getElementById("setupName").value.trim(),
+                        email: document.getElementById("setupEmail").value.trim(),
+                        password: document.getElementById("setupPassword").value,
+                    }),
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Não foi possível criar o administrador.");
+                }
+
+                message.textContent = "Administrador criado. Agora entre no painel com este e-mail e senha.";
+                message.className = "message success";
+                form.reset();
+            } catch (error) {
+                message.textContent = error.message || "Falha ao conectar com a API.";
+                message.className = "message error";
+            } finally {
+                button.disabled = false;
+                button.textContent = "Criar administrador";
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+name = "gerador-documentos-rurais"
+compatibility_date = "2026-05-27"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gerador_documentos_rurais"
+database_id = "20da6561-a547-4b2a-ba29-685ea8d149d5"
+
+
+# Mercado Pago: configure o token privado como secret no ambiente Cloudflare.
+# wrangler secret put MERCADO_PAGO_ACCESS_TOKEN

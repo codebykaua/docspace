@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1f6feb">
+    <title>Controle de Acessos</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="style.css?v=29">
+</head>
+<body>
+    <main class="app">
+        <section id="controlLoginView" class="view auth-view" aria-labelledby="controlLoginTitle">
+            <div class="auth-copy">
+                <p class="eyebrow">Painel administrativo</p>
+                <h1 id="controlLoginTitle">Controle de acessos</h1>
+                <p class="descricao">
+                    Entre com uma conta administradora para criar usuários, editar assinaturas,
+                    renovar planos ou bloquear o acesso ao sistema.
+                </p>
+            </div>
+
+            <section class="auth-panel" aria-label="Login administrativo">
+                <form id="controlLoginForm" class="login-form" novalidate>
+                    <label class="field">
+                        <span>E-mail administrador</span>
+                        <input id="controlLoginEmail" type="email" autocomplete="email" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Senha</span>
+                        <input id="controlLoginPassword" type="password" autocomplete="current-password" required>
+                    </label>
+
+                    <p id="controlLoginMessage" class="message" aria-live="polite"></p>
+                    <button type="submit" id="controlLoginButton">Entrar</button>
+                </form>
+            </section>
+        </section>
+
+        <section id="controlPanelView" class="view admin-view is-hidden" aria-labelledby="controlTitle">
+            <div class="generator-bar">
+                <div>
+                    <p class="eyebrow">Controle</p>
+                    <h1 id="controlTitle">Gerenciar logins e assinaturas</h1>
+                </div>
+                <div class="user-menu">
+                    <span id="controlUserEmail"></span>
+                    <a class="secondary-button control-link" href="index.html">Abrir sistema</a>
+                    <button type="button" class="secondary-button" id="controlLogoutButton">Sair</button>
+                </div>
+            </div>
+
+            <section class="admin-layout" aria-label="Painel de controle">
+                <form id="controlAccessForm" class="form-panel admin-form" novalidate>
+                    <input type="hidden" id="controlEditingUid">
+
+                    <div class="grid">
+                        <h2 id="controlFormTitle" class="section-title">Criar novo login</h2>
+
+                        <label class="field field-wide">
+                            <span>Nome do usuário</span>
+                            <input id="controlUserName" type="text" autocomplete="name" required>
+                        </label>
+
+                        <label class="field">
+                            <span>E-mail</span>
+                            <input id="controlUserEmailInput" type="email" autocomplete="email" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Senha inicial</span>
+                            <input id="controlUserPassword" type="password" autocomplete="new-password" minlength="6" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Plano</span>
+                            <select id="controlUserPlan" required>
+                                <option value="test3min">3 minutos para teste</option>
+                                <option value="test10c">Teste Mercado Pago - R$ 0,10</option>
+                                <option value="basic30">30 dias plano Básico</option>
+                                <option value="proMax365">365 dias plano Pro Max</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Status</span>
+                            <select id="controlUserStatus" required>
+                                <option value="active">Ativo</option>
+                                <option value="blocked">Bloqueado</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Vencimento</span>
+                            <input id="controlUserExpiresAt" type="date">
+                        </label>
+
+                        <label class="field">
+                            <span>Limite diário por documento (reinicia às 04:00)</span>
+                            <input id="controlUserDailyDocumentLimit" type="number" min="1" max="999" step="1" value="5" required>
+                        </label>
+
+                        <label class="field">
+                            <span>Administrador</span>
+                            <select id="controlUserAdmin">
+                                <option value="no">Não</option>
+                                <option value="yes">Sim</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Selo verificado</span>
+                            <select id="controlUserVerified">
+                                <option value="no">Não exibir</option>
+                                <option value="yes">Exibir selo dourado</option>
+                            </select>
+                        </label>
+
+                        <label class="field field-wide">
+                            <span>Observações</span>
+                            <textarea id="controlUserNotes" rows="3" placeholder="Ex.: cliente em teste, pagamento pendente..."></textarea>
+                        </label>
+                    </div>
+
+                    <div class="actions">
+                        <p id="controlAccessMessage" class="message" aria-live="polite"></p>
+                        <div class="control-actions">
+                            <button type="button" class="secondary-button is-hidden" id="controlCancelEditButton">Cancelar edição</button>
+                            <button type="submit" id="controlAccessButton">Criar login</button>
+                        </div>
+                    </div>
+                </form>
+
+                <section class="form-panel admin-users-panel" aria-label="Usuários cadastrados">
+                    <div class="admin-users-header">
+                        <div>
+                            <h2>Usuários cadastrados</h2>
+                            <p>Edite plano, vencimento, status e permissões de administrador.</p>
+                        </div>
+                        <button type="button" class="secondary-button" id="controlRefreshUsersButton">Atualizar</button>
+                    </div>
+
+                    <div id="controlUsersList" class="admin-users-list"></div>
+                </section>
+
+                <section class="form-panel admin-support-panel" aria-label="Caixa de atendimento">
+                    <div class="admin-users-header">
+                        <div>
+                            <p class="eyebrow">Atendimento</p>
+                            <h2>Mensagens e comprovantes</h2>
+                            <p>Conversas organizadas por nome e e-mail do login.</p>
+                        </div>
+                        <button type="button" class="secondary-button" id="controlRefreshSupportButton">Atualizar caixa</button>
+                    </div>
+                    <div id="controlSupportList" class="admin-support-list"></div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script src="contro.js?v=15"></script>
+</body>
+</html>
