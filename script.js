@@ -170,6 +170,7 @@ const pdfLocalUpgradeButton = document.getElementById("pdfLocalUpgradeButton");
 const pdfLocalWorkspace = document.getElementById("pdfLocalWorkspace");
 const pdfLocalToolButtons = Array.from(document.querySelectorAll("[data-pdf-local-operation]"));
 const pdfLocalCategoryButtons = Array.from(document.querySelectorAll("[data-pdf-local-category]"));
+const pdfLocalStartUploadButtons = Array.from(document.querySelectorAll("[data-pdf-local-start-upload]"));
 const pdfLocalForm = document.getElementById("pdfLocalForm");
 const pdfLocalFileLabel = document.getElementById("pdfLocalFileLabel");
 const pdfLocalFiles = document.getElementById("pdfLocalFiles");
@@ -2010,6 +2011,13 @@ async function enviarComprovantePagamento(event) {
 function configurarFerramentasPdfLocais() {
     pdfLocalToolButtons.forEach((button) => {
         button.addEventListener("click", () => selecionarFerramentaPdfLocal(button.dataset.pdfLocalOperation, { abrirPainel: true }));
+    });
+
+    pdfLocalStartUploadButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            selecionarFerramentaPdfLocal(button.dataset.pdfLocalStartUpload || "merge", { abrirPainel: true });
+            pdfLocalFiles?.click();
+        });
     });
 
     pdfLocalCategoryButtons.forEach((button) => {

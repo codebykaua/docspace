@@ -724,16 +724,45 @@
                 </div>
 
                 <div id="pdfLocalWorkspace" class="is-hidden">
-                    <div class="pdf-local-note">
-                        <strong>Privacidade local</strong>
-                        <span>Os arquivos não são enviados nem armazenados. Fechar ou atualizar esta página limpa o processamento.</span>
-                    </div>
-
                     <section id="pdfLocalToolsHome" class="pdf-local-tools-home" aria-label="Catálogo de ferramentas PDF">
-                        <div class="pdf-local-hero-card">
-                            <p class="eyebrow">Todas as ferramentas PDF</p>
-                            <h2>Escolha uma ação para o seu arquivo</h2>
-                            <p>Junte, divida, compacte, gire, organize ou aplique OCR em poucos cliques, direto no navegador.</p>
+                        <button type="button" class="pdf-local-hero-card pdf-local-home-dropzone" data-pdf-local-start-upload="merge">
+                            <span class="pdf-local-home-upload-icon"><i data-lucide="cloud-upload" aria-hidden="true"></i></span>
+                            <span class="pdf-local-home-upload-copy">
+                                <strong>Arraste seu PDF aqui ou clique para selecionar</strong>
+                                <small>Seus arquivos permanecem neste dispositivo. Nada é enviado.</small>
+                            </span>
+                        </button>
+
+                        <div class="pdf-local-note">
+                            <span class="pdf-local-note-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span>
+                            <span>
+                                <strong>Privacidade local</strong>
+                                <small>Os arquivos não são enviados nem armazenados. Fechar ou atualizar esta página limpa o processamento.</small>
+                            </span>
+                            <em><i data-lucide="check-circle-2" aria-hidden="true"></i> 100% privado</em>
+                        </div>
+
+                        <div class="pdf-local-summary-grid" aria-label="Resumo das ferramentas PDF">
+                            <article class="pdf-local-summary-card pdf-summary-tools">
+                                <span><i data-lucide="file-type-2" aria-hidden="true"></i></span>
+                                <strong>10</strong>
+                                <small>Ferramentas disponíveis</small>
+                            </article>
+                            <article class="pdf-local-summary-card pdf-summary-local">
+                                <span><i data-lucide="lock-keyhole" aria-hidden="true"></i></span>
+                                <strong>Uso local</strong>
+                                <small>Seus arquivos não saem do dispositivo</small>
+                            </article>
+                            <article class="pdf-local-summary-card pdf-summary-format">
+                                <span><i data-lucide="file-text" aria-hidden="true"></i></span>
+                                <strong>PDF</strong>
+                                <small>Formatos suportados PDF</small>
+                            </article>
+                            <article class="pdf-local-summary-card pdf-summary-recent">
+                                <span><i data-lucide="clock-3" aria-hidden="true"></i></span>
+                                <strong>0 recentes</strong>
+                                <small>Nenhum arquivo processado ainda</small>
+                            </article>
                         </div>
 
                         <div class="pdf-local-category-tabs" aria-label="Categorias de ferramentas PDF">
