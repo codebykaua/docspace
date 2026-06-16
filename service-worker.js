@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v103-app-update-screen";
+const CACHE_NAME = "docspace-v104-app-update-notice-link";
 
 const APP_ASSETS = [
     "./",

@@ -2592,7 +2592,7 @@ function normalizeAppDownloadUrl(value) {
     const downloadUrl = String(value || "").trim();
 
     if (!downloadUrl) {
-        throw httpError(400, "Informe o link de download do APK/APKS.");
+        throw httpError(400, "Informe o link HTTPS de download da atualização.");
     }
 
     let parsed;
@@ -2604,7 +2604,7 @@ function normalizeAppDownloadUrl(value) {
     }
 
     if (parsed.protocol !== "https:") {
-        throw httpError(400, "Use um link HTTPS para o download do APK/APKS.");
+        throw httpError(400, "Use um link HTTPS para o download da atualização.");
     }
 
     return parsed.toString();
@@ -3633,7 +3633,7 @@ function withCors(request, response) {
     }
 
     headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Billing-Token, X-Signature, X-Request-Id");
-    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 
     return new Response(response.body, {
         status: response.status,

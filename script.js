@@ -6729,6 +6729,32 @@ function renderizarAppReleaseAdmin(release) {
     inicializarIcones();
 }
 
+function validarAvisoAtualizacaoAdmin({ versionName, downloadUrl, message }) {
+    if (!versionName) {
+        return "Informe a versão que será exibida no app.";
+    }
+
+    if (!downloadUrl) {
+        return "Cole o link HTTPS de download da atualização. O APK não será enviado ao banco.";
+    }
+
+    try {
+        const url = new URL(downloadUrl);
+
+        if (url.protocol !== "https:") {
+            return "Use um link HTTPS para a atualização.";
+        }
+    } catch {
+        return "Informe um link de download válido.";
+    }
+
+    if (!message) {
+        return "Escreva a mensagem que o Flutter deverá exibir aos usuários.";
+    }
+
+    return "";
+}
+
 async function enviarApkAdmin(event) {
     event.preventDefault();
     mostrarMensagemApkAdmin("");
@@ -6738,15 +6764,23 @@ async function enviarApkAdmin(event) {
         return;
     }
 
+    const payload = {
+        versionName: adminApkVersion?.value.trim() || "",
+        downloadUrl: adminApkDownloadUrl?.value.trim() || "",
+        message: adminApkNotes?.value.trim() || "",
+    };
+    const erroValidacao = validarAvisoAtualizacaoAdmin(payload);
+
+    if (erroValidacao) {
+        mostrarMensagemApkAdmin(erroValidacao, "error");
+        return;
+    }
+
     try {
         alternarApkAdminCarregamento(true);
         const data = await apiRequest("/api/admin/app-release", {
             method: "POST",
-            body: {
-                versionName: adminApkVersion?.value.trim() || "",
-                downloadUrl: adminApkDownloadUrl?.value.trim() || "",
-                message: adminApkNotes?.value.trim() || "",
-            },
+            body: payload,
         });
 
         adminApkUploadForm.reset();
@@ -8247,12 +8281,17 @@ function tratarErro(error, mostrarErro = mostrarMensagem) {
 
 function traduzirErroApi(error) {
     const message = error?.data?.message || error?.message || "Nao foi possivel concluir a acao.";
+    const texto = String(message).trim();
 
-    if (/^Plano invalido\.?$/i.test(String(message).trim())) {
+    if (/Failed to fetch|NetworkError|Load failed/i.test(texto)) {
+        return "Não foi possível conectar na API. Publique o Worker atualizado e tente novamente.";
+    }
+
+    if (/^Plano invalido\.?$/i.test(texto)) {
         return "A API do Cloudflare ainda esta com os planos antigos. Cole o worker-backend-pronto.js atualizado no Worker e clique em Deploy.";
     }
 
-    if (/^Rota nao encontrada\.?$/i.test(String(message).trim())) {
+    if (/^Rota nao encontrada\.?$/i.test(texto)) {
         return "A API carregada nao encontrou esta rota. Atualize a pagina; se continuar, publique o Worker/API atualizado.";
     }
 
