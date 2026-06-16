@@ -1108,6 +1108,43 @@
                     <div id="adminUsersList" class="admin-users-list"></div>
                 </section>
 
+                <section class="form-panel admin-app-release-panel" aria-label="Upload de aplicativo Android">
+                    <div class="admin-users-header">
+                        <div>
+                            <p class="eyebrow">Aplicativo Android</p>
+                            <h2>Enviar APK/APKS</h2>
+                            <p>Salva o arquivo no banco de dados para o Flutter consultar depois.</p>
+                        </div>
+                    </div>
+
+                    <form id="adminApkUploadForm" class="admin-apk-upload-form" novalidate>
+                        <label class="field">
+                            <span>Arquivo .apk ou .apks</span>
+                            <input id="adminApkFile" type="file" accept=".apk,.apks,application/vnd.android.package-archive,application/octet-stream" required>
+                            <small>Limite: 45 MB. Nenhuma notificação é enviada por aqui.</small>
+                        </label>
+
+                        <label class="field">
+                            <span>Versão exibida no app</span>
+                            <input id="adminApkVersion" type="text" placeholder="Ex.: 1.0.3">
+                        </label>
+
+                        <label class="field field-wide">
+                            <span>Observação interna</span>
+                            <textarea id="adminApkNotes" rows="3" placeholder="Ex.: correção da WebView, novo link, build de produção..."></textarea>
+                        </label>
+
+                        <div id="adminApkCurrent" class="admin-apk-current">
+                            <p>Nenhum APK/APKS enviado ainda.</p>
+                        </div>
+
+                        <div class="actions">
+                            <p id="adminApkMessage" class="message" aria-live="polite"></p>
+                            <button type="submit" id="adminApkButton">Salvar APK no banco</button>
+                        </div>
+                    </form>
+                </section>
+
                 <section id="adminHistoryPanel" class="form-panel admin-history-panel is-hidden" aria-label="Histórico do usuário">
                     <div class="admin-users-header">
                         <div>

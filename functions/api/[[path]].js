@@ -12,6 +12,7 @@ const SESSION_COOKIE = "dr_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const BILLING_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 const MAX_SUPPORT_ATTACHMENT_BYTES = 1500 * 1024;
+const MAX_APP_PACKAGE_BYTES = 45 * 1024 * 1024;
 const MAX_PREVIEW_DOCX_BASE64_LENGTH = 14 * 1024 * 1024;
 const MAX_PDF_TOOL_BASE64_LENGTH = 70 * 1024 * 1024;
 const SERVER_PDF_TOOL_TYPES = new Set(["compress", "ocr"]);
@@ -307,6 +308,18 @@ async function handleRequest(request, env) {
         return createAdminSupportMessage(request, env, session.user);
     }
 
+    if (request.method === "GET" && match(path, ["admin", "app-release"])) {
+        await requireAdmin(request, env);
+        return json({ release: await getLatestAppRelease(env) });
+    }
+
+    if (request.method === "POST" && match(path, ["admin", "app-release"])) {
+        const session = await requireAdmin(request, env);
+        const body = await readJson(request);
+        const release = await createAppRelease(env, body, session.user);
+        return json({ release, message: "APK salvo no banco de dados." }, 201);
+    }
+
     if (request.method === "POST" && match(path, ["admin", "users"])) {
         const session = await requireAdmin(request, env);
         const body = await readJson(request);
@@ -423,6 +436,20 @@ async function ensureDatabaseSchema(env) {
         )`,
         "CREATE INDEX IF NOT EXISTS idx_support_messages_email ON support_messages(customer_email)",
         "CREATE INDEX IF NOT EXISTS idx_support_messages_created_at ON support_messages(created_at)",
+        `CREATE TABLE IF NOT EXISTS app_releases (
+            id TEXT PRIMARY KEY,
+            platform TEXT NOT NULL DEFAULT 'android',
+            version_name TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            file_name TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            file_extension TEXT NOT NULL,
+            file_size INTEGER NOT NULL DEFAULT 0,
+            file_data TEXT NOT NULL,
+            uploaded_by_user_id TEXT,
+            created_at TEXT NOT NULL
+        )`,
+        "CREATE INDEX IF NOT EXISTS idx_app_releases_platform_created_at ON app_releases(platform, created_at)",
         `CREATE TABLE IF NOT EXISTS billing_payments (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
@@ -2458,6 +2485,108 @@ function normalizeSupportAttachment(rawAttachment, options = {}) {
     return { name, type, data };
 }
 
+async function createAppRelease(env, body, actor) {
+    const file = normalizeAppPackageFile(body.file);
+    const id = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+    const versionName = String(body.versionName || "").trim().slice(0, 80);
+    const notes = String(body.notes || "").trim().slice(0, 800);
+
+    await env.DB.prepare(`
+        INSERT INTO app_releases (
+            id, platform, version_name, notes, file_name, file_type, file_extension,
+            file_size, file_data, uploaded_by_user_id, created_at
+        )
+        VALUES (?, 'android', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+        id,
+        versionName,
+        notes,
+        file.name,
+        file.type,
+        file.extension,
+        file.size,
+        file.data,
+        actor?.id || null,
+        createdAt
+    ).run();
+
+    await logAction(env, actor?.id || null, "upload_app_release", null, {
+        fileName: file.name,
+        fileExtension: file.extension,
+        fileSize: file.size,
+        versionName,
+    });
+
+    return publicAppRelease({
+        id,
+        platform: "android",
+        version_name: versionName,
+        notes,
+        file_name: file.name,
+        file_type: file.type,
+        file_extension: file.extension,
+        file_size: file.size,
+        uploaded_by_user_id: actor?.id || "",
+        created_at: createdAt,
+    });
+}
+
+async function getLatestAppRelease(env) {
+    const row = await env.DB.prepare(`
+        SELECT id, platform, version_name, notes, file_name, file_type,
+               file_extension, file_size, uploaded_by_user_id, created_at
+        FROM app_releases
+        WHERE platform = 'android'
+        ORDER BY created_at DESC
+        LIMIT 1
+    `).first();
+
+    return row ? publicAppRelease(row) : null;
+}
+
+function normalizeAppPackageFile(rawFile) {
+    if (!rawFile) {
+        throw httpError(400, "Envie um arquivo APK ou APKS.");
+    }
+
+    const name = sanitizeFilename(String(rawFile.name || "app.apk"));
+    const lowerName = name.toLowerCase();
+    const extension = lowerName.endsWith(".apks")
+        ? "apks"
+        : lowerName.endsWith(".apk") ? "apk" : "";
+    const data = String(rawFile.data || "").replace(/^data:[^;]+;base64,/, "");
+    const estimatedBytes = Math.ceil(data.length * 0.75);
+    const type = String(rawFile.type || "").toLowerCase() || (
+        extension === "apk" ? "application/vnd.android.package-archive" : "application/octet-stream"
+    );
+
+    if (!extension) {
+        throw httpError(400, "O arquivo precisa terminar com .apk ou .apks.");
+    }
+
+    if (!data || estimatedBytes > MAX_APP_PACKAGE_BYTES) {
+        throw httpError(400, "O APK/APKS deve ter no maximo 45 MB.");
+    }
+
+    return { name, type, extension, data, size: estimatedBytes };
+}
+
+function publicAppRelease(row) {
+    return {
+        id: row.id,
+        platform: row.platform || "android",
+        versionName: row.version_name || "",
+        notes: row.notes || "",
+        fileName: row.file_name || "",
+        fileType: row.file_type || "",
+        fileExtension: row.file_extension || "",
+        fileSize: Number(row.file_size || 0),
+        uploadedByUserId: row.uploaded_by_user_id || "",
+        createdAt: row.created_at,
+    };
+}
+
 function sanitizeFilename(value) {
     return String(value || "arquivo").replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
 }
@@ -3604,6 +3733,4 @@ function constantTimeEqual(a, b) {
 
     return diff === 0;
 }
-
-
 

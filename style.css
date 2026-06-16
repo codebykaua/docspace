@@ -9270,3 +9270,78 @@ body.system-light-theme .pdf-local-view .pdf-upload-dropzone {
         width: 100%;
     }
 }
+
+/* ===== ADMIN APK RELEASE ===== */
+.admin-app-release-panel {
+    display: grid;
+    gap: 18px;
+}
+
+.admin-apk-upload-form {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-apk-current {
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 12px;
+    background: rgba(37, 99, 235, 0.06);
+}
+
+.admin-apk-current p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.admin-apk-release-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-apk-release-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
+}
+
+.admin-apk-release-card strong,
+.admin-apk-release-card small {
+    display: block;
+    min-width: 0;
+}
+
+.admin-apk-release-card strong {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-apk-release-card small {
+    margin-top: 4px;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.admin-apk-release-card p {
+    margin: 8px 0 0;
+    color: var(--muted);
+}
+
+body.system-dark-theme .admin-apk-current {
+    border-color: rgba(148, 163, 184, 0.20);
+    background: rgba(15, 23, 42, 0.62);
+}
+
+body.system-dark-theme .admin-apk-release-card strong {
+    color: #f8fafc;
+}

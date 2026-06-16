@@ -25,6 +25,7 @@ const SYSTEM_THEME_STORAGE_KEY = "documentos_rurais_system_theme";
 const PRIVACY_ACCEPTED_STORAGE_KEY = "documentos_rurais_privacidade_aceita";
 const PROFILE_PHOTO_MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 const PROFILE_PHOTO_MAX_DATA_URL_LENGTH = 420 * 1024;
+const ADMIN_APK_MAX_BYTES = 45 * 1024 * 1024;
 
 const authView = document.getElementById("authView");
 const startupSplash = document.getElementById("startupSplash");
@@ -231,6 +232,13 @@ const adminAccessMessage = document.getElementById("adminAccessMessage");
 const adminAccessButton = document.getElementById("adminAccessButton");
 const adminUsersList = document.getElementById("adminUsersList");
 const refreshAdminUsersButton = document.getElementById("refreshAdminUsersButton");
+const adminApkUploadForm = document.getElementById("adminApkUploadForm");
+const adminApkFile = document.getElementById("adminApkFile");
+const adminApkVersion = document.getElementById("adminApkVersion");
+const adminApkNotes = document.getElementById("adminApkNotes");
+const adminApkCurrent = document.getElementById("adminApkCurrent");
+const adminApkMessage = document.getElementById("adminApkMessage");
+const adminApkButton = document.getElementById("adminApkButton");
 const adminHistoryPanel = document.getElementById("adminHistoryPanel");
 const adminHistoryTitle = document.getElementById("adminHistoryTitle");
 const adminHistoryList = document.getElementById("adminHistoryList");
@@ -4896,6 +4904,7 @@ function configurarPainelAdmin() {
     });
 
     refreshAdminUsersButton.addEventListener("click", carregarUsuariosAdmin);
+    adminApkUploadForm?.addEventListener("submit", enviarApkAdmin);
     adminAddQuotaNowButton.addEventListener("click", () => ajustarSaldoDocumentoAdmin("add"));
     adminSubtractQuotaNowButton.addEventListener("click", () => ajustarSaldoDocumentoAdmin("subtract"));
     adminAddPdfToolQuotaButton.addEventListener("click", () => ajustarSaldoPdfAdmin("add"));
@@ -6445,6 +6454,7 @@ function abrirPainelAdmin() {
     mostrarTela("admin");
     carregarUsuariosAdmin();
     carregarAtendimentosAdmin();
+    carregarAppReleaseAdmin();
 }
 
 function validarFormularioAdmin() {
@@ -6516,6 +6526,119 @@ async function carregarAtendimentosAdmin() {
         renderizarAtendimentosAdmin(data.messages || []);
     } catch (error) {
         adminSupportList.innerHTML = `<div class="empty-state">${escaparHtmlSeguro(traduzirErroApi(error))}</div>`;
+    }
+}
+
+async function carregarAppReleaseAdmin() {
+    if (!usuarioAtualEhAdmin || !adminApkCurrent) {
+        return;
+    }
+
+    adminApkCurrent.innerHTML = "<p>Consultando último APK/APKS salvo...</p>";
+
+    try {
+        const data = await apiRequest("/api/admin/app-release");
+        renderizarAppReleaseAdmin(data.release);
+    } catch (error) {
+        adminApkCurrent.innerHTML = `<p>${escaparHtmlSeguro(traduzirErroApi(error))}</p>`;
+    }
+}
+
+function renderizarAppReleaseAdmin(release) {
+    if (!adminApkCurrent) {
+        return;
+    }
+
+    if (!release) {
+        adminApkCurrent.innerHTML = "<p>Nenhum APK/APKS enviado ainda.</p>";
+        return;
+    }
+
+    adminApkCurrent.innerHTML = `
+        <article class="admin-apk-release-card">
+            <span class="admin-apk-release-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
+            <div>
+                <strong>${escaparHtmlSeguro(release.fileName)}</strong>
+                <small>${[
+                    release.versionName ? `Versão ${release.versionName}` : "",
+                    release.fileSize ? formatarTamanhoArquivo(release.fileSize) : "",
+                    release.createdAt ? formatarDataHora(release.createdAt) : "",
+                ].filter(Boolean).map(escaparHtmlSeguro).join(" | ")}</small>
+                ${release.notes ? `<p>${escaparHtmlSeguro(release.notes)}</p>` : ""}
+            </div>
+        </article>
+    `;
+    inicializarIcones();
+}
+
+async function enviarApkAdmin(event) {
+    event.preventDefault();
+    mostrarMensagemApkAdmin("");
+
+    if (!usuarioAtualEhAdmin) {
+        mostrarMensagemApkAdmin("Apenas administradores podem enviar APK/APKS.", "error");
+        return;
+    }
+
+    const arquivo = adminApkFile?.files?.[0];
+
+    try {
+        alternarApkAdminCarregamento(true);
+        const file = await prepararPacoteAppAdmin(arquivo);
+        const data = await apiRequest("/api/admin/app-release", {
+            method: "POST",
+            body: {
+                versionName: adminApkVersion?.value.trim() || "",
+                notes: adminApkNotes?.value.trim() || "",
+                file,
+            },
+        });
+
+        adminApkUploadForm.reset();
+        renderizarAppReleaseAdmin(data.release);
+        mostrarMensagemApkAdmin(data.message || "APK salvo no banco de dados.", "success");
+    } catch (error) {
+        mostrarMensagemApkAdmin(traduzirErroApi(error), "error");
+    } finally {
+        alternarApkAdminCarregamento(false);
+    }
+}
+
+async function prepararPacoteAppAdmin(file) {
+    if (!file) {
+        throw new Error("Escolha um arquivo .apk ou .apks.");
+    }
+
+    const lowerName = file.name.toLowerCase();
+
+    if (!lowerName.endsWith(".apk") && !lowerName.endsWith(".apks")) {
+        throw new Error("O arquivo precisa terminar com .apk ou .apks.");
+    }
+
+    if (file.size > ADMIN_APK_MAX_BYTES) {
+        throw new Error("O APK/APKS deve ter no máximo 45 MB.");
+    }
+
+    return {
+        name: file.name,
+        type: file.type || (lowerName.endsWith(".apk") ? "application/vnd.android.package-archive" : "application/octet-stream"),
+        data: await lerArquivoComoDataUrl(file),
+    };
+}
+
+function mostrarMensagemApkAdmin(texto, tipo) {
+    if (!adminApkMessage) {
+        return;
+    }
+
+    adminApkMessage.textContent = texto || "";
+    adminApkMessage.className = `message ${tipo || ""}`.trim();
+}
+
+function alternarApkAdminCarregamento(carregando) {
+    if (adminApkButton) {
+        adminApkButton.disabled = carregando;
+        adminApkButton.textContent = carregando ? "Salvando APK..." : "Salvar APK no banco";
     }
 }
 

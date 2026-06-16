@@ -58,6 +58,22 @@ CREATE TABLE IF NOT EXISTS support_messages (
 CREATE INDEX IF NOT EXISTS idx_support_messages_email ON support_messages(customer_email);
 CREATE INDEX IF NOT EXISTS idx_support_messages_created_at ON support_messages(created_at);
 
+CREATE TABLE IF NOT EXISTS app_releases (
+    id TEXT PRIMARY KEY,
+    platform TEXT NOT NULL DEFAULT 'android',
+    version_name TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    file_name TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    file_extension TEXT NOT NULL,
+    file_size INTEGER NOT NULL DEFAULT 0,
+    file_data TEXT NOT NULL,
+    uploaded_by_user_id TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_releases_platform_created_at ON app_releases(platform, created_at);
+
 
 CREATE TABLE IF NOT EXISTS billing_payments (
     id TEXT PRIMARY KEY,
