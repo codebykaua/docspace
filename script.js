@@ -25,7 +25,7 @@ const SYSTEM_THEME_STORAGE_KEY = "documentos_rurais_system_theme";
 const PRIVACY_ACCEPTED_STORAGE_KEY = "documentos_rurais_privacidade_aceita";
 const PROFILE_PHOTO_MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 const PROFILE_PHOTO_MAX_DATA_URL_LENGTH = 420 * 1024;
-const ADMIN_APK_MAX_BYTES = 45 * 1024 * 1024;
+const ADMIN_APK_MAX_BYTES = 70 * 1024 * 1024;
 
 const authView = document.getElementById("authView");
 const startupSplash = document.getElementById("startupSplash");
@@ -239,6 +239,7 @@ const adminApkNotes = document.getElementById("adminApkNotes");
 const adminApkCurrent = document.getElementById("adminApkCurrent");
 const adminApkMessage = document.getElementById("adminApkMessage");
 const adminApkButton = document.getElementById("adminApkButton");
+const adminApkDeleteButton = document.getElementById("adminApkDeleteButton");
 const adminHistoryPanel = document.getElementById("adminHistoryPanel");
 const adminHistoryTitle = document.getElementById("adminHistoryTitle");
 const adminHistoryList = document.getElementById("adminHistoryList");
@@ -4905,6 +4906,7 @@ function configurarPainelAdmin() {
 
     refreshAdminUsersButton.addEventListener("click", carregarUsuariosAdmin);
     adminApkUploadForm?.addEventListener("submit", enviarApkAdmin);
+    adminApkDeleteButton?.addEventListener("click", excluirApkAdmin);
     adminAddQuotaNowButton.addEventListener("click", () => ajustarSaldoDocumentoAdmin("add"));
     adminSubtractQuotaNowButton.addEventListener("click", () => ajustarSaldoDocumentoAdmin("subtract"));
     adminAddPdfToolQuotaButton.addEventListener("click", () => ajustarSaldoPdfAdmin("add"));
@@ -6551,9 +6553,11 @@ function renderizarAppReleaseAdmin(release) {
 
     if (!release) {
         adminApkCurrent.innerHTML = "<p>Nenhum APK/APKS enviado ainda.</p>";
+        adminApkDeleteButton?.classList.add("is-hidden");
         return;
     }
 
+    adminApkDeleteButton?.classList.remove("is-hidden");
     adminApkCurrent.innerHTML = `
         <article class="admin-apk-release-card">
             <span class="admin-apk-release-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
@@ -6604,6 +6608,32 @@ async function enviarApkAdmin(event) {
     }
 }
 
+async function excluirApkAdmin() {
+    mostrarMensagemApkAdmin("");
+
+    if (!usuarioAtualEhAdmin) {
+        mostrarMensagemApkAdmin("Apenas administradores podem excluir APK/APKS.", "error");
+        return;
+    }
+
+    const confirmar = window.confirm("Excluir o APK/APKS salvo no banco de dados?");
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        alternarApkAdminCarregamento(true);
+        const data = await apiRequest("/api/admin/app-release", { method: "DELETE" });
+        renderizarAppReleaseAdmin(null);
+        mostrarMensagemApkAdmin(data.message || "APK removido do banco de dados.", "success");
+    } catch (error) {
+        mostrarMensagemApkAdmin(traduzirErroApi(error), "error");
+    } finally {
+        alternarApkAdminCarregamento(false);
+    }
+}
+
 async function prepararPacoteAppAdmin(file) {
     if (!file) {
         throw new Error("Escolha um arquivo .apk ou .apks.");
@@ -6616,7 +6646,7 @@ async function prepararPacoteAppAdmin(file) {
     }
 
     if (file.size > ADMIN_APK_MAX_BYTES) {
-        throw new Error("O APK/APKS deve ter no máximo 45 MB.");
+        throw new Error("O APK/APKS deve ter no máximo 70 MB.");
     }
 
     return {
@@ -6639,6 +6669,10 @@ function alternarApkAdminCarregamento(carregando) {
     if (adminApkButton) {
         adminApkButton.disabled = carregando;
         adminApkButton.textContent = carregando ? "Salvando APK..." : "Salvar APK no banco";
+    }
+
+    if (adminApkDeleteButton) {
+        adminApkDeleteButton.disabled = carregando;
     }
 }
 

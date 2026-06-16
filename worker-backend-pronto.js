@@ -12,7 +12,7 @@ const SESSION_COOKIE = "dr_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const BILLING_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 const MAX_SUPPORT_ATTACHMENT_BYTES = 1500 * 1024;
-const MAX_APP_PACKAGE_BYTES = 45 * 1024 * 1024;
+const MAX_APP_PACKAGE_BYTES = 70 * 1024 * 1024;
 const MAX_PREVIEW_DOCX_BASE64_LENGTH = 14 * 1024 * 1024;
 const MAX_PDF_TOOL_BASE64_LENGTH = 70 * 1024 * 1024;
 const SERVER_PDF_TOOL_TYPES = new Set(["compress", "ocr"]);
@@ -318,6 +318,12 @@ async function handleRequest(request, env) {
         const body = await readJson(request);
         const release = await createAppRelease(env, body, session.user);
         return json({ release, message: "APK salvo no banco de dados." }, 201);
+    }
+
+    if (request.method === "DELETE" && match(path, ["admin", "app-release"])) {
+        const session = await requireAdmin(request, env);
+        const deletedCount = await deleteAppRelease(env, session.user);
+        return json({ deletedCount, release: null, message: "APK removido do banco de dados." });
     }
 
     if (request.method === "POST" && match(path, ["admin", "users"])) {
@@ -2492,6 +2498,8 @@ async function createAppRelease(env, body, actor) {
     const versionName = String(body.versionName || "").trim().slice(0, 80);
     const notes = String(body.notes || "").trim().slice(0, 800);
 
+    await env.DB.prepare("DELETE FROM app_releases WHERE platform = 'android'").run();
+
     await env.DB.prepare(`
         INSERT INTO app_releases (
             id, platform, version_name, notes, file_name, file_type, file_extension,
@@ -2532,6 +2540,14 @@ async function createAppRelease(env, body, actor) {
     });
 }
 
+async function deleteAppRelease(env, actor) {
+    const result = await env.DB.prepare("DELETE FROM app_releases WHERE platform = 'android'").run();
+    const deletedCount = Number(result.meta?.changes || 0);
+
+    await logAction(env, actor?.id || null, "delete_app_release", null, { deletedCount });
+    return deletedCount;
+}
+
 async function getLatestAppRelease(env) {
     const row = await env.DB.prepare(`
         SELECT id, platform, version_name, notes, file_name, file_type,
@@ -2566,7 +2582,7 @@ function normalizeAppPackageFile(rawFile) {
     }
 
     if (!data || estimatedBytes > MAX_APP_PACKAGE_BYTES) {
-        throw httpError(400, "O APK/APKS deve ter no maximo 45 MB.");
+        throw httpError(400, "O APK/APKS deve ter no maximo 70 MB.");
     }
 
     return { name, type, extension, data, size: estimatedBytes };
@@ -3733,4 +3749,3 @@ function constantTimeEqual(a, b) {
 
     return diff === 0;
 }
-

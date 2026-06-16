@@ -1121,7 +1121,7 @@
                         <label class="field">
                             <span>Arquivo .apk ou .apks</span>
                             <input id="adminApkFile" type="file" accept=".apk,.apks,application/vnd.android.package-archive,application/octet-stream" required>
-                            <small>Limite: 45 MB. Nenhuma notificação é enviada por aqui.</small>
+                            <small>Limite: 70 MB. Nenhuma notificação é enviada por aqui.</small>
                         </label>
 
                         <label class="field">
@@ -1140,6 +1140,7 @@
 
                         <div class="actions">
                             <p id="adminApkMessage" class="message" aria-live="polite"></p>
+                            <button type="button" id="adminApkDeleteButton" class="secondary-button danger-button is-hidden">Excluir APK do banco</button>
                             <button type="submit" id="adminApkButton">Salvar APK no banco</button>
                         </div>
                     </form>

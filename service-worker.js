@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v100-admin-apk-upload";
+const CACHE_NAME = "docspace-v101-admin-apk-delete";
 
 const APP_ASSETS = [
     "./",
@@ -115,4 +115,3 @@ async function buscarAtualizarCache(request, fallbackUrl) {
         throw error;
     }
 }
-
