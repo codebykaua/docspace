@@ -25,7 +25,6 @@ const SYSTEM_THEME_STORAGE_KEY = "documentos_rurais_system_theme";
 const PRIVACY_ACCEPTED_STORAGE_KEY = "documentos_rurais_privacidade_aceita";
 const PROFILE_PHOTO_MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 const PROFILE_PHOTO_MAX_DATA_URL_LENGTH = 420 * 1024;
-const ADMIN_APK_MAX_BYTES = 70 * 1024 * 1024;
 
 const authView = document.getElementById("authView");
 const startupSplash = document.getElementById("startupSplash");
@@ -73,6 +72,11 @@ const profileSection = document.getElementById("profileSection");
 const recentDocumentsSection = document.getElementById("recentDocumentsSection");
 const recentDocumentsList = document.getElementById("recentDocumentsList");
 const favoriteDocumentsList = document.getElementById("favoriteDocumentsList");
+const appUpdateCard = document.getElementById("appUpdateCard");
+const appUpdateVersion = document.getElementById("appUpdateVersion");
+const appUpdateMessage = document.getElementById("appUpdateMessage");
+const appUpdateDate = document.getElementById("appUpdateDate");
+const appUpdateDownloadLink = document.getElementById("appUpdateDownloadLink");
 const documentGeneratedCount = document.getElementById("documentGeneratedCount");
 const documentFavoriteCount = document.getElementById("documentFavoriteCount");
 const documentModelCount = document.getElementById("documentModelCount");
@@ -233,8 +237,8 @@ const adminAccessButton = document.getElementById("adminAccessButton");
 const adminUsersList = document.getElementById("adminUsersList");
 const refreshAdminUsersButton = document.getElementById("refreshAdminUsersButton");
 const adminApkUploadForm = document.getElementById("adminApkUploadForm");
-const adminApkFile = document.getElementById("adminApkFile");
 const adminApkVersion = document.getElementById("adminApkVersion");
+const adminApkDownloadUrl = document.getElementById("adminApkDownloadUrl");
 const adminApkNotes = document.getElementById("adminApkNotes");
 const adminApkCurrent = document.getElementById("adminApkCurrent");
 const adminApkMessage = document.getElementById("adminApkMessage");
@@ -3673,6 +3677,11 @@ function configurarTelaInicialDocumentos() {
 
             if (action === "billing") {
                 abrirRenovacaoPlano();
+                return;
+            }
+
+            if (action === "apk") {
+                navegarTelaInicialDocumentos("apk");
             }
         });
     });
@@ -4468,7 +4477,7 @@ function alternarTemaLiquidGlass() {
 }
 
 function navegarTelaInicialDocumentos(destino, options = {}) {
-    const destinoValido = ["home", "favorites", "documents", "profile"].includes(destino) ? destino : "home";
+    const destinoValido = ["home", "favorites", "documents", "apk", "profile"].includes(destino) ? destino : "home";
     documentView.classList.toggle("is-profile-page", destinoValido === "profile");
 
     homeNavigationButtons.forEach((button) => {
@@ -4481,6 +4490,10 @@ function navegarTelaInicialDocumentos(destino, options = {}) {
     });
 
     atualizarDashboardProduto();
+
+    if (destinoValido === "apk") {
+        carregarAppReleaseUsuario();
+    }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -6447,6 +6460,61 @@ function escaparHtmlSeguro(text) {
         .replaceAll("'", "&#039;");
 }
 
+async function carregarAppReleaseUsuario() {
+    if (!appUpdateCard) {
+        return;
+    }
+
+    renderizarAppReleaseUsuario(null, { loading: true });
+
+    try {
+        const data = await apiRequest("/api/app-release");
+        renderizarAppReleaseUsuario(data.release);
+    } catch (error) {
+        renderizarAppReleaseUsuario(null, { error: traduzirErroApi(error) });
+    }
+}
+
+function renderizarAppReleaseUsuario(release, state = {}) {
+    if (!appUpdateCard || !appUpdateVersion || !appUpdateMessage || !appUpdateDownloadLink) {
+        return;
+    }
+
+    if (state.loading) {
+        appUpdateVersion.textContent = "Consultando atualização...";
+        appUpdateMessage.textContent = "Aguarde enquanto buscamos a versão mais recente.";
+        appUpdateDate.textContent = "";
+        appUpdateDownloadLink.classList.add("is-hidden");
+        appUpdateDownloadLink.removeAttribute("href");
+        return;
+    }
+
+    if (state.error) {
+        appUpdateVersion.textContent = "Não foi possível consultar";
+        appUpdateMessage.textContent = state.error;
+        appUpdateDate.textContent = "";
+        appUpdateDownloadLink.classList.add("is-hidden");
+        appUpdateDownloadLink.removeAttribute("href");
+        return;
+    }
+
+    if (!release) {
+        appUpdateVersion.textContent = "Nenhuma atualização publicada";
+        appUpdateMessage.textContent = "Quando uma nova versão Android estiver disponível, ela aparecerá aqui.";
+        appUpdateDate.textContent = "";
+        appUpdateDownloadLink.classList.add("is-hidden");
+        appUpdateDownloadLink.removeAttribute("href");
+        return;
+    }
+
+    appUpdateVersion.textContent = release.versionName ? `Versão ${release.versionName}` : "Nova versão disponível";
+    appUpdateMessage.textContent = release.message || "Nova atualização disponível.";
+    appUpdateDate.textContent = release.createdAt ? `Publicado em ${formatarDataHora(release.createdAt)}` : "";
+    appUpdateDownloadLink.href = release.downloadUrl || "#";
+    appUpdateDownloadLink.classList.toggle("is-hidden", !release.downloadUrl);
+    inicializarIcones();
+}
+
 function abrirPainelAdmin() {
     if (!usuarioAtualEhAdmin) {
         return;
@@ -6536,7 +6604,7 @@ async function carregarAppReleaseAdmin() {
         return;
     }
 
-    adminApkCurrent.innerHTML = "<p>Consultando último APK/APKS salvo...</p>";
+    adminApkCurrent.innerHTML = "<p>Consultando aviso de atualização...</p>";
 
     try {
         const data = await apiRequest("/api/admin/app-release");
@@ -6552,7 +6620,7 @@ function renderizarAppReleaseAdmin(release) {
     }
 
     if (!release) {
-        adminApkCurrent.innerHTML = "<p>Nenhum APK/APKS enviado ainda.</p>";
+        adminApkCurrent.innerHTML = "<p>Nenhum aviso de atualização publicado ainda.</p>";
         adminApkDeleteButton?.classList.add("is-hidden");
         return;
     }
@@ -6562,13 +6630,12 @@ function renderizarAppReleaseAdmin(release) {
         <article class="admin-apk-release-card">
             <span class="admin-apk-release-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
             <div>
-                <strong>${escaparHtmlSeguro(release.fileName)}</strong>
+                <strong>${escaparHtmlSeguro(release.versionName ? `Versão ${release.versionName}` : "Nova atualização disponível")}</strong>
                 <small>${[
-                    release.versionName ? `Versão ${release.versionName}` : "",
-                    release.fileSize ? formatarTamanhoArquivo(release.fileSize) : "",
+                    release.downloadUrl || "",
                     release.createdAt ? formatarDataHora(release.createdAt) : "",
                 ].filter(Boolean).map(escaparHtmlSeguro).join(" | ")}</small>
-                ${release.notes ? `<p>${escaparHtmlSeguro(release.notes)}</p>` : ""}
+                ${release.message ? `<p>${escaparHtmlSeguro(release.message)}</p>` : ""}
             </div>
         </article>
     `;
@@ -6580,27 +6647,24 @@ async function enviarApkAdmin(event) {
     mostrarMensagemApkAdmin("");
 
     if (!usuarioAtualEhAdmin) {
-        mostrarMensagemApkAdmin("Apenas administradores podem enviar APK/APKS.", "error");
+        mostrarMensagemApkAdmin("Apenas administradores podem publicar atualizações.", "error");
         return;
     }
 
-    const arquivo = adminApkFile?.files?.[0];
-
     try {
         alternarApkAdminCarregamento(true);
-        const file = await prepararPacoteAppAdmin(arquivo);
         const data = await apiRequest("/api/admin/app-release", {
             method: "POST",
             body: {
                 versionName: adminApkVersion?.value.trim() || "",
-                notes: adminApkNotes?.value.trim() || "",
-                file,
+                downloadUrl: adminApkDownloadUrl?.value.trim() || "",
+                message: adminApkNotes?.value.trim() || "",
             },
         });
 
         adminApkUploadForm.reset();
         renderizarAppReleaseAdmin(data.release);
-        mostrarMensagemApkAdmin(data.message || "APK salvo no banco de dados.", "success");
+        mostrarMensagemApkAdmin(data.message || "Aviso de atualização publicado.", "success");
     } catch (error) {
         mostrarMensagemApkAdmin(traduzirErroApi(error), "error");
     } finally {
@@ -6612,11 +6676,11 @@ async function excluirApkAdmin() {
     mostrarMensagemApkAdmin("");
 
     if (!usuarioAtualEhAdmin) {
-        mostrarMensagemApkAdmin("Apenas administradores podem excluir APK/APKS.", "error");
+        mostrarMensagemApkAdmin("Apenas administradores podem remover avisos de atualização.", "error");
         return;
     }
 
-    const confirmar = window.confirm("Excluir o APK/APKS salvo no banco de dados?");
+    const confirmar = window.confirm("Remover o aviso de atualização publicado?");
 
     if (!confirmar) {
         return;
@@ -6626,34 +6690,12 @@ async function excluirApkAdmin() {
         alternarApkAdminCarregamento(true);
         const data = await apiRequest("/api/admin/app-release", { method: "DELETE" });
         renderizarAppReleaseAdmin(null);
-        mostrarMensagemApkAdmin(data.message || "APK removido do banco de dados.", "success");
+        mostrarMensagemApkAdmin(data.message || "Aviso de atualização removido.", "success");
     } catch (error) {
         mostrarMensagemApkAdmin(traduzirErroApi(error), "error");
     } finally {
         alternarApkAdminCarregamento(false);
     }
-}
-
-async function prepararPacoteAppAdmin(file) {
-    if (!file) {
-        throw new Error("Escolha um arquivo .apk ou .apks.");
-    }
-
-    const lowerName = file.name.toLowerCase();
-
-    if (!lowerName.endsWith(".apk") && !lowerName.endsWith(".apks")) {
-        throw new Error("O arquivo precisa terminar com .apk ou .apks.");
-    }
-
-    if (file.size > ADMIN_APK_MAX_BYTES) {
-        throw new Error("O APK/APKS deve ter no máximo 70 MB.");
-    }
-
-    return {
-        name: file.name,
-        type: file.type || (lowerName.endsWith(".apk") ? "application/vnd.android.package-archive" : "application/octet-stream"),
-        data: await lerArquivoComoDataUrl(file),
-    };
 }
 
 function mostrarMensagemApkAdmin(texto, tipo) {
@@ -6668,7 +6710,7 @@ function mostrarMensagemApkAdmin(texto, tipo) {
 function alternarApkAdminCarregamento(carregando) {
     if (adminApkButton) {
         adminApkButton.disabled = carregando;
-        adminApkButton.textContent = carregando ? "Salvando APK..." : "Salvar APK no banco";
+        adminApkButton.textContent = carregando ? "Publicando..." : "Publicar atualização";
     }
 
     if (adminApkDeleteButton) {

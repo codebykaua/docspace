@@ -9345,3 +9345,109 @@ body.system-dark-theme .admin-apk-current {
 body.system-dark-theme .admin-apk-release-card strong {
     color: #f8fafc;
 }
+
+/* ===== APP UPDATE PAGE ===== */
+.app-update-section {
+    display: grid;
+    gap: 18px;
+}
+
+.app-update-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 20px;
+    padding: clamp(22px, 3vw, 30px);
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.15), transparent 34%),
+        rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.10);
+}
+
+.app-update-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.26);
+}
+
+.app-update-icon svg {
+    width: 34px;
+    height: 34px;
+}
+
+.app-update-copy {
+    min-width: 0;
+}
+
+.app-update-copy h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+}
+
+.app-update-copy p:not(.eyebrow) {
+    max-width: 680px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.app-update-meta {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.app-update-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 0 20px;
+    border-radius: 12px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.24);
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.app-update-download:hover {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+}
+
+body.system-dark-theme .app-update-card {
+    border-color: rgba(148, 163, 184, 0.20);
+    background:
+        radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.20), transparent 34%),
+        rgba(15, 23, 42, 0.82);
+    box-shadow: 0 22px 54px rgba(2, 6, 23, 0.28);
+}
+
+body.system-dark-theme .app-update-copy h3 {
+    color: #f8fafc;
+}
+
+@media (max-width: 720px) {
+    .app-update-card {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .app-update-download {
+        width: 100%;
+    }
+}

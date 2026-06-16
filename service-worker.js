@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v101-admin-apk-delete";
+const CACHE_NAME = "docspace-v102-app-update-page";
 
 const APP_ASSETS = [
     "./",

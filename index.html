@@ -189,6 +189,11 @@
                             <span class="home-action-copy"><strong>Renovar com Pix</strong><span>QR Code e copia-e-cola dentro do app</span></span>
                             <i data-lucide="chevron-right" aria-hidden="true"></i>
                         </button>
+                        <button type="button" class="home-action-card home-action-apk" data-home-action="apk">
+                            <span class="home-action-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
+                            <span class="home-action-copy"><strong>Atualização APK</strong><span>Baixe a versão Android mais recente</span></span>
+                            <i data-lucide="chevron-right" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </section>
 
@@ -271,6 +276,31 @@
                     </div>
                 </div>
                 <div id="favoriteDocumentsList" class="dashboard-document-list dashboard-document-list-large"></div>
+            </section>
+
+            <section id="appUpdateSection" class="dashboard-page-section app-update-section is-hidden" data-home-section="apk" aria-labelledby="appUpdateTitle">
+                <div class="document-section-heading">
+                    <div>
+                        <p class="document-home-kicker">Aplicativo Android</p>
+                        <h2 id="appUpdateTitle">Atualização APK</h2>
+                    </div>
+                </div>
+
+                <article id="appUpdateCard" class="app-update-card">
+                    <span class="app-update-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
+                    <div class="app-update-copy">
+                        <p class="eyebrow">Nova versão</p>
+                        <h3 id="appUpdateVersion">Consultando atualização...</h3>
+                        <p id="appUpdateMessage">Aguarde enquanto buscamos a versão mais recente.</p>
+                        <div class="app-update-meta">
+                            <span id="appUpdateDate"></span>
+                        </div>
+                    </div>
+                    <a id="appUpdateDownloadLink" class="app-update-download is-hidden" href="#" target="_blank" rel="noopener">
+                        <i data-lucide="download" aria-hidden="true"></i>
+                        <span>Baixar APK</span>
+                    </a>
+                </article>
             </section>
 
             <section id="documentCatalogSection" class="document-catalog is-hidden" data-home-section="documents" aria-labelledby="documentCatalogTitle">
@@ -557,6 +587,7 @@
                 <button type="button" class="bottom-navigation-item is-active" data-home-nav="home"><i data-lucide="house" aria-hidden="true"></i><span>Início</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="favorites"><i data-lucide="star" aria-hidden="true"></i><span>Favoritos</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="documents"><i data-lucide="files" aria-hidden="true"></i><span>Documentos</span></button>
+                <button type="button" class="bottom-navigation-item" data-home-nav="apk"><i data-lucide="smartphone" aria-hidden="true"></i><span>APK</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Perfil</span></button>
             </nav>
         </section>
@@ -1108,40 +1139,40 @@
                     <div id="adminUsersList" class="admin-users-list"></div>
                 </section>
 
-                <section class="form-panel admin-app-release-panel" aria-label="Upload de aplicativo Android">
+                <section class="form-panel admin-app-release-panel" aria-label="Aviso de atualização Android">
                     <div class="admin-users-header">
                         <div>
                             <p class="eyebrow">Aplicativo Android</p>
-                            <h2>Enviar APK/APKS</h2>
-                            <p>Salva o arquivo no banco de dados para o Flutter consultar depois.</p>
+                            <h2>Aviso de atualização APK</h2>
+                            <p>Publique apenas versão, mensagem e link de download. O APK fica fora do banco.</p>
                         </div>
                     </div>
 
                     <form id="adminApkUploadForm" class="admin-apk-upload-form" novalidate>
                         <label class="field">
-                            <span>Arquivo .apk ou .apks</span>
-                            <input id="adminApkFile" type="file" accept=".apk,.apks,application/vnd.android.package-archive,application/octet-stream" required>
-                            <small>Limite: 70 MB. Nenhuma notificação é enviada por aqui.</small>
+                            <span>Versão exibida no app</span>
+                            <input id="adminApkVersion" type="text" placeholder="Ex.: 1.0.3" required>
                         </label>
 
                         <label class="field">
-                            <span>Versão exibida no app</span>
-                            <input id="adminApkVersion" type="text" placeholder="Ex.: 1.0.3">
+                            <span>Link HTTPS do APK/APKS</span>
+                            <input id="adminApkDownloadUrl" type="url" placeholder="https://..." required>
+                            <small>Use GitHub Releases, Cloudflare R2, Google Drive direto ou outro host externo.</small>
                         </label>
 
                         <label class="field field-wide">
-                            <span>Observação interna</span>
-                            <textarea id="adminApkNotes" rows="3" placeholder="Ex.: correção da WebView, novo link, build de produção..."></textarea>
+                            <span>Mensagem para usuários e Flutter</span>
+                            <textarea id="adminApkNotes" rows="3" placeholder="Ex.: Nova atualização disponível. Baixe a versão mais recente para receber correções." required></textarea>
                         </label>
 
                         <div id="adminApkCurrent" class="admin-apk-current">
-                            <p>Nenhum APK/APKS enviado ainda.</p>
+                            <p>Nenhum aviso de atualização publicado ainda.</p>
                         </div>
 
                         <div class="actions">
                             <p id="adminApkMessage" class="message" aria-live="polite"></p>
-                            <button type="button" id="adminApkDeleteButton" class="secondary-button danger-button is-hidden">Excluir APK do banco</button>
-                            <button type="submit" id="adminApkButton">Salvar APK no banco</button>
+                            <button type="button" id="adminApkDeleteButton" class="secondary-button danger-button is-hidden">Remover aviso</button>
+                            <button type="submit" id="adminApkButton">Publicar atualização</button>
                         </div>
                     </form>
                 </section>
