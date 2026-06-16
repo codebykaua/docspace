@@ -77,6 +77,8 @@ const appUpdateVersion = document.getElementById("appUpdateVersion");
 const appUpdateMessage = document.getElementById("appUpdateMessage");
 const appUpdateDate = document.getElementById("appUpdateDate");
 const appUpdateDownloadLink = document.getElementById("appUpdateDownloadLink");
+const appUpdateVersionsList = document.getElementById("appUpdateVersionsList");
+const appUpdateVersionCount = document.getElementById("appUpdateVersionCount");
 const documentGeneratedCount = document.getElementById("documentGeneratedCount");
 const documentFavoriteCount = document.getElementById("documentFavoriteCount");
 const documentModelCount = document.getElementById("documentModelCount");
@@ -6476,7 +6478,7 @@ async function carregarAppReleaseUsuario() {
 }
 
 function renderizarAppReleaseUsuario(release, state = {}) {
-    if (!appUpdateCard || !appUpdateVersion || !appUpdateMessage || !appUpdateDownloadLink) {
+    if (!appUpdateCard || !appUpdateVersion || !appUpdateMessage || !appUpdateDate || !appUpdateDownloadLink) {
         return;
     }
 
@@ -6486,6 +6488,8 @@ function renderizarAppReleaseUsuario(release, state = {}) {
         appUpdateDate.textContent = "";
         appUpdateDownloadLink.classList.add("is-hidden");
         appUpdateDownloadLink.removeAttribute("href");
+        renderizarListaVersoesApp(null, { loading: true });
+        inicializarIcones();
         return;
     }
 
@@ -6495,6 +6499,8 @@ function renderizarAppReleaseUsuario(release, state = {}) {
         appUpdateDate.textContent = "";
         appUpdateDownloadLink.classList.add("is-hidden");
         appUpdateDownloadLink.removeAttribute("href");
+        renderizarListaVersoesApp(null, { error: state.error });
+        inicializarIcones();
         return;
     }
 
@@ -6504,6 +6510,8 @@ function renderizarAppReleaseUsuario(release, state = {}) {
         appUpdateDate.textContent = "";
         appUpdateDownloadLink.classList.add("is-hidden");
         appUpdateDownloadLink.removeAttribute("href");
+        renderizarListaVersoesApp(null);
+        inicializarIcones();
         return;
     }
 
@@ -6512,7 +6520,86 @@ function renderizarAppReleaseUsuario(release, state = {}) {
     appUpdateDate.textContent = release.createdAt ? `Publicado em ${formatarDataHora(release.createdAt)}` : "";
     appUpdateDownloadLink.href = release.downloadUrl || "#";
     appUpdateDownloadLink.classList.toggle("is-hidden", !release.downloadUrl);
+    renderizarListaVersoesApp(release);
     inicializarIcones();
+}
+
+function renderizarListaVersoesApp(release, state = {}) {
+    if (!appUpdateVersionsList) {
+        return;
+    }
+
+    appUpdateVersionsList.replaceChildren();
+
+    const item = document.createElement("article");
+    item.className = "app-version-item";
+    item.setAttribute("role", "listitem");
+
+    const iconWrap = document.createElement("span");
+    iconWrap.className = "app-version-status-icon";
+    const icon = document.createElement("i");
+    icon.setAttribute("data-lucide", "badge-check");
+    icon.setAttribute("aria-hidden", "true");
+    iconWrap.appendChild(icon);
+
+    const copy = document.createElement("div");
+    copy.className = "app-version-copy";
+    const title = document.createElement("strong");
+    const subtitle = document.createElement("small");
+
+    const meta = document.createElement("span");
+    meta.className = "app-version-pill";
+
+    if (state.loading) {
+        item.classList.add("is-loading");
+        icon.setAttribute("data-lucide", "loader-circle");
+        title.textContent = "Consultando versão...";
+        subtitle.textContent = "A versão Android publicada aparecerá aqui.";
+        meta.textContent = "Aguarde";
+        if (appUpdateVersionCount) {
+            appUpdateVersionCount.textContent = "1 versão";
+        }
+    } else if (state.error) {
+        item.classList.add("is-error");
+        icon.setAttribute("data-lucide", "triangle-alert");
+        title.textContent = "Não foi possível carregar";
+        subtitle.textContent = state.error;
+        meta.textContent = "Erro";
+        if (appUpdateVersionCount) {
+            appUpdateVersionCount.textContent = "0 versões";
+        }
+    } else if (!release) {
+        item.classList.add("is-empty");
+        icon.setAttribute("data-lucide", "clock-3");
+        title.textContent = "Primeira versão em breve";
+        subtitle.textContent = "Assim que o admin publicar a atualização, ela ficará disponível para download.";
+        meta.textContent = "Aguardando";
+        if (appUpdateVersionCount) {
+            appUpdateVersionCount.textContent = "0 versões";
+        }
+    } else {
+        title.textContent = release.versionName ? `Versão ${release.versionName}` : "Versão publicada";
+        subtitle.textContent = release.message || "Nova atualização Android disponível.";
+        meta.textContent = release.createdAt ? formatarDataHora(release.createdAt) : "Disponível agora";
+        if (appUpdateVersionCount) {
+            appUpdateVersionCount.textContent = "1 versão";
+        }
+    }
+
+    copy.append(title, subtitle);
+    item.append(iconWrap, copy, meta);
+
+    if (release?.downloadUrl && !state.loading && !state.error) {
+        const link = document.createElement("a");
+        link.className = "app-version-mini-download";
+        link.href = release.downloadUrl;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.innerHTML = '<i data-lucide="download" aria-hidden="true"></i><span>Baixar</span>';
+        item.appendChild(link);
+    }
+
+    appUpdateVersionsList.appendChild(item);
 }
 
 function abrirPainelAdmin() {

@@ -301,6 +301,26 @@
                         <span>Baixar APK</span>
                     </a>
                 </article>
+
+                <div class="app-version-panel" aria-labelledby="appVersionListTitle">
+                    <div class="app-version-panel-heading">
+                        <div>
+                            <p class="eyebrow">Histórico Android</p>
+                            <h3 id="appVersionListTitle">Versões do aplicativo</h3>
+                        </div>
+                        <span id="appUpdateVersionCount" class="app-version-count">1 versão</span>
+                    </div>
+
+                    <div id="appUpdateVersionsList" class="app-version-list" role="list">
+                        <article class="app-version-item is-loading" role="listitem">
+                            <span class="app-version-status-icon"><i data-lucide="loader-circle" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Consultando versão...</strong>
+                                <small>A versão Android publicada aparecerá aqui.</small>
+                            </div>
+                        </article>
+                    </div>
+                </div>
             </section>
 
             <section id="documentCatalogSection" class="document-catalog is-hidden" data-home-section="documents" aria-labelledby="documentCatalogTitle">
@@ -587,7 +607,6 @@
                 <button type="button" class="bottom-navigation-item is-active" data-home-nav="home"><i data-lucide="house" aria-hidden="true"></i><span>Início</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="favorites"><i data-lucide="star" aria-hidden="true"></i><span>Favoritos</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="documents"><i data-lucide="files" aria-hidden="true"></i><span>Documentos</span></button>
-                <button type="button" class="bottom-navigation-item" data-home-nav="apk"><i data-lucide="smartphone" aria-hidden="true"></i><span>APK</span></button>
                 <button type="button" class="bottom-navigation-item" data-home-nav="profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Perfil</span></button>
             </nav>
         </section>

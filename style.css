@@ -9391,7 +9391,7 @@ body.system-dark-theme .admin-apk-release-card strong {
     color: var(--text);
     font-size: clamp(1.5rem, 3vw, 2.2rem);
     line-height: 1.1;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
 }
 
 .app-update-copy p:not(.eyebrow) {
@@ -9429,6 +9429,127 @@ body.system-dark-theme .admin-apk-release-card strong {
     transform: translateY(-1px);
 }
 
+.app-version-panel {
+    display: grid;
+    gap: 14px;
+    padding: clamp(18px, 2.4vw, 24px);
+    border: 1px solid rgba(148, 163, 184, 0.20);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+.app-version-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.app-version-panel-heading h3 {
+    margin: 2px 0 0;
+    color: var(--text);
+    font-size: clamp(1.08rem, 2vw, 1.35rem);
+    line-height: 1.2;
+    letter-spacing: 0;
+}
+
+.app-version-count,
+.app-version-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    color: #1d4ed8;
+    background: rgba(37, 99, 235, 0.10);
+    font-size: 0.78rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.app-version-list {
+    display: grid;
+    gap: 10px;
+}
+
+.app-version-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 74px;
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 16px;
+    background: rgba(248, 250, 252, 0.86);
+}
+
+.app-version-status-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    box-shadow: 0 12px 24px rgba(22, 163, 74, 0.18);
+}
+
+.app-version-item.is-loading .app-version-status-icon,
+.app-version-item.is-empty .app-version-status-icon {
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+}
+
+.app-version-item.is-error .app-version-status-icon {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    box-shadow: 0 12px 24px rgba(239, 68, 68, 0.18);
+}
+
+.app-version-copy {
+    min-width: 0;
+}
+
+.app-version-copy strong,
+.app-version-copy small {
+    display: block;
+}
+
+.app-version-copy strong {
+    color: var(--text);
+    font-size: 0.98rem;
+    line-height: 1.25;
+}
+
+.app-version-copy small {
+    margin-top: 4px;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.app-version-mini-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+    color: #ffffff;
+    background: #2563eb;
+    font-size: 0.86rem;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.app-version-mini-download:hover {
+    background: #1d4ed8;
+}
+
 body.system-dark-theme .app-update-card {
     border-color: rgba(148, 163, 184, 0.20);
     background:
@@ -9441,6 +9562,29 @@ body.system-dark-theme .app-update-copy h3 {
     color: #f8fafc;
 }
 
+body.system-dark-theme .app-version-panel {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.72);
+    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.22);
+}
+
+body.system-dark-theme .app-version-panel-heading h3,
+body.system-dark-theme .app-version-copy strong {
+    color: #f8fafc;
+}
+
+body.system-dark-theme .app-version-item {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.72);
+}
+
+body.system-dark-theme .app-version-count,
+body.system-dark-theme .app-version-pill {
+    border-color: rgba(96, 165, 250, 0.26);
+    color: #bfdbfe;
+    background: rgba(37, 99, 235, 0.16);
+}
+
 @media (max-width: 720px) {
     .app-update-card {
         grid-template-columns: 1fr;
@@ -9449,5 +9593,20 @@ body.system-dark-theme .app-update-copy h3 {
 
     .app-update-download {
         width: 100%;
+    }
+
+    .app-version-panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .app-version-item {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .app-version-pill,
+    .app-version-mini-download {
+        grid-column: 1 / -1;
+        justify-self: stretch;
     }
 }
