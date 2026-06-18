@@ -4699,6 +4699,8 @@ function abrirTipoDocumento(tipoDocumento) {
         // Mostrar botão de PDF
         if (printPdfButton) {
             printPdfButton.style.display = "inline-block";
+            printPdfButton.textContent = "Gerar PDF";
+            printPdfButton.classList.add("pdf-action-button");
             // Guardar tipo de documento para usar no botão de PDF
             printPdfButton.dataset.documentType = "comodato";
         }
@@ -4814,7 +4816,7 @@ function configurarFormularioContrato() {
         limparMensagem();
 
         if (usuarioAtualTemPlanoBasicoSemWord()) {
-            mostrarMensagem("No Plano Básico, use o botão Imprimir como PDF.", "");
+            mostrarMensagem("No Plano Básico, use o botão Gerar PDF.", "");
             return;
         }
 
@@ -4852,7 +4854,7 @@ function configurarFormularioDocumentoSimples() {
         limparMensagemDocumentoSimples();
 
         if (usuarioAtualTemPlanoBasicoSemWord()) {
-            mostrarMensagemDocumentoSimples("No Plano Básico, use o botão Imprimir como PDF.", "");
+            mostrarMensagemDocumentoSimples("No Plano Básico, use o botão Gerar PDF.", "");
             return;
         }
 
@@ -5532,12 +5534,14 @@ function abrirDocumentoSimples(tipoDocumento) {
     window.documentoSimplesTipoAtual = tipoDocumento;
     simpleDocumentTitle.textContent = config.title;
     simpleDocumentDescription.textContent = config.description;
-    simpleDocumentButton.textContent = "Gerar documento";
+    simpleDocumentButton.textContent = "Gerar Word";
     atualizarBotoesGeracaoPorPlano();
 
     // Mostrar botão de PDF
     if (simplePrintPdfButton) {
         simplePrintPdfButton.style.display = "inline-block";
+        simplePrintPdfButton.textContent = "Gerar PDF";
+        simplePrintPdfButton.classList.add("pdf-action-button");
         simplePrintPdfButton.dataset.documentType = tipoDocumento;
     }
 
@@ -7953,8 +7957,8 @@ function alternarCarregamentoDocumentoSimples(carregando) {
         simpleDocumentClearButton.disabled = carregando;
     }
     simpleDocumentButton.textContent = carregando
-        ? "Gerando documento..."
-        : "Gerar documento";
+        ? "Gerando Word..."
+        : "Gerar Word";
 }
 
 function validarCamposObrigatorios() {
@@ -8191,7 +8195,7 @@ function alternarCarregamento(carregando) {
     if (clearContractFormButton) {
         clearContractFormButton.disabled = carregando;
     }
-    button.textContent = carregando ? "Gerando..." : "Gerar Contrato";
+    button.textContent = carregando ? "Gerando Word..." : "Gerar Word";
 }
 
 function mostrarMensagemAdmin(texto, tipo) {

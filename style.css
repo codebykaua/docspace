@@ -9610,3 +9610,37 @@ body.system-dark-theme .app-version-pill {
         justify-self: stretch;
     }
 }
+/* Correção dos botões Word/PDF do gerador de documentos */
+.generator-view .actions #generateButton,
+.generator-view .actions #simpleDocumentButton {
+    min-width: 210px;
+    min-height: 50px;
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.generator-view .actions #generateButton:hover,
+.generator-view .actions #simpleDocumentButton:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.generator-view .actions .pdf-action-button,
+.generator-view .actions #printPdfButton.pdf-action-button,
+.generator-view .actions #simplePrintPdfButton.pdf-action-button {
+    min-width: 210px;
+    min-height: 50px;
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.48);
+    background: rgba(127, 29, 29, 0.18);
+    font-weight: 800;
+}
+
+.generator-view .actions .pdf-action-button:hover,
+.generator-view .actions #printPdfButton.pdf-action-button:hover,
+.generator-view .actions #simplePrintPdfButton.pdf-action-button:hover {
+    color: #ffffff;
+    border-color: rgba(248, 113, 113, 0.78);
+    background: rgba(185, 28, 28, 0.34);
+}
