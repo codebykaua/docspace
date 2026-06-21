@@ -18,6 +18,18 @@ const APP_VERSION = "4.2.0";
 const FAVORITES_STORAGE_KEY = "documentos_rurais_favoritos";
 const RECENTS_STORAGE_KEY = "documentos_rurais_recentes";
 const GENERATED_COUNT_STORAGE_KEY = "documentos_rurais_documentos_gerados";
+const GENERATED_ACTIVITY_STORAGE_KEY = "documentos_rurais_atividade_geracao";
+const CATEGORY_FAVORITES_STORAGE_KEY = "documentos_rurais_categorias_favoritas";
+const SEARCH_HISTORY_STORAGE_KEY = "documentos_rurais_buscas_recentes";
+const DASHBOARD_CATEGORY_DATA = [
+    { id: "contracts", title: "Contratos", description: "Contratos rurais, previdenciários e compra e venda.", icon: "file-text", filter: "contracts" },
+    { id: "rural", title: "Documentos Rurais", description: "Autodeclaração, posse, produção e CAF.", icon: "sprout", filter: "caf" },
+    { id: "inss", title: "INSS", description: "Modelos previdenciários e autodeclarações.", icon: "landmark", search: "INSS" },
+    { id: "declarations", title: "Declarações", description: "Residência, renda, posse e autenticidade.", icon: "file-badge", filter: "declarations" },
+    { id: "requirements", title: "Requerimentos", description: "Pesquise requerimentos disponíveis.", icon: "clipboard-list", search: "Requerimento" },
+    { id: "powers", title: "Procurações", description: "Procurações particulares e de representação.", icon: "key-round", filter: "powers" },
+    { id: "tools", title: "Ferramentas PDF", description: "PDF, OCR e organização de arquivos.", icon: "file-type-2", filter: "tools" },
+];
 const NOTIFICATIONS_READ_STORAGE_KEY = "documentos_rurais_notificacoes_lidas";
 const LIQUID_GLASS_THEME_STORAGE_KEY = "documentos_rurais_liquid_glass_theme";
 const LIQUID_GLASS_THEME_LAST_STATE_KEY = `${LIQUID_GLASS_THEME_STORAGE_KEY}_last`;
@@ -3649,6 +3661,19 @@ function configurarTelaInicialDocumentos() {
         }
 
         filtrarDocumentos();
+        renderizarSugestoesBuscaDashboard();
+    });
+
+    documentSearch.addEventListener("focus", renderizarSugestoesBuscaDashboard);
+    documentSearch.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && documentSearch.value.trim()) {
+            armazenarBuscaDashboard(documentSearch.value.trim());
+            esconderSugestoesBuscaDashboard();
+        }
+
+        if (event.key === "Escape") {
+            esconderSugestoesBuscaDashboard();
+        }
     });
 
     documentFilterButtons.forEach((buttonFilter) => {
@@ -3690,9 +3715,42 @@ function configurarTelaInicialDocumentos() {
 
     homeCategoryShortcutButtons.forEach((buttonCategory) => {
         buttonCategory.addEventListener("click", () => {
-            aplicarFiltroCategoriaDocumento(buttonCategory.dataset.documentCategoryShortcut || "all");
-            navegarTelaInicialDocumentos("documents", { focusSearch: false });
+            abrirCategoriaDashboard(buttonCategory.dataset.documentCategoryShortcut || "all");
         });
+    });
+
+    document.querySelectorAll("[data-document-search-shortcut]").forEach((buttonShortcut) => {
+        buttonShortcut.addEventListener("click", () => {
+            aplicarBuscaDashboard(buttonShortcut.dataset.documentSearchShortcut || buttonShortcut.textContent || "");
+        });
+    });
+
+    document.querySelectorAll("[data-category-favorite]").forEach((buttonFavorite) => {
+        buttonFavorite.addEventListener("click", (event) => {
+            event.stopPropagation();
+            alternarCategoriaFavorita(buttonFavorite.dataset.categoryFavorite);
+        });
+    });
+
+    document.querySelectorAll("[data-open-changelog]").forEach((buttonChangelog) => {
+        buttonChangelog.addEventListener("click", abrirHistoricoAtualizacoes);
+    });
+
+    const sidebarToggle = document.getElementById("dashboardSidebarToggle");
+    sidebarToggle?.addEventListener("click", () => {
+        const collapsed = !documentView.classList.contains("dashboard-sidebar-collapsed");
+        documentView.classList.toggle("dashboard-sidebar-collapsed", collapsed);
+        sidebarToggle.setAttribute("aria-pressed", String(collapsed));
+        sidebarToggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Recolher menu");
+        const icon = sidebarToggle.querySelector("i");
+        icon?.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
+        inicializarIcones();
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest(".app-shell-search")) {
+            esconderSugestoesBuscaDashboard();
+        }
     });
 
     document.addEventListener("keydown", (event) => {
@@ -3708,7 +3766,6 @@ function configurarTelaInicialDocumentos() {
 
     filtrarDocumentos();
 }
-
 function aplicarFiltroCategoriaDocumento(categoria) {
     documentCategoryFilter = categoria || "all";
 
@@ -3780,9 +3837,14 @@ function obterTotalDocumentosGerados() {
     return Math.max(0, Number(localStorage.getItem(obterChaveArmazenamento(GENERATED_COUNT_STORAGE_KEY)) || 0));
 }
 
-function registrarDocumentoGerado() {
+function registrarDocumentoGerado(tipoDocumento = "") {
     const novoTotal = obterTotalDocumentosGerados() + 1;
     localStorage.setItem(obterChaveArmazenamento(GENERATED_COUNT_STORAGE_KEY), String(novoTotal));
+    registrarAtividadeDashboard({
+        action: "Documento gerado",
+        type: tipoDocumento,
+        icon: "file-check-2",
+    });
     atualizarDashboardProduto();
 }
 
@@ -3972,6 +4034,11 @@ function registrarDocumentoRecente(tipoDocumento) {
 
     const recentes = lerListaArmazenada(RECENTS_STORAGE_KEY).filter((tipo) => tipo !== tipoDocumento);
     salvarListaArmazenada(RECENTS_STORAGE_KEY, [tipoDocumento, ...recentes].slice(0, 10));
+    registrarAtividadeDashboard({
+        action: "Documento aberto",
+        type: tipoDocumento,
+        icon: "clock-3",
+    });
     atualizarDashboardProduto();
 }
 
@@ -3983,6 +4050,11 @@ function alternarDocumentoFavorito(tipoDocumento) {
         : [tipoDocumento, ...favoritos];
 
     salvarListaArmazenada(FAVORITES_STORAGE_KEY, novoFavoritos);
+    registrarAtividadeDashboard({
+        action: removendo ? "Favorito removido" : "Documento favoritado",
+        type: tipoDocumento,
+        icon: "star",
+    });
 
     if (!removendo) {
         const recentes = lerListaArmazenada(RECENTS_STORAGE_KEY).filter((tipo) => tipo !== tipoDocumento);
@@ -4289,32 +4361,352 @@ function calcularSaldoPdfHome() {
     return Math.max(0, ...saldos, Number(pdfToolUsage?.limit ?? 0));
 }
 
+function obterCategoriaDashboard(id) {
+    return DASHBOARD_CATEGORY_DATA.find((categoria) => categoria.id === id || categoria.filter === id) || null;
+}
+
+function aplicarBuscaDashboard(termo) {
+    const busca = String(termo || "").trim();
+
+    if (!busca || !documentSearch) {
+        return;
+    }
+
+    documentCategoryFilter = "all";
+    documentFilterButtons.forEach((button) => {
+        const ativo = button.dataset.documentFilter === "all";
+        button.classList.toggle("is-active", ativo);
+        button.setAttribute("aria-selected", String(ativo));
+    });
+    documentSearch.value = busca;
+    armazenarBuscaDashboard(busca);
+    navegarTelaInicialDocumentos("documents", { focusSearch: false });
+    filtrarDocumentos();
+    esconderSugestoesBuscaDashboard();
+}
+
+function abrirCategoriaDashboard(id) {
+    const categoria = obterCategoriaDashboard(id);
+
+    if (categoria?.search) {
+        aplicarBuscaDashboard(categoria.search);
+        return;
+    }
+
+    aplicarFiltroCategoriaDocumento(categoria?.filter || id || "all");
+    navegarTelaInicialDocumentos("documents", { focusSearch: false });
+}
+
+function armazenarBuscaDashboard(termo) {
+    const busca = String(termo || "").trim();
+
+    if (!busca) {
+        return;
+    }
+
+    const historico = lerListaArmazenada(SEARCH_HISTORY_STORAGE_KEY)
+        .filter((item) => normalizarTextoBusca(item) !== normalizarTextoBusca(busca));
+    salvarListaArmazenada(SEARCH_HISTORY_STORAGE_KEY, [busca, ...historico].slice(0, 8));
+}
+
+function esconderSugestoesBuscaDashboard() {
+    document.getElementById("dashboardSearchSuggestions")?.classList.add("is-hidden");
+}
+
+function obterSugestoesBuscaDashboard() {
+    const termo = normalizarTextoBusca(documentSearch?.value || "");
+    const historico = lerListaArmazenada(SEARCH_HISTORY_STORAGE_KEY).map((label) => ({
+        label,
+        description: "Busca recente",
+        icon: "history",
+        kind: "search",
+    }));
+    const fixas = [
+        { label: "Contrato de Compra e Venda", description: "Sugestão rápida", icon: "file-text", kind: "search" },
+        { label: "Declaração de Posse", description: "Sugestão rápida", icon: "sprout", kind: "search" },
+        { label: "Procuração Particular", description: "Sugestão rápida", icon: "key-round", kind: "search" },
+        { label: "Requerimento INSS", description: "Sugestão rápida", icon: "landmark", kind: "search" },
+    ];
+    const categorias = DASHBOARD_CATEGORY_DATA.map((categoria) => ({
+        label: categoria.title,
+        description: categoria.description,
+        icon: categoria.icon,
+        kind: "category",
+        categoryId: categoria.id,
+    }));
+    const documentos = documentTypeButtons
+        .filter((card) => card.dataset.documentType !== "admin" && usuarioPodeAcessarDocumento(card.dataset.documentType))
+        .map((card) => ({
+            label: obterTituloDocumento(card.dataset.documentType),
+            description: "Documento disponível",
+            icon: obterIconeDocumento(card.dataset.documentType),
+            kind: "search",
+        }));
+    const mapa = new Map();
+
+    [...historico, ...fixas, ...categorias, ...documentos].forEach((item) => {
+        const chave = normalizarTextoBusca(item.label);
+
+        if (!chave || mapa.has(chave)) {
+            return;
+        }
+
+        if (!termo || chave.includes(termo)) {
+            mapa.set(chave, item);
+        }
+    });
+
+    return Array.from(mapa.values()).slice(0, 7);
+}
+
+function renderizarSugestoesBuscaDashboard() {
+    const painel = document.getElementById("dashboardSearchSuggestions");
+
+    if (!painel || !documentSearch) {
+        return;
+    }
+
+    const sugestoes = obterSugestoesBuscaDashboard();
+    painel.replaceChildren();
+
+    if (!sugestoes.length) {
+        painel.classList.add("is-hidden");
+        return;
+    }
+
+    sugestoes.forEach((sugestao) => {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "dashboard-search-suggestion";
+        botao.setAttribute("role", "option");
+        botao.innerHTML = `<i data-lucide="${sugestao.icon}" aria-hidden="true"></i><span><strong>${escaparHtmlSeguro(sugestao.label)}</strong><small>${escaparHtmlSeguro(sugestao.description)}</small></span>`;
+        botao.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+
+            if (sugestao.kind === "category") {
+                abrirCategoriaDashboard(sugestao.categoryId);
+            } else {
+                aplicarBuscaDashboard(sugestao.label);
+            }
+        });
+        painel.appendChild(botao);
+    });
+
+    painel.classList.remove("is-hidden");
+    inicializarIcones();
+}
+
+function registrarAtividadeDashboard(atividade) {
+    const lista = lerListaArmazenada(GENERATED_ACTIVITY_STORAGE_KEY);
+    const proximaAtividade = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        action: atividade?.action || "Atividade registrada",
+        type: atividade?.type || "",
+        icon: atividade?.icon || "check",
+        createdAt: new Date().toISOString(),
+    };
+
+    salvarListaArmazenada(GENERATED_ACTIVITY_STORAGE_KEY, [proximaAtividade, ...lista].slice(0, 80));
+}
+
+function alternarCategoriaFavorita(categoriaId) {
+    const categoria = obterCategoriaDashboard(categoriaId);
+
+    if (!categoria) {
+        return;
+    }
+
+    const favoritos = lerListaArmazenada(CATEGORY_FAVORITES_STORAGE_KEY);
+    const removendo = favoritos.includes(categoria.id);
+    const novaLista = removendo
+        ? favoritos.filter((id) => id !== categoria.id)
+        : [categoria.id, ...favoritos];
+
+    salvarListaArmazenada(CATEGORY_FAVORITES_STORAGE_KEY, novaLista);
+    registrarAtividadeDashboard({
+        action: removendo ? "Categoria removida dos favoritos" : "Categoria favoritada",
+        type: categoria.id,
+        icon: "star",
+    });
+    atualizarDashboardProduto();
+}
+
+function atualizarBotoesFavoritosCategoria() {
+    const favoritos = lerListaArmazenada(CATEGORY_FAVORITES_STORAGE_KEY);
+
+    document.querySelectorAll("[data-category-favorite]").forEach((button) => {
+        const ativo = favoritos.includes(button.dataset.categoryFavorite);
+        button.classList.toggle("is-favorite", ativo);
+        button.setAttribute("aria-pressed", String(ativo));
+        button.setAttribute("aria-label", ativo ? "Remover categoria dos favoritos" : "Favoritar categoria");
+    });
+}
+
+function renderizarCategoriasFavoritasDashboard() {
+    const container = document.getElementById("favoriteCategoriesList");
+
+    if (!container) {
+        return;
+    }
+
+    const favoritos = lerListaArmazenada(CATEGORY_FAVORITES_STORAGE_KEY)
+        .map(obterCategoriaDashboard)
+        .filter(Boolean);
+    container.replaceChildren();
+
+    if (!favoritos.length) {
+        const vazio = document.createElement("article");
+        vazio.className = "dashboard-category-empty";
+        vazio.innerHTML = '<i data-lucide="star" aria-hidden="true"></i><span>Favorite categorias para criar atalhos aqui.</span>';
+        container.appendChild(vazio);
+        return;
+    }
+
+    favoritos.forEach((categoria) => {
+        const card = document.createElement("article");
+        card.className = "premium-category-card favorite-category-card";
+        card.innerHTML = `
+            <button type="button" class="premium-card-main">
+                <span class="premium-card-icon"><i data-lucide="${categoria.icon}" aria-hidden="true"></i></span>
+                <span><strong>${escaparHtmlSeguro(categoria.title)}</strong><small>${escaparHtmlSeguro(categoria.description)}</small></span>
+            </button>
+            <button type="button" class="category-favorite-button is-favorite" aria-label="Remover categoria dos favoritos"><i data-lucide="star" aria-hidden="true"></i></button>
+        `;
+        card.querySelector(".premium-card-main").addEventListener("click", () => abrirCategoriaDashboard(categoria.id));
+        card.querySelector(".category-favorite-button").addEventListener("click", () => alternarCategoriaFavorita(categoria.id));
+        container.appendChild(card);
+    });
+}
+
+function formatarHorarioAtividade(createdAt) {
+    if (!createdAt) {
+        return "Modelo";
+    }
+
+    const data = new Date(createdAt);
+
+    if (!Number.isFinite(data.getTime())) {
+        return "Modelo";
+    }
+
+    return new Intl.DateTimeFormat("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(data);
+}
+
+function calcularMetricasGeracao() {
+    const atividades = lerListaArmazenada(GENERATED_ACTIVITY_STORAGE_KEY)
+        .filter((atividade) => atividade?.action === "Documento gerado");
+    const hoje = new Date();
+    const chaveHoje = hoje.toDateString();
+    const chaveMes = `${hoje.getFullYear()}-${hoje.getMonth()}`;
+    const contagemPorTipo = new Map();
+    let geradosHoje = 0;
+    let geradosMes = 0;
+
+    atividades.forEach((atividade) => {
+        const data = new Date(atividade.createdAt);
+
+        if (!Number.isFinite(data.getTime())) {
+            return;
+        }
+
+        if (data.toDateString() === chaveHoje) {
+            geradosHoje += 1;
+        }
+
+        if (`${data.getFullYear()}-${data.getMonth()}` === chaveMes) {
+            geradosMes += 1;
+        }
+
+        if (atividade.type) {
+            contagemPorTipo.set(atividade.type, (contagemPorTipo.get(atividade.type) || 0) + 1);
+        }
+    });
+
+    let maisUsado = "Nenhum ainda";
+    let maiorTotal = 0;
+    contagemPorTipo.forEach((total, tipo) => {
+        if (total > maiorTotal) {
+            maiorTotal = total;
+            maisUsado = obterTituloDocumento(tipo);
+        }
+    });
+
+    return { geradosHoje, geradosMes, maisUsado };
+}
+
+function renderizarAtividadesDashboard() {
+    const container = document.getElementById("dashboardActivityList");
+
+    if (!container) {
+        return;
+    }
+
+    const atividades = lerListaArmazenada(GENERATED_ACTIVITY_STORAGE_KEY).slice(0, 12);
+    const fallback = [
+        { action: "Contrato criado", icon: "check", createdAt: null },
+        { action: "PDF convertido", icon: "file-type-2", createdAt: null },
+        { action: "Documento favoritado", icon: "star", createdAt: null },
+        { action: "Procuração gerada", icon: "key-round", createdAt: null },
+        { action: "Consulta pública realizada", icon: "search-check", createdAt: null },
+    ];
+    const itens = atividades.length ? atividades : fallback;
+    container.replaceChildren();
+
+    itens.forEach((atividade) => {
+        const item = document.createElement("article");
+        item.className = "dashboard-activity-item";
+        const tituloDocumento = atividade.type ? obterTituloDocumento(atividade.type) : "";
+        item.innerHTML = `
+            <span class="dashboard-activity-icon"><i data-lucide="${atividade.icon || "check"}" aria-hidden="true"></i></span>
+            <span class="dashboard-activity-copy">
+                <strong>${escaparHtmlSeguro(atividade.action)}</strong>
+                <small>${escaparHtmlSeguro(tituloDocumento || "Fluxo de produtividade")}</small>
+            </span>
+            <time>${escaparHtmlSeguro(formatarHorarioAtividade(atividade.createdAt))}</time>
+        `;
+        container.appendChild(item);
+    });
+}
+
 function atualizarDashboardProduto() {
     const favoritos = lerListaArmazenada(FAVORITES_STORAGE_KEY);
     const recentes = lerListaArmazenada(RECENTS_STORAGE_KEY);
     const favoritosLiberados = favoritos.filter(usuarioPodeAcessarDocumento);
     const recentesLiberados = recentes.filter(usuarioPodeAcessarDocumento);
+    const categoriasFavoritas = lerListaArmazenada(CATEGORY_FAVORITES_STORAGE_KEY);
     const totalGerados = obterTotalDocumentosGerados();
     const totalModelos = documentTypeButtons.filter((card) => card.dataset.documentType !== "admin" && usuarioPodeAcessarDocumento(card.dataset.documentType)).length;
+    const metricas = calcularMetricasGeracao();
 
     definirTextoElemento(documentGeneratedCount, totalGerados);
-    definirTextoElemento(documentFavoriteCount, favoritosLiberados.length);
+    definirTextoElemento(documentFavoriteCount, favoritosLiberados.length + categoriasFavoritas.length);
     definirTextoElemento(documentModelCount, totalModelos);
     definirTextoElemento(homeDocumentBalanceCount, calcularSaldoDocumentosHome());
     definirTextoElemento(homePdfBalanceCount, calcularSaldoPdfHome());
-    definirTextoElemento(homeFavoriteCount, favoritosLiberados.length);
+    definirTextoElemento(homeFavoriteCount, favoritosLiberados.length + categoriasFavoritas.length);
     definirTextoElemento(homeRecentCount, recentesLiberados.length);
+    definirTextoElemento(document.getElementById("homeGeneratedTodayCount"), metricas.geradosHoje);
+    definirTextoElemento(document.getElementById("homeGeneratedMonthCount"), metricas.geradosMes);
+    definirTextoElemento(document.getElementById("homeMostUsedDocument"), metricas.maisUsado);
 
-    renderizarAtalhosDocumentos(recentDocumentsList, recentesLiberados.filter((tipo) => !favoritosLiberados.includes(tipo)).slice(0, 3), "Seus documentos recentes aparecerão aqui.");
+    renderizarAtalhosDocumentos(recentDocumentsList, recentesLiberados.filter((tipo) => !favoritosLiberados.includes(tipo)).slice(0, 4), "Seus documentos recentes aparecerão aqui.");
+    renderizarAtalhosDocumentos(document.getElementById("recentDocumentsListFull"), recentesLiberados.slice(0, 12), "Abra documentos para criar seu histórico recente.");
     renderizarAtalhosDocumentos(favoriteDocumentsList, favoritosLiberados, "Marque a estrela de um documento para encontrá-lo rapidamente.", { allowRemoveFavorite: true });
+    renderizarCategoriasFavoritasDashboard();
+    renderizarAtividadesDashboard();
 
     popularDocumentButtons.forEach((buttonShortcut) => {
         buttonShortcut.classList.toggle("is-hidden", favoritos.includes(buttonShortcut.dataset.documentShortcut) || !usuarioPodeAcessarDocumento(buttonShortcut.dataset.documentShortcut));
     });
 
-    if (popularDocumentButtons.length) {
+    if (popularDocumentButtons.length && popularDocumentsSection) {
         popularDocumentsSection.classList.toggle("is-hidden", popularDocumentButtons.every((buttonShortcut) => buttonShortcut.classList.contains("is-hidden")));
-    } else {
+    } else if (popularDocumentsSection) {
         popularDocumentsSection.classList.remove("is-hidden");
     }
 
@@ -4325,10 +4717,10 @@ function atualizarDashboardProduto() {
         buttonFavorito.setAttribute("aria-label", ativo ? "Remover dos favoritos" : "Adicionar aos favoritos");
     });
 
+    atualizarBotoesFavoritosCategoria();
     atualizarPerfilProduto();
     inicializarIcones();
 }
-
 function atualizarPerfilProduto() {
     const primeiroNome = String(usuarioAtual?.name || "Usuário").trim();
     const planId = normalizePlanId(usuarioAtual?.plan);
@@ -4479,7 +4871,7 @@ function alternarTemaLiquidGlass() {
 }
 
 function navegarTelaInicialDocumentos(destino, options = {}) {
-    const destinoValido = ["home", "favorites", "documents", "apk", "profile"].includes(destino) ? destino : "home";
+    const destinoValido = ["home", "favorites", "documents", "apk", "profile", "recentes", "categories"].includes(destino) ? destino : "home";
     documentView.classList.toggle("is-profile-page", destinoValido === "profile");
 
     homeNavigationButtons.forEach((button) => {
@@ -4835,7 +5227,7 @@ function configurarFormularioContrato() {
 
             await registrarUsoDocumentoNoServidor("comodato");
             window.saveAs(arquivoFinal, "contrato-comodato-preenchido.docx");
-            registrarDocumentoGerado();
+            registrarDocumentoGerado("comodato");
             mostrarMensagem("Contrato gerado com sucesso.", "success");
         } catch (error) {
             console.error(error);
@@ -4874,7 +5266,7 @@ function configurarFormularioDocumentoSimples() {
 
             await registrarUsoDocumentoNoServidor(documentoSimplesTipoAtual);
             window.saveAs(arquivoFinal, nomeArquivo);
-            registrarDocumentoGerado();
+            registrarDocumentoGerado(documentoSimplesTipoAtual);
             mostrarMensagemDocumentoSimples("Documento gerado com sucesso. O download foi iniciado.", "success");
         } catch (error) {
             console.error(error);

@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/LOGO1.png">
     <link rel="apple-touch-icon" href="assets/LOGO1.png">
-    <link rel="stylesheet" href="style.css?v=50">
+    <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body class="splash-open">
     <script>
@@ -79,6 +79,52 @@
         </section>
 
         <section id="documentView" class="view document-view is-hidden" aria-labelledby="documentTitle">
+            <aside id="dashboardSidebar" class="dashboard-sidebar" aria-label="Navegação principal">
+                <div class="dashboard-sidebar-head">
+                    <button type="button" class="dashboard-sidebar-logo" data-home-nav="home" aria-label="Ir para Dashboard">
+                        <img src="assets/LOGO1.png" alt="DocSpace">
+                        <span>DocSpace</span>
+                    </button>
+                    <button type="button" id="dashboardSidebarToggle" class="dashboard-sidebar-toggle" aria-label="Recolher menu" aria-pressed="false">
+                        <i data-lucide="panel-left-close" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <nav class="dashboard-sidebar-nav">
+                    <button type="button" class="dashboard-sidebar-item is-active" data-home-nav="home">
+                        <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="documents">
+                        <i data-lucide="file-text" aria-hidden="true"></i>
+                        <span>Documentos</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="favorites">
+                        <i data-lucide="star" aria-hidden="true"></i>
+                        <span>Favoritos</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="recentes">
+                        <i data-lucide="clock-3" aria-hidden="true"></i>
+                        <span>Recentes</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="categories">
+                        <i data-lucide="folders" aria-hidden="true"></i>
+                        <span>Categorias</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="apk">
+                        <i data-lucide="download-cloud" aria-hidden="true"></i>
+                        <span>Downloads</span>
+                    </button>
+                    <button type="button" class="dashboard-sidebar-item" data-home-nav="profile">
+                        <i data-lucide="settings" aria-hidden="true"></i>
+                        <span>Configurações</span>
+                    </button>
+                </nav>
+                <div class="dashboard-sidebar-footer">
+                    <span class="sidebar-plan-dot" aria-hidden="true"></span>
+                    <span>Ambiente sincronizado</span>
+                </div>
+            </aside>
+
             <header class="document-home-header app-shell-header">
                 <div class="app-shell-brand">
                     <img class="app-shell-logo" src="assets/LOGO1.png" alt="DocSpace">
@@ -88,7 +134,8 @@
                 <label class="document-search global-document-search app-shell-search">
                     <i data-lucide="search" aria-hidden="true"></i>
                     <span class="sr-only">Pesquisar documento</span>
-                    <input id="documentSearch" type="search" placeholder="Buscar documentos, modelos, contratos..." autocomplete="off">
+                    <input id="documentSearch" type="search" placeholder="Buscar documentos, categorias ou ferramentas..." autocomplete="off" aria-autocomplete="list" aria-controls="dashboardSearchSuggestions">
+                    <div id="dashboardSearchSuggestions" class="dashboard-search-suggestions is-hidden" role="listbox" aria-label="Sugestões de busca"></div>
                     <kbd>Ctrl + K</kbd>
                 </label>
 
@@ -128,145 +175,275 @@
                     </button>
                 </div>
             </header>
+            <div id="dashboardHomeSection" class="dashboard-home-section optimized-home premium-dashboard" data-home-section="home">
+                <div class="premium-dashboard-layout">
+                    <main class="premium-dashboard-main">
+                        <section id="documentPlanCard" class="plan-summary-card home-hero-card premium-hero-card" aria-labelledby="documentTitle">
+                            <div class="premium-hero-copy">
+                                <p class="document-home-kicker">Dashboard</p>
+                                <h1 id="documentTitle">Olá, <span id="documentUserName">usuário</span></h1>
+                                <span class="document-user-email" data-user-email></span>
+                            </div>
+                            <div class="premium-hero-details" aria-label="Resumo do plano">
+                                <span>
+                                    <small>Plano atual</small>
+                                    <strong id="documentPlanName">Consultando...</strong>
+                                </span>
+                                <span>
+                                    <small>Dias restantes</small>
+                                    <strong id="documentPlanRemaining">Carregando...</strong>
+                                </span>
+                            </div>
+                            <div class="plan-summary-progress premium-plan-progress" aria-label="Progresso do plano">
+                                <div class="plan-progress-heading">
+                                    <span id="documentPlanExpiration">Consultando vencimento...</span>
+                                    <strong id="documentPlanPercent">0%</strong>
+                                </div>
+                                <div class="plan-progress-track" aria-hidden="true"><span id="documentPlanProgress"></span></div>
+                            </div>
+                            <div id="planActions" class="plan-actions is-hidden premium-hero-actions" aria-label="Ações do plano">
+                                <button type="button" id="renewPlanButton" class="primary-dashboard-button">
+                                    <i data-lucide="refresh-cw" aria-hidden="true"></i>
+                                    <span>Renovar Plano</span>
+                                </button>
+                                <button type="button" id="changePlanButton" class="is-visually-secondary">
+                                    <i data-lucide="sparkles" aria-hidden="true"></i>
+                                    <span>Alterar plano</span>
+                                </button>
+                            </div>
+                        </section>
 
-            <div id="dashboardHomeSection" class="dashboard-home-section optimized-home" data-home-section="home">
-                <section id="documentPlanCard" class="plan-summary-card home-hero-card" aria-labelledby="documentTitle">
-                    <div class="home-hero-copy">
-                        <p class="document-home-kicker">Bem-vindo de volta</p>
-                        <h1 id="documentTitle">Olá, <span id="documentUserName">usuário</span> <span aria-hidden="true">👋</span></h1>
-                        <p class="home-hero-subtitle">Tudo pronto para você produzir mais hoje.</p>
-                        <span class="document-user-email" data-user-email></span>
-                        <div class="home-hero-badges" aria-label="Status do plano">
-                            <span class="home-status-pill"><i data-lucide="check" aria-hidden="true"></i> Plano ativo</span>
-                            <span class="home-status-pill home-status-pill-muted"><i data-lucide="timer" aria-hidden="true"></i> <span id="documentPlanRemaining">Carregando validade...</span></span>
-                        </div>
-                    </div>
+                        <p id="accessStatusMessage" class="access-status" aria-live="polite"></p>
 
-                    <div class="plan-summary-progress home-hero-plan">
-                        <div class="plan-progress-heading">
-                            <span id="documentPlanName">Plano Básico</span>
-                            <strong id="documentPlanPercent">0%</strong>
-                        </div>
-                        <div class="plan-progress-track" aria-hidden="true"><span id="documentPlanProgress"></span></div>
-                        <p id="documentPlanExpiration">Consultando vencimento...</p>
-                    </div>
+                        <section class="premium-section popular-category-section" aria-labelledby="popularCategoriesTitle">
+                            <div class="document-section-heading compact-section-heading">
+                                <div>
+                                    <p class="document-home-kicker">Acesso rápido</p>
+                                    <h2 id="popularCategoriesTitle">Categorias Mais Utilizadas</h2>
+                                </div>
+                            </div>
+                            <div class="premium-category-grid">
+                                <article class="premium-category-card">
+                                    <button type="button" class="premium-card-main" data-document-category-shortcut="contracts">
+                                        <span class="premium-card-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
+                                        <span><strong>Contratos</strong><small>Comodato, compra e venda, honorários</small></span>
+                                    </button>
+                                    <button type="button" class="category-favorite-button" data-category-favorite="contracts" aria-label="Favoritar Contratos"><i data-lucide="star" aria-hidden="true"></i></button>
+                                </article>
+                                <article class="premium-category-card">
+                                    <button type="button" class="premium-card-main" data-document-category-shortcut="rural">
+                                        <span class="premium-card-icon"><i data-lucide="sprout" aria-hidden="true"></i></span>
+                                        <span><strong>Documentos Rurais</strong><small>Posse, CAF, produção e atividade rural</small></span>
+                                    </button>
+                                    <button type="button" class="category-favorite-button" data-category-favorite="rural" aria-label="Favoritar Documentos Rurais"><i data-lucide="star" aria-hidden="true"></i></button>
+                                </article>
+                                <article class="premium-category-card">
+                                    <button type="button" class="premium-card-main" data-document-search-shortcut="INSS">
+                                        <span class="premium-card-icon"><i data-lucide="landmark" aria-hidden="true"></i></span>
+                                        <span><strong>INSS</strong><small>Autodeclarações e requerimentos previdenciários</small></span>
+                                    </button>
+                                    <button type="button" class="category-favorite-button" data-category-favorite="inss" aria-label="Favoritar INSS"><i data-lucide="star" aria-hidden="true"></i></button>
+                                </article>
+                                <article class="premium-category-card">
+                                    <button type="button" class="premium-card-main" data-document-category-shortcut="declarations">
+                                        <span class="premium-card-icon"><i data-lucide="file-badge" aria-hidden="true"></i></span>
+                                        <span><strong>Declarações</strong><small>Residência, renda, posse e autenticidade</small></span>
+                                    </button>
+                                    <button type="button" class="category-favorite-button" data-category-favorite="declarations" aria-label="Favoritar Declarações"><i data-lucide="star" aria-hidden="true"></i></button>
+                                </article>
+                                <article class="premium-category-card">
+                                    <button type="button" class="premium-card-main" data-document-search-shortcut="Requerimento">
+                                        <span class="premium-card-icon"><i data-lucide="clipboard-list" aria-hidden="true"></i></span>
+                                        <span><strong>Requerimentos</strong><small>Modelos operacionais para rotina diária</small></span>
+                                    </button>
+                                    <button type="button" class="category-favorite-button" data-category-favorite="requirements" aria-label="Favoritar Requerimentos"><i data-lucide="star" aria-hidden="true"></i></button>
+                                </article>
+                            </div>
+                        </section>
 
-                    <div id="planActions" class="plan-actions is-hidden home-hero-actions" aria-label="Ações do plano">
-                        <button type="button" id="renewPlanButton" class="secondary-button">
-                            <i data-lucide="refresh-cw" aria-hidden="true"></i>
-                            <span>Renovar</span>
-                        </button>
-                        <button type="button" id="changePlanButton">
-                            <i data-lucide="sparkles" aria-hidden="true"></i>
-                            <span>Upgrade</span>
-                        </button>
-                    </div>
-                </section>
+                        <section class="premium-section home-quick-section" aria-labelledby="homeQuickTitle">
+                            <div class="document-section-heading compact-section-heading">
+                                <div>
+                                    <p class="document-home-kicker">Produtividade</p>
+                                    <h2 id="homeQuickTitle">Ações rápidas</h2>
+                                </div>
+                            </div>
+                            <div class="premium-action-grid">
+                                <button type="button" class="premium-action-card" data-home-action="documents">
+                                    <span class="premium-action-icon"><i data-lucide="plus" aria-hidden="true"></i></span>
+                                    <strong>Novo Documento</strong>
+                                    <small>Escolha um modelo e gere Word ou PDF.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-document-category-shortcut="contracts">
+                                    <span class="premium-action-icon"><i data-lucide="files" aria-hidden="true"></i></span>
+                                    <strong>Contratos</strong>
+                                    <small>Acesse contratos mais usados.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-document-category-shortcut="rural">
+                                    <span class="premium-action-icon"><i data-lucide="wheat" aria-hidden="true"></i></span>
+                                    <strong>Documentos Rurais</strong>
+                                    <small>Modelos para produtor rural.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-document-search-shortcut="INSS">
+                                    <span class="premium-action-icon"><i data-lucide="landmark" aria-hidden="true"></i></span>
+                                    <strong>INSS</strong>
+                                    <small>Filtre documentos previdenciários.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-document-category-shortcut="powers">
+                                    <span class="premium-action-icon"><i data-lucide="key-round" aria-hidden="true"></i></span>
+                                    <strong>Procurações</strong>
+                                    <small>Modelos particulares e de representação.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-document-search-shortcut="Consulta Pública">
+                                    <span class="premium-action-icon"><i data-lucide="search-check" aria-hidden="true"></i></span>
+                                    <strong>Consulta Pública</strong>
+                                    <small>Procure ferramentas e documentos de consulta.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-home-action="pdf">
+                                    <span class="premium-action-icon"><i data-lucide="file-type-2" aria-hidden="true"></i></span>
+                                    <strong>Ferramentas PDF</strong>
+                                    <small>Comprimir, juntar, OCR e organizar.</small>
+                                </button>
+                                <button type="button" class="premium-action-card" data-home-nav="favorites">
+                                    <span class="premium-action-icon"><i data-lucide="star" aria-hidden="true"></i></span>
+                                    <strong>Favoritos</strong>
+                                    <small>Abra seus modelos salvos.</small>
+                                </button>
+                            </div>
+                        </section>
 
-                <p id="accessStatusMessage" class="access-status" aria-live="polite"></p>
+                        <section class="premium-section dashboard-metrics-section" aria-labelledby="dashboardMetricsTitle">
+                            <div class="document-section-heading compact-section-heading">
+                                <div>
+                                    <p class="document-home-kicker">Performance</p>
+                                    <h2 id="dashboardMetricsTitle">Métricas úteis</h2>
+                                </div>
+                            </div>
+                            <div class="premium-metrics-grid">
+                                <article class="premium-metric-card">
+                                    <span class="premium-metric-icon"><i data-lucide="file-check-2" aria-hidden="true"></i></span>
+                                    <div><strong id="homeGeneratedTodayCount">0</strong><span>Documentos Gerados Hoje</span></div>
+                                </article>
+                                <article class="premium-metric-card">
+                                    <span class="premium-metric-icon"><i data-lucide="trending-up" aria-hidden="true"></i></span>
+                                    <div><strong id="homeGeneratedMonthCount">0</strong><span>Documentos Gerados Este Mês</span></div>
+                                </article>
+                                <article class="premium-metric-card">
+                                    <span class="premium-metric-icon"><i data-lucide="star" aria-hidden="true"></i></span>
+                                    <div><strong id="homeFavoriteCount">0</strong><span>Total de Favoritos</span></div>
+                                </article>
+                                <article class="premium-metric-card premium-metric-card-wide">
+                                    <span class="premium-metric-icon"><i data-lucide="flame" aria-hidden="true"></i></span>
+                                    <div><strong id="homeMostUsedDocument">Nenhum ainda</strong><span>Documento Mais Utilizado</span></div>
+                                </article>
+                                <span class="dashboard-hidden-counter" id="homeDocumentBalanceCount">0</span>
+                                <span class="dashboard-hidden-counter" id="homePdfBalanceCount">0</span>
+                                <span class="dashboard-hidden-counter" id="homeRecentCount">0</span>
+                            </div>
+                        </section>
 
-                <section class="home-quick-section" aria-labelledby="homeQuickTitle">
-                    <div class="document-section-heading compact-section-heading">
-                        <div>
-                            <p class="document-home-kicker">Acesso rápido</p>
-                            <h2 id="homeQuickTitle">Principais ações</h2>
-                        </div>
-                        <button type="button" class="section-link-button" data-home-action="documents">Ver biblioteca <i data-lucide="arrow-right" aria-hidden="true"></i></button>
-                    </div>
-                    <div class="home-action-grid">
-                        <button type="button" class="home-action-card home-action-documents" data-home-action="documents">
-                            <span class="home-action-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
-                            <span class="home-action-copy"><strong>Gerador de documentos</strong><span>Abra a área completa do sistema web</span></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="home-action-card home-action-pdf" data-home-action="pdf">
-                            <span class="home-action-icon"><i data-lucide="file-type-2" aria-hidden="true"></i></span>
-                            <span class="home-action-copy"><strong>Ferramentas PDF</strong><span>Comprimir, organizar, OCR, juntar e mais</span></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="home-action-card home-action-pix" data-home-action="billing">
-                            <span class="home-action-icon"><i data-lucide="badge-dollar-sign" aria-hidden="true"></i></span>
-                            <span class="home-action-copy"><strong>Renovar com Pix</strong><span>QR Code e copia-e-cola dentro do app</span></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="home-action-card home-action-apk" data-home-action="apk">
-                            <span class="home-action-icon"><i data-lucide="smartphone" aria-hidden="true"></i></span>
-                            <span class="home-action-copy"><strong>Atualização APK</strong><span>Baixe a versão Android mais recente</span></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </section>
+                        <section id="recentDocumentsSection" class="premium-section recent-documents home-recent-section" aria-labelledby="recentDocumentsTitle">
+                            <div class="document-section-heading compact-section-heading">
+                                <div>
+                                    <p class="document-home-kicker">Continue rápido</p>
+                                    <h2 id="recentDocumentsTitle">Documentos recentes</h2>
+                                </div>
+                                <button type="button" class="section-link-button" data-home-nav="recentes">Ver recentes <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                            </div>
+                            <div id="recentDocumentsList" class="dashboard-document-list home-recent-grid"></div>
+                        </section>
+                    </main>
 
-                <section class="home-summary-section" aria-labelledby="homeSummaryTitle">
-                    <div class="document-section-heading compact-section-heading">
-                        <div>
-                            <p class="document-home-kicker">Resumo</p>
-                            <h2 id="homeSummaryTitle">Saldo e atividade</h2>
-                        </div>
-                    </div>
-                    <div class="home-summary-grid">
-                        <article class="home-summary-card">
-                            <span class="home-summary-icon"><i data-lucide="folder-open" aria-hidden="true"></i></span>
-                            <div><span>Docs disponíveis</span><strong id="homeDocumentBalanceCount">0</strong><small>saldo/limite</small></div>
-                        </article>
-                        <article class="home-summary-card home-summary-card-pdf">
-                            <span class="home-summary-icon"><i data-lucide="file-type-2" aria-hidden="true"></i></span>
-                            <div><span>PDF disponíveis</span><strong id="homePdfBalanceCount">0</strong><small>saldo/limite</small></div>
-                        </article>
-                        <article class="home-summary-card home-summary-card-favorite">
-                            <span class="home-summary-icon"><i data-lucide="star" aria-hidden="true"></i></span>
-                            <div><span>Favoritos</span><strong id="homeFavoriteCount">0</strong><small>itens salvos</small></div>
-                        </article>
-                        <article class="home-summary-card home-summary-card-recent">
-                            <span class="home-summary-icon"><i data-lucide="clock-3" aria-hidden="true"></i></span>
-                            <div><span>Recentes</span><strong id="homeRecentCount">0</strong><small>documentos</small></div>
-                        </article>
-                    </div>
-                </section>
+                    <aside class="premium-dashboard-side">
+                        <section class="dashboard-side-panel activity-panel" aria-labelledby="dashboardActivityTitle">
+                            <div class="side-panel-heading">
+                                <div>
+                                    <p class="document-home-kicker">Timeline</p>
+                                    <h2 id="dashboardActivityTitle">Últimas Atividades</h2>
+                                </div>
+                                <i data-lucide="activity" aria-hidden="true"></i>
+                            </div>
+                            <div id="dashboardActivityList" class="dashboard-activity-list" aria-live="polite"></div>
+                        </section>
 
-                <section id="recentDocumentsSection" class="recent-documents home-recent-section" aria-labelledby="recentDocumentsTitle">
-                    <div class="document-section-heading compact-section-heading">
-                        <div>
-                            <p class="document-home-kicker">Continue de onde parou</p>
-                            <h2 id="recentDocumentsTitle">Documentos recentes</h2>
-                        </div>
-                        <button type="button" class="section-link-button" data-home-action="documents">Ver todos <i data-lucide="arrow-right" aria-hidden="true"></i></button>
-                    </div>
-                    <div id="recentDocumentsList" class="dashboard-document-list home-recent-grid"></div>
-                </section>
-
-                <section id="popularDocumentsSection" class="popular-documents home-popular-section" aria-labelledby="popularDocumentsTitle">
-                    <div class="document-section-heading compact-section-heading">
-                        <div>
-                            <p class="document-home-kicker">Biblioteca</p>
-                            <h2 id="popularDocumentsTitle">Documentos populares</h2>
-                        </div>
-                        <button type="button" class="section-link-button" data-home-action="documents">Biblioteca completa <i data-lucide="arrow-right" aria-hidden="true"></i></button>
-                    </div>
-                    <div class="popular-document-grid home-category-grid">
-                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="contracts">
-                            <span class="home-category-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
-                            <span><strong>Contratos</strong><small>Modelos de comodato, venda e parceria</small></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="declarations">
-                            <span class="home-category-icon"><i data-lucide="file-badge" aria-hidden="true"></i></span>
-                            <span><strong>Declarações</strong><small>Residência, renda, posse e atividade rural</small></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="powers">
-                            <span class="home-category-icon"><i data-lucide="key-round" aria-hidden="true"></i></span>
-                            <span><strong>Procurações</strong><small>Modelos prontos para representação</small></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="popular-document home-category-card" data-document-category-shortcut="tools">
-                            <span class="home-category-icon"><i data-lucide="settings" aria-hidden="true"></i></span>
-                            <span><strong>Ferramentas</strong><small>PDF, OCR e organização de arquivos</small></span>
-                            <i data-lucide="chevron-right" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </section>
+                        <section class="dashboard-side-panel changelog-panel" aria-labelledby="dashboardChangelogTitle">
+                            <div class="side-panel-heading">
+                                <div>
+                                    <p class="document-home-kicker">Atualizações</p>
+                                    <h2 id="dashboardChangelogTitle">Versão 4.2.0</h2>
+                                </div>
+                                <i data-lucide="rocket" aria-hidden="true"></i>
+                            </div>
+                            <ul class="dashboard-changelog-list">
+                                <li><i data-lucide="check" aria-hidden="true"></i><span>Novo modelo de CCIR</span></li>
+                                <li><i data-lucide="check" aria-hidden="true"></i><span>Melhorias no PDF</span></li>
+                                <li><i data-lucide="check" aria-hidden="true"></i><span>Correções de bugs</span></li>
+                                <li><i data-lucide="check" aria-hidden="true"></i><span>Melhor desempenho</span></li>
+                            </ul>
+                            <button type="button" class="section-link-button changelog-open-button" data-open-changelog>
+                                Ver Changelog Completo <i data-lucide="arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </section>
+                    </aside>
+                </div>
             </div>
+
+            <section id="recentesSection" class="dashboard-page-section is-hidden" data-home-section="recentes" aria-labelledby="recentesTitle">
+                <div class="document-section-heading">
+                    <div>
+                        <p class="document-home-kicker">Histórico de acesso</p>
+                        <h2 id="recentesTitle">Documentos recentes</h2>
+                    </div>
+                </div>
+                <div id="recentDocumentsListFull" class="dashboard-document-list dashboard-document-list-large"></div>
+            </section>
+
+            <section id="categoriesSection" class="dashboard-page-section is-hidden" data-home-section="categories" aria-labelledby="categoriesTitle">
+                <div class="document-section-heading">
+                    <div>
+                        <p class="document-home-kicker">Biblioteca organizada</p>
+                        <h2 id="categoriesTitle">Categorias</h2>
+                    </div>
+                </div>
+                <div class="premium-category-grid premium-category-grid-page">
+                    <article class="premium-category-card">
+                        <button type="button" class="premium-card-main" data-document-category-shortcut="contracts">
+                            <span class="premium-card-icon"><i data-lucide="file-text" aria-hidden="true"></i></span>
+                            <span><strong>Contratos</strong><small>Contratos rurais, previdenciários e compra e venda.</small></span>
+                        </button>
+                        <button type="button" class="category-favorite-button" data-category-favorite="contracts" aria-label="Favoritar Contratos"><i data-lucide="star" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="premium-category-card">
+                        <button type="button" class="premium-card-main" data-document-category-shortcut="rural">
+                            <span class="premium-card-icon"><i data-lucide="sprout" aria-hidden="true"></i></span>
+                            <span><strong>Documentos Rurais</strong><small>Autodeclaração, posse, produção e CAF.</small></span>
+                        </button>
+                        <button type="button" class="category-favorite-button" data-category-favorite="rural" aria-label="Favoritar Documentos Rurais"><i data-lucide="star" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="premium-category-card">
+                        <button type="button" class="premium-card-main" data-document-search-shortcut="INSS">
+                            <span class="premium-card-icon"><i data-lucide="landmark" aria-hidden="true"></i></span>
+                            <span><strong>INSS</strong><small>Contratos e autodeclarações previdenciárias.</small></span>
+                        </button>
+                        <button type="button" class="category-favorite-button" data-category-favorite="inss" aria-label="Favoritar INSS"><i data-lucide="star" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="premium-category-card">
+                        <button type="button" class="premium-card-main" data-document-category-shortcut="declarations">
+                            <span class="premium-card-icon"><i data-lucide="file-badge" aria-hidden="true"></i></span>
+                            <span><strong>Declarações</strong><small>Declarações pessoais, rurais e familiares.</small></span>
+                        </button>
+                        <button type="button" class="category-favorite-button" data-category-favorite="declarations" aria-label="Favoritar Declarações"><i data-lucide="star" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="premium-category-card">
+                        <button type="button" class="premium-card-main" data-document-search-shortcut="Requerimento">
+                            <span class="premium-card-icon"><i data-lucide="clipboard-list" aria-hidden="true"></i></span>
+                            <span><strong>Requerimentos</strong><small>Pesquise requerimentos disponíveis na biblioteca.</small></span>
+                        </button>
+                        <button type="button" class="category-favorite-button" data-category-favorite="requirements" aria-label="Favoritar Requerimentos"><i data-lucide="star" aria-hidden="true"></i></button>
+                    </article>
+                </div>
+            </section>
+
 
             <section id="favoritesSection" class="dashboard-page-section is-hidden" data-home-section="favorites" aria-labelledby="favoritesTitle">
                 <div class="document-section-heading">
@@ -275,6 +452,7 @@
                         <h2 id="favoritesTitle">Seus favoritos</h2>
                     </div>
                 </div>
+                <div id="favoriteCategoriesList" class="dashboard-category-favorites"></div>
                 <div id="favoriteDocumentsList" class="dashboard-document-list dashboard-document-list-large"></div>
             </section>
 
@@ -1734,7 +1912,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
-    <script src="script.js?v=85"></script>
+    <script src="script.js?v=86"></script>
     <script src="pdf-preview.js?v=6"></script>
 </body>
 </html>
