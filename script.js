@@ -3747,10 +3747,26 @@ function configurarTelaInicialDocumentos() {
         inicializarIcones();
     });
 
-    document.addEventListener("click", (event) => {
-        if (!event.target.closest(".app-shell-search")) {
-            esconderSugestoesBuscaDashboard();
+    const fecharSugestoesBuscaAoSair = (event) => {
+        const alvo = event.target;
+
+        if (alvo instanceof Element && alvo.closest(".app-shell-search")) {
+            return;
         }
+
+        esconderSugestoesBuscaDashboard();
+        documentSearch?.blur();
+    };
+
+    document.addEventListener("pointerdown", fecharSugestoesBuscaAoSair, true);
+    document.addEventListener("click", fecharSugestoesBuscaAoSair, true);
+    window.addEventListener("scroll", esconderSugestoesBuscaDashboard, true);
+    documentSearch.addEventListener("blur", () => {
+        window.setTimeout(() => {
+            if (!document.activeElement?.closest?.(".app-shell-search")) {
+                esconderSugestoesBuscaDashboard();
+            }
+        }, 120);
     });
 
     document.addEventListener("keydown", (event) => {

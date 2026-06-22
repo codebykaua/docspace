@@ -10510,3 +10510,25 @@ body.system-dark-theme .category-favorite-button {
 .category-favorite-button {
     z-index: 3;
 }
+/* === DOCSPACE DASHBOARD SEARCH CLOSE + CENTERED TOGGLE FIXES === */
+.dashboard-sidebar-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    text-align: center;
+    line-height: 1;
+}
+
+.dashboard-sidebar-toggle i,
+.dashboard-sidebar-toggle svg {
+    display: block !important;
+    flex: 0 0 auto;
+    margin: auto !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.dashboard-search-suggestions.is-hidden {
+    display: none !important;
+}
