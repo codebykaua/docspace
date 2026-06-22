@@ -3743,7 +3743,7 @@ function configurarTelaInicialDocumentos() {
         sidebarToggle.setAttribute("aria-pressed", String(collapsed));
         sidebarToggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Recolher menu");
         const icon = sidebarToggle.querySelector("i");
-        icon?.setAttribute("data-lucide", collapsed ? "panel-left-open" : "panel-left-close");
+        icon?.setAttribute("data-lucide", collapsed ? "chevrons-right" : "chevrons-left");
         inicializarIcones();
     });
 
