@@ -288,6 +288,7 @@ let documentoSimplesAtual = null;
 let usuarioAtual = null;
 let usuarioAtualEhAdmin = false;
 let adminUsersCache = {};
+let adminSupportMessagesCache = [];
 let pagamentoPlanoSelecionado = "";
 let pagamentoModoAtual = "";
 let pagamentoAtualId = "";
@@ -5295,7 +5296,479 @@ function configurarFormularioDocumentoSimples() {
     });
 }
 
+function configurarDashboardAdminVisual() {
+    if (!adminView || adminView.dataset.adminDashboardConfigured === "yes") {
+        return;
+    }
+
+    adminView.dataset.adminDashboardConfigured = "yes";
+    adminView.classList.add("admin-dashboard-view");
+    configurarNavegacaoInternaAdmin();
+    configurarPaineisAdmin();
+    organizarFormularioAdminPorEtapas();
+    configurarFiltrosUsuariosAdmin();
+    configurarPreviaApkAdmin();
+    atualizarEstadoCamposDependentesAdmin();
+}
+
+function configurarNavegacaoInternaAdmin() {
+    const intro = adminView.querySelector(".intro");
+
+    if (!intro || adminView.querySelector(".admin-section-nav")) {
+        return;
+    }
+
+    const nav = document.createElement("nav");
+    nav.className = "admin-section-nav";
+    nav.setAttribute("aria-label", "Seções administrativas");
+    nav.innerHTML = `
+        <button type="button" class="is-active" data-admin-section-link="users"><i data-lucide="users" aria-hidden="true"></i><span>Usuários</span></button>
+        <button type="button" data-admin-section-link="create"><i data-lucide="user-plus" aria-hidden="true"></i><span>Criar acesso</span></button>
+        <button type="button" data-admin-section-link="app"><i data-lucide="smartphone" aria-hidden="true"></i><span>Atualização</span></button>
+        <button type="button" data-admin-section-link="history"><i data-lucide="history" aria-hidden="true"></i><span>Histórico</span></button>
+        <button type="button" data-admin-section-link="support"><i data-lucide="messages-square" aria-hidden="true"></i><span>Atendimento</span></button>
+    `;
+    intro.insertAdjacentElement("afterend", nav);
+    nav.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-admin-section-link]");
+
+        if (!button) {
+            return;
+        }
+
+        const section = button.dataset.adminSectionLink || "users";
+
+        if (section === "create" && !adminEditingUid.value) {
+            limparFormularioAdmin();
+        }
+
+        mostrarSecaoAdmin(section);
+    });
+}
+
+function configurarPaineisAdmin() {
+    const layout = adminView.querySelector(".admin-layout");
+    const usersPanel = adminUsersList?.closest(".admin-users-panel");
+    const appPanel = adminApkUploadForm?.closest(".admin-app-release-panel");
+    const supportPanel = adminSupportList?.closest(".admin-support-panel");
+
+    adminAccessForm?.setAttribute("data-admin-section", "create");
+    usersPanel?.setAttribute("data-admin-section", "users");
+    appPanel?.setAttribute("data-admin-section", "app");
+    adminHistoryPanel?.setAttribute("data-admin-section", "history");
+    supportPanel?.setAttribute("data-admin-section", "support");
+
+    [adminAccessForm, usersPanel, appPanel, adminHistoryPanel, supportPanel]
+        .filter(Boolean)
+        .forEach((panel) => panel.classList.add("admin-section-panel"));
+
+    if (layout && usersPanel && layout.firstElementChild !== usersPanel) {
+        layout.prepend(usersPanel);
+    }
+
+    mostrarSecaoAdmin("users");
+}
+
+function mostrarSecaoAdmin(section = "users") {
+    adminView.dataset.activeAdminSection = section;
+
+    adminView.querySelectorAll("[data-admin-section]").forEach((panel) => {
+        const active = panel.dataset.adminSection === section;
+        panel.classList.toggle("admin-section-active", active);
+        panel.classList.toggle("is-hidden", !active);
+        panel.setAttribute("aria-hidden", String(!active));
+    });
+
+    adminView.querySelectorAll("[data-admin-section-link]").forEach((button) => {
+        const active = button.dataset.adminSectionLink === section;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-current", active ? "page" : "false");
+    });
+
+    inicializarIcones();
+}
+
+function organizarFormularioAdminPorEtapas() {
+    const grid = adminAccessForm?.querySelector(".grid");
+
+    if (!grid || grid.dataset.adminStepsReady === "yes") {
+        return;
+    }
+
+    grid.dataset.adminStepsReady = "yes";
+    const title = grid.querySelector(".section-title");
+    const formHeader = document.createElement("div");
+    formHeader.className = "admin-form-heading";
+    formHeader.innerHTML = `
+        <div>
+            <p class="eyebrow">Acesso</p>
+            <h2 class="section-title" data-admin-form-heading-title>${title?.textContent || "Criar novo login"}</h2>
+            <p>Configure conta, plano, limites, permissões e documentos liberados sem alterar os nomes enviados ao backend.</p>
+        </div>
+        <button type="button" class="secondary-button" data-admin-form-cancel>Cancelar edição</button>
+    `;
+    title?.remove();
+    grid.before(formHeader);
+    formHeader.querySelector("[data-admin-form-cancel]")?.addEventListener("click", () => {
+        limparFormularioAdmin();
+        mostrarSecaoAdmin("users");
+    });
+
+    const groupConfigs = [
+        {
+            title: "1. Dados da conta",
+            subtitle: "Nome, e-mail, senha inicial e status do acesso.",
+            className: "admin-step-account",
+            items: ["adminUserName", "adminUserEmail", "adminUserPassword", "adminUserStatus"],
+        },
+        {
+            title: "2. Plano",
+            subtitle: "Plano, validade e renovação diária dos documentos.",
+            className: "admin-step-plan",
+            items: ["adminUserPlan", "adminUserDailyDocumentLimit", "adminUserDailyQuotaRenewal"],
+        },
+        {
+            title: "3. Limites de documentos",
+            subtitle: "Ajuste saldo individual apenas depois que o usuário existir.",
+            className: "admin-step-documents-limit",
+            items: ["adminUserQuotaDocument", "adminUserQuotaAddAmount", "adminUserQuotaSummary"],
+            note: "Após criar o usuário, será possível ajustar o saldo individual deste documento.",
+        },
+        {
+            title: "4. Ferramentas PDF",
+            subtitle: "Liberação, limite diário e saldo das ferramentas PDF.",
+            className: "admin-step-pdf",
+            items: ["adminUserPdfTools", "adminUserPdfToolDailyLimit", "adminUserPdfToolQuotaRenewal", "adminUserPdfToolOperation", "adminUserPdfToolQuotaAmount", "adminUserPdfToolQuotaSummary"],
+            note: "Após criar o usuário, será possível ajustar o saldo individual das ferramentas PDF.",
+        },
+        {
+            title: "5. Permissões e aparência",
+            subtitle: "Selo verificado, Liquid Glass e permissões visuais.",
+            className: "admin-step-permissions",
+            items: ["adminUserVerified", "adminUserLiquidGlass"],
+        },
+        {
+            title: "6. Documentos liberados",
+            subtitle: "Controle visual dos documentos sem alterar as chaves usadas pelo backend.",
+            className: "admin-step-document-access",
+            items: ["adminDocumentAccessList"],
+        },
+        {
+            title: "7. Observações e resumo",
+            subtitle: "Notas internas antes de criar ou salvar.",
+            className: "admin-step-notes",
+            items: ["adminUserNotes"],
+        },
+    ];
+
+    const groups = groupConfigs.map((config) => {
+        const group = document.createElement("section");
+        group.className = `admin-form-step ${config.className}`;
+        group.innerHTML = `
+            <div class="admin-form-step-heading">
+                <h3>${config.title}</h3>
+                <p>${config.subtitle}</p>
+            </div>
+            <div class="admin-form-step-grid"></div>
+        `;
+        if (config.note) {
+            const note = document.createElement("p");
+            note.className = "admin-dependent-note";
+            note.textContent = config.note;
+            group.appendChild(note);
+        }
+        grid.appendChild(group);
+        return { config, grid: group.querySelector(".admin-form-step-grid") };
+    });
+
+    const fieldById = (id) => {
+        const element = document.getElementById(id);
+
+        if (!element) {
+            return null;
+        }
+
+        if (id === "adminUserQuotaSummary" || id === "adminUserPdfToolQuotaSummary") {
+            return element;
+        }
+
+        if (id === "adminDocumentAccessList") {
+            return element.closest(".admin-document-access");
+        }
+
+        return element.closest(".field") || element;
+    };
+
+    groups.forEach(({ config, grid: stepGrid }) => {
+        config.items
+            .map(fieldById)
+            .filter(Boolean)
+            .forEach((field) => stepGrid.appendChild(field));
+    });
+
+    configurarControlesDocumentosLiberadosAdmin();
+}
+
+function configurarControlesDocumentosLiberadosAdmin() {
+    const fieldset = adminDocumentAccessList?.closest(".admin-document-access");
+
+    if (!fieldset || fieldset.querySelector(".admin-document-toolbar")) {
+        return;
+    }
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "admin-document-toolbar";
+    toolbar.innerHTML = `
+        <label class="admin-document-search">
+            <span class="sr-only">Pesquisar documentos liberados</span>
+            <i data-lucide="search" aria-hidden="true"></i>
+            <input id="adminDocumentSearch" type="search" placeholder="Pesquisar documento...">
+        </label>
+        <span id="adminDocumentSelectedCount" class="admin-document-selected-count">0 selecionados</span>
+        <button type="button" class="secondary-button" data-admin-documents-select-all>Selecionar todos</button>
+        <button type="button" class="secondary-button" data-admin-documents-clear>Limpar seleção</button>
+    `;
+    adminDocumentAccessList.before(toolbar);
+
+    toolbar.querySelector("#adminDocumentSearch")?.addEventListener("input", atualizarFiltroDocumentosAdmin);
+    toolbar.querySelector("[data-admin-documents-select-all]")?.addEventListener("click", () => {
+        adminAllowAllDocuments.checked = false;
+        adminDocumentAccessList.querySelectorAll("[data-admin-document-access]").forEach((checkbox) => {
+            checkbox.disabled = false;
+            checkbox.checked = true;
+        });
+        atualizarContadorDocumentosAdmin();
+    });
+    toolbar.querySelector("[data-admin-documents-clear]")?.addEventListener("click", () => {
+        adminAllowAllDocuments.checked = false;
+        adminDocumentAccessList.querySelectorAll("[data-admin-document-access]").forEach((checkbox) => {
+            checkbox.disabled = false;
+            checkbox.checked = false;
+        });
+        atualizarContadorDocumentosAdmin();
+    });
+    adminDocumentAccessList.addEventListener("change", atualizarContadorDocumentosAdmin);
+    adminAllowAllDocuments?.addEventListener("change", atualizarContadorDocumentosAdmin);
+    atualizarContadorDocumentosAdmin();
+}
+
+function atualizarFiltroDocumentosAdmin() {
+    const search = normalizarTextoBusca(document.getElementById("adminDocumentSearch")?.value || "");
+
+    adminDocumentAccessList?.querySelectorAll(".admin-document-access-option").forEach((label) => {
+        label.classList.toggle("is-filtered-out", search && !normalizarTextoBusca(label.textContent).includes(search));
+    });
+}
+
+function atualizarContadorDocumentosAdmin() {
+    const counter = document.getElementById("adminDocumentSelectedCount");
+
+    if (!counter || !adminDocumentAccessList) {
+        return;
+    }
+
+    const total = adminDocumentAccessList.querySelectorAll("[data-admin-document-access]").length;
+    const checked = adminAllowAllDocuments?.checked
+        ? total
+        : adminDocumentAccessList.querySelectorAll("[data-admin-document-access]:checked").length;
+    counter.textContent = `${checked} de ${total} selecionados`;
+}
+
+function atualizarEstadoCamposDependentesAdmin() {
+    const editando = Boolean(adminEditingUid?.value);
+    const campos = [
+        adminUserQuotaDocument,
+        adminUserQuotaAddAmount,
+        adminAddQuotaNowButton,
+        adminSubtractQuotaNowButton,
+        adminUserPdfToolOperation,
+        adminUserPdfToolQuotaAmount,
+        adminAddPdfToolQuotaButton,
+        adminSubtractPdfToolQuotaButton,
+    ].filter(Boolean);
+
+    campos.forEach((campo) => {
+        campo.disabled = !editando;
+        campo.classList.toggle("is-disabled-by-create", !editando);
+    });
+
+    adminAccessForm?.classList.toggle("is-editing-user", editando);
+    adminAccessForm?.classList.toggle("is-creating-user", !editando);
+}
+
+function atualizarTituloFormularioAdmin(texto) {
+    const headingTitle = adminAccessForm?.querySelector("[data-admin-form-heading-title]");
+
+    if (headingTitle) {
+        headingTitle.textContent = texto;
+    }
+}
+
+function configurarFiltrosUsuariosAdmin() {
+    const panel = adminUsersList?.closest(".admin-users-panel");
+    const header = panel?.querySelector(".admin-users-header");
+
+    if (!panel || !header || panel.querySelector(".admin-users-toolbar")) {
+        return;
+    }
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "admin-users-toolbar";
+    toolbar.innerHTML = `
+        <div class="admin-users-stat-grid" aria-label="Resumo dos usuários">
+            <article><span>Total</span><strong id="adminUsersTotalCount">0</strong></article>
+            <article><span>Ativos</span><strong id="adminUsersActiveCount">0</strong></article>
+            <article><span>Bloqueados/vencidos</span><strong id="adminUsersBlockedCount">0</strong></article>
+        </div>
+        <div class="admin-users-filters">
+            <label class="admin-search-input">
+                <span class="sr-only">Buscar usuários</span>
+                <i data-lucide="search" aria-hidden="true"></i>
+                <input id="adminUsersSearch" type="search" placeholder="Buscar por nome ou e-mail...">
+            </label>
+            <label>
+                <span>Status</span>
+                <select id="adminUsersStatusFilter">
+                    <option value="all">Todos</option>
+                    <option value="active">Ativos</option>
+                    <option value="blocked">Bloqueados</option>
+                    <option value="expired">Vencidos</option>
+                </select>
+            </label>
+            <label>
+                <span>Plano</span>
+                <select id="adminUsersPlanFilter">
+                    <option value="all">Todos os planos</option>
+                </select>
+            </label>
+            <label>
+                <span>Vencimento</span>
+                <select id="adminUsersExpirationFilter">
+                    <option value="all">Qualquer vencimento</option>
+                    <option value="expired">Vencidos</option>
+                    <option value="7">Até 7 dias</option>
+                    <option value="30">Até 30 dias</option>
+                </select>
+            </label>
+            <button type="button" id="adminCreateAccessButton" class="admin-primary-button"><i data-lucide="user-plus" aria-hidden="true"></i><span>Criar novo acesso</span></button>
+        </div>
+    `;
+    header.insertAdjacentElement("afterend", toolbar);
+
+    const planFilter = toolbar.querySelector("#adminUsersPlanFilter");
+    Object.entries(ACCESS_PLANS).forEach(([planId, plan]) => {
+        const option = document.createElement("option");
+        option.value = planId;
+        option.textContent = plan.label;
+        planFilter.appendChild(option);
+    });
+
+    toolbar.querySelectorAll("input, select").forEach((control) => {
+        control.addEventListener("input", () => renderizarUsuariosAdmin(Object.values(adminUsersCache)));
+        control.addEventListener("change", () => renderizarUsuariosAdmin(Object.values(adminUsersCache)));
+    });
+    toolbar.querySelector("#adminCreateAccessButton")?.addEventListener("click", () => {
+        limparFormularioAdmin();
+        mostrarSecaoAdmin("create");
+        adminUserName?.focus({ preventScroll: true });
+    });
+}
+
+function obterFiltrosUsuariosAdmin() {
+    return {
+        search: normalizarTextoBusca(document.getElementById("adminUsersSearch")?.value || ""),
+        status: document.getElementById("adminUsersStatusFilter")?.value || "all",
+        plan: document.getElementById("adminUsersPlanFilter")?.value || "all",
+        expiration: document.getElementById("adminUsersExpirationFilter")?.value || "all",
+    };
+}
+
+function usuarioPassaFiltrosAdmin(usuario, filtros) {
+    const status = obterStatusVisual(usuario).status;
+    const plan = normalizePlanId(usuario.plan);
+    const searchBase = normalizarTextoBusca(`${usuario.name || ""} ${usuario.email || ""}`);
+
+    if (filtros.search && !searchBase.includes(filtros.search)) {
+        return false;
+    }
+
+    if (filtros.status !== "all" && status !== filtros.status) {
+        return false;
+    }
+
+    if (filtros.plan !== "all" && plan !== filtros.plan) {
+        return false;
+    }
+
+    if (filtros.expiration !== "all") {
+        const expiresAt = new Date(usuario.expiresAt || "").getTime();
+        const now = Date.now();
+
+        if (filtros.expiration === "expired") {
+            return !expiresAt || expiresAt <= now;
+        }
+
+        const days = Number(filtros.expiration);
+        return Number.isFinite(expiresAt) && expiresAt > now && expiresAt <= now + days * 24 * 60 * 60 * 1000;
+    }
+
+    return true;
+}
+
+function atualizarResumoUsuariosAdmin(usuarios) {
+    const total = usuarios.length;
+    const active = usuarios.filter((usuario) => obterStatusVisual(usuario).status === "active").length;
+    const blockedOrExpired = usuarios.filter((usuario) => ["blocked", "expired"].includes(obterStatusVisual(usuario).status)).length;
+
+    definirTextoElemento(document.getElementById("adminUsersTotalCount"), total);
+    definirTextoElemento(document.getElementById("adminUsersActiveCount"), active);
+    definirTextoElemento(document.getElementById("adminUsersBlockedCount"), blockedOrExpired);
+}
+
+function configurarPreviaApkAdmin() {
+    if (!adminApkUploadForm || document.getElementById("adminApkPreview")) {
+        return;
+    }
+
+    const preview = document.createElement("article");
+    preview.id = "adminApkPreview";
+    preview.className = "admin-apk-preview";
+    adminApkCurrent?.before(preview);
+
+    const updatePreview = () => {
+        const version = adminApkVersion?.value.trim() || "Versão não informada";
+        const url = adminApkDownloadUrl?.value.trim() || "Link HTTPS pendente";
+        const message = adminApkNotes?.value.trim() || "A mensagem para usuários aparecerá aqui.";
+        preview.innerHTML = `
+            <div class="admin-apk-preview-heading">
+                <span class="status-pill status-pill-active">Prévia</span>
+                <strong>${escaparHtmlSeguro(version)}</strong>
+            </div>
+            <p>${escaparHtmlSeguro(message)}</p>
+            <small>${escaparHtmlSeguro(url)}</small>
+        `;
+    };
+
+    [adminApkVersion, adminApkDownloadUrl, adminApkNotes].filter(Boolean).forEach((input) => {
+        input.addEventListener("input", updatePreview);
+    });
+    updatePreview();
+}
+
+function confirmarAcaoAdmin(action, usuario) {
+    const nome = usuario?.name || usuario?.email || "este acesso";
+    const mensagens = {
+        block: `Tem certeza de que deseja bloquear ${nome}? O login perderá acesso ao sistema até ser liberado.`,
+        unblock: `Liberar novamente o acesso de ${nome}?`,
+        renewCurrent: `Renovar o plano atual de ${nome}?`,
+    };
+
+    return window.confirm(mensagens[action] || "Confirmar esta ação?");
+}
+
+
 function configurarPainelAdmin() {
+    configurarDashboardAdminVisual();
     adminAccessForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         limparMensagemAdmin();
@@ -5348,6 +5821,32 @@ function configurarPainelAdmin() {
             return;
         }
 
+        const conversationButton = event.target.closest("[data-support-open]");
+
+        if (conversationButton) {
+            selecionarConversaAtendimentoAdmin(conversationButton.dataset.supportOpen);
+            return;
+        }
+
+        const sendButton = event.target.closest("[data-support-send]");
+
+        if (sendButton) {
+            const composer = adminSupportList.querySelector("[data-support-reply-input]");
+            const message = composer?.value.trim() || "";
+
+            if (message) {
+                sendButton.disabled = true;
+
+                try {
+                    await enviarRespostaAdmin(sendButton.dataset.supportSend, sendButton.dataset.customerName, message);
+                } finally {
+                    sendButton.disabled = false;
+                }
+            }
+
+            return;
+        }
+
         const replyButton = event.target.closest("[data-support-reply]");
 
         if (replyButton) {
@@ -5373,6 +5872,12 @@ function configurarPainelAdmin() {
 
         if (actionButton.dataset.adminAction === "history") {
             await carregarHistoricoUsuarioAdmin(actionButton.dataset.uid);
+            return;
+        }
+
+        const usuarioAcaoAdmin = adminUsersCache[actionButton.dataset.uid];
+
+        if (["block", "unblock", "renewCurrent"].includes(actionButton.dataset.adminAction) && !confirmarAcaoAdmin(actionButton.dataset.adminAction, usuarioAcaoAdmin)) {
             return;
         }
 
@@ -5699,10 +6204,10 @@ async function carregarHistoricoUsuarioAdmin(uid) {
         return;
     }
 
+    mostrarSecaoAdmin("history");
     adminHistoryPanel.classList.remove("is-hidden");
     adminHistoryTitle.textContent = `Histórico de ${usuario?.name || "usuário"}`;
     adminHistoryList.innerHTML = '<div class="empty-state">Carregando histórico...</div>';
-    adminHistoryPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 
     try {
         const data = await apiRequest(`/api/admin/users/${uid}/history`);
@@ -5717,6 +6222,10 @@ function fecharHistoricoUsuarioAdmin() {
     adminHistoryPanel?.classList.add("is-hidden");
     if (adminHistoryList) {
         adminHistoryList.textContent = "";
+    }
+
+    if (adminView?.dataset.activeAdminSection === "history") {
+        mostrarSecaoAdmin("users");
     }
 }
 
@@ -7023,6 +7532,7 @@ function abrirPainelAdmin() {
 
     limparMensagemAdmin();
     mostrarTela("admin");
+    mostrarSecaoAdmin("users");
     carregarUsuariosAdmin();
     carregarAtendimentosAdmin();
     carregarAppReleaseAdmin();
@@ -7254,49 +7764,118 @@ function alternarApkAdminCarregamento(carregando) {
 }
 
 function renderizarAtendimentosAdmin(messages) {
-    if (!messages.length) {
+    adminSupportMessagesCache = Array.isArray(messages) ? messages : [];
+
+    if (!adminSupportMessagesCache.length) {
         adminSupportList.innerHTML = '<div class="empty-state">Nenhuma mensagem ou comprovante recebido.</div>';
         return;
     }
 
-    const conversations = messages.reduce((groups, item) => {
+    const conversations = adminSupportMessagesCache.reduce((groups, item) => {
         const email = item.customerEmail || "sem-email";
         groups[email] ||= [];
         groups[email].push(item);
         return groups;
     }, {});
+    const orderedConversations = Object.entries(conversations).sort(([, itemsA], [, itemsB]) => {
+        const dateA = new Date(itemsA[0]?.createdAt || 0).getTime();
+        const dateB = new Date(itemsB[0]?.createdAt || 0).getTime();
+        return dateB - dateA;
+    });
+    const selectedEmail = adminSupportList.dataset.selectedSupportEmail && conversations[adminSupportList.dataset.selectedSupportEmail]
+        ? adminSupportList.dataset.selectedSupportEmail
+        : orderedConversations[0]?.[0];
+    adminSupportList.dataset.selectedSupportEmail = selectedEmail;
 
-    adminSupportList.innerHTML = Object.entries(conversations).map(([email, items]) => {
-        const latest = items[0];
+    const listHtml = orderedConversations.map(([email, items]) => {
+        const latest = items[0] || {};
         const customerName = latest.customerName || "Cliente";
-        const messagesHtml = items.map((item) => `
-            <article class="admin-support-message ${item.senderType === "admin" ? "is-admin" : "is-customer"}">
-                <div class="admin-support-message-heading">
-                    <strong>${item.senderType === "admin" ? "Administrador" : "Cliente"}</strong>
-                    <time>${formatarDataHora(item.createdAt)}</time>
-                </div>
-                ${item.category === "payment_proof" ? `<span class="support-category-pill">Comprovante: ${escaparHtmlSeguro(obterNomePlanoPorId(item.plan))}</span>` : ""}
-                ${item.message ? `<p>${escaparHtmlSeguro(item.message)}</p>` : ""}
-                ${item.attachmentName ? `<button type="button" class="secondary-button support-download-button" data-support-download="${escaparHtmlSeguro(item.id)}" data-attachment-name="${escaparHtmlSeguro(item.attachmentName)}"><i data-lucide="download" aria-hidden="true"></i><span>${escaparHtmlSeguro(item.attachmentName)}</span></button>` : ""}
-            </article>
-        `).join("");
-
+        const unreadCount = items.filter((item) => item.senderType !== "admin").length;
         return `
-            <details class="admin-support-conversation">
-                <summary>
-                    <span class="admin-support-avatar"><i data-lucide="user-round" aria-hidden="true"></i></span>
-                    <span><strong>${escaparHtmlSeguro(customerName)}</strong><small>${escaparHtmlSeguro(email)}</small></span>
-                    <span class="admin-support-count">${items.length}</span>
-                </summary>
-                <div class="admin-support-thread">
-                    ${messagesHtml}
-                    <button type="button" class="secondary-button admin-support-reply" data-support-reply="${escaparHtmlSeguro(email)}" data-customer-name="${escaparHtmlSeguro(customerName)}"><i data-lucide="reply" aria-hidden="true"></i><span>Responder</span></button>
-                </div>
-            </details>
+            <button type="button" class="admin-support-chat-item ${email === selectedEmail ? "is-active" : ""}" data-support-open="${escaparHtmlSeguro(email)}">
+                <span class="admin-support-avatar"><i data-lucide="user-round" aria-hidden="true"></i></span>
+                <span class="admin-support-chat-copy">
+                    <strong>${escaparHtmlSeguro(customerName)}</strong>
+                    <small>${escaparHtmlSeguro(email)}</small>
+                    <em>${escaparHtmlSeguro(latest.message || latest.attachmentName || "Sem mensagem de texto")}</em>
+                </span>
+                <span class="admin-support-chat-meta">
+                    <time>${formatarDataHora(latest.createdAt)}</time>
+                    ${unreadCount ? `<b>${unreadCount}</b>` : ""}
+                </span>
+            </button>
         `;
     }).join("");
+
+    const selectedItems = conversations[selectedEmail] || [];
+    const latest = selectedItems[0] || {};
+    const customerName = latest.customerName || "Cliente";
+    const messagesHtml = [...selectedItems].reverse().map((item) => `
+        <article class="admin-support-message ${item.senderType === "admin" ? "is-admin" : "is-customer"}">
+            <div class="admin-support-message-heading">
+                <strong>${item.senderType === "admin" ? "Administrador" : "Cliente"}</strong>
+                <time>${formatarDataHora(item.createdAt)}</time>
+            </div>
+            ${item.category === "payment_proof" ? `<span class="support-category-pill">Comprovante: ${escaparHtmlSeguro(obterNomePlanoPorId(item.plan))}</span>` : ""}
+            ${item.message ? `<p>${escaparHtmlSeguro(item.message)}</p>` : ""}
+            ${item.attachmentName ? `<button type="button" class="secondary-button support-download-button" data-support-download="${escaparHtmlSeguro(item.id)}" data-attachment-name="${escaparHtmlSeguro(item.attachmentName)}"><i data-lucide="download" aria-hidden="true"></i><span>${escaparHtmlSeguro(item.attachmentName)}</span></button>` : ""}
+        </article>
+    `).join("");
+
+    adminSupportList.innerHTML = `
+        <div class="admin-support-dashboard">
+            <aside class="admin-support-sidebar" aria-label="Conversas">
+                <label class="admin-search-input admin-support-search">
+                    <span class="sr-only">Pesquisar conversa</span>
+                    <i data-lucide="search" aria-hidden="true"></i>
+                    <input type="search" placeholder="Pesquisar conversa..." data-support-search>
+                </label>
+                <div class="admin-support-chat-list">
+                    ${listHtml}
+                </div>
+            </aside>
+            <section class="admin-support-chat" aria-label="Conversa selecionada">
+                <header class="admin-support-chat-header">
+                    <span class="admin-support-avatar"><i data-lucide="user-round" aria-hidden="true"></i></span>
+                    <div>
+                        <strong>${escaparHtmlSeguro(customerName)}</strong>
+                        <small>${escaparHtmlSeguro(selectedEmail || "sem-email")}</small>
+                    </div>
+                    <span class="admin-support-count">${selectedItems.length} mensagens</span>
+                </header>
+                <div class="admin-support-thread">
+                    ${messagesHtml || '<div class="empty-state">Conversa sem mensagens.</div>'}
+                </div>
+                <div class="admin-support-composer">
+                    <label class="field">
+                        <span>Responder</span>
+                        <textarea rows="3" placeholder="Digite a resposta ao cliente..." data-support-reply-input></textarea>
+                    </label>
+                    <button type="button" class="admin-primary-button" data-support-send="${escaparHtmlSeguro(selectedEmail || "")}" data-customer-name="${escaparHtmlSeguro(customerName)}">
+                        <i data-lucide="send" aria-hidden="true"></i>
+                        <span>Enviar</span>
+                    </button>
+                </div>
+            </section>
+        </div>
+    `;
+
+    const searchInput = adminSupportList.querySelector("[data-support-search]");
+    searchInput?.addEventListener("input", () => {
+        const search = normalizarTextoBusca(searchInput.value);
+        adminSupportList.querySelectorAll("[data-support-open]").forEach((button) => {
+            button.classList.toggle("is-hidden", search && !normalizarTextoBusca(button.textContent).includes(search));
+        });
+    });
     inicializarIcones();
 }
+
+function selecionarConversaAtendimentoAdmin(email) {
+    adminSupportList.dataset.selectedSupportEmail = email;
+    renderizarAtendimentosAdmin(adminSupportMessagesCache);
+}
+
+
 
 async function enviarRespostaAdmin(email, name, message) {
     try {
@@ -7333,24 +7912,56 @@ async function baixarAnexoAtendimento(id, filename) {
 }
 
 function renderizarUsuariosAdmin(usuarios) {
-    const entradas = usuarios
+    const listaUsuarios = Array.isArray(usuarios) ? usuarios : [];
+    const entradas = listaUsuarios
         .map((usuario) => [usuario.id, usuario])
         .sort(([, a], [, b]) => String(a.email || "").localeCompare(String(b.email || "")));
+
+    atualizarResumoUsuariosAdmin(listaUsuarios);
 
     if (entradas.length === 0) {
         adminUsersList.innerHTML = '<div class="empty-state">Nenhum usuário cadastrado ainda.</div>';
         return;
     }
 
+    const filtros = obterFiltrosUsuariosAdmin();
+    const entradasFiltradas = entradas.filter(([, usuario]) => usuarioPassaFiltrosAdmin(usuario, filtros));
+
+    if (entradasFiltradas.length === 0) {
+        adminUsersList.innerHTML = '<div class="empty-state">Nenhum usuário encontrado com os filtros atuais.</div>';
+        return;
+    }
+
     adminUsersList.textContent = "";
 
-    entradas.forEach(([uid, usuario]) => {
+    const table = document.createElement("div");
+    table.className = "admin-users-table";
+    table.setAttribute("role", "table");
+    table.setAttribute("aria-label", "Usuários cadastrados");
+    table.innerHTML = `
+        <div class="admin-users-table-head" role="row">
+            <span>Usuário</span>
+            <span>Plano</span>
+            <span>Status</span>
+            <span>Vencimento</span>
+            <span>Uso e permissões</span>
+            <span>Ações</span>
+        </div>
+    `;
+
+    const body = document.createElement("div");
+    body.className = "admin-users-table-body";
+
+    entradasFiltradas.forEach(([uid, usuario]) => {
         const status = obterStatusVisual(usuario);
+        const documentosLiberados = normalizarListaDocumentosLiberados(usuario.allowedDocumentTypes);
         const item = document.createElement("article");
-        item.className = "admin-user-item";
+        item.className = `admin-user-row admin-user-status-${status.status}`;
+        item.setAttribute("role", "row");
 
         const identity = document.createElement("div");
-        identity.className = "admin-user-identity";
+        identity.className = "admin-user-cell admin-user-identity";
+        identity.setAttribute("data-label", "Usuário");
         const avatar = document.createElement("span");
         avatar.className = "admin-user-avatar";
         avatar.innerHTML = '<i data-lucide="user-round" aria-hidden="true"></i>';
@@ -7365,55 +7976,112 @@ function renderizarUsuariosAdmin(usuarios) {
             nomeLinha.appendChild(criarSeloVerificado());
         }
 
-        const meta = document.createElement("div");
-        meta.className = "admin-user-meta";
-        meta.append(
-            criarTextoMeta(usuario.email || "sem e-mail"),
-            criarPlanoAtualAdmin(usuario),
-            criarTextoMeta(`Vence em ${formatarVencimento(usuario)}`),
-            criarStatus(status)
-        );
-
-        if (["test3min", "test10c", "basic30"].includes(normalizePlanId(usuario.plan))) {
-            meta.append(criarTextoMeta(`Limite diário: ${usuario.dailyDocumentLimit || 5} por documento`));
-            meta.append(criarTextoMeta(usuario.dailyQuotaRenewalEnabled === false
-                ? "Renovação diária: desligada"
-                : "Renovação diária: + saldo às 04:00"));
-        }
-
-        if (usuario.allowLiquidGlass) {
-            meta.append(criarTextoMeta("Tema Liquid Glass liberado"));
-        }
-
-        const documentosLiberados = normalizarListaDocumentosLiberados(usuario.allowedDocumentTypes);
-        meta.append(criarTextoMeta(documentosLiberados.length ? `Documentos liberados: ${documentosLiberados.length}` : "Documentos: todos"));
-
-        if (usuario.isAdmin) {
-            meta.append(criarTextoMeta("Administrador"));
-        }
-
-        if (usuario.notes) {
-            meta.append(criarTextoMeta(usuario.notes));
-        }
-
-        info.append(nomeLinha, meta);
+        const email = document.createElement("small");
+        email.textContent = usuario.email || "sem e-mail";
+        info.append(nomeLinha, email);
         identity.append(avatar, info);
 
-        const actions = document.createElement("div");
-        actions.className = "admin-user-actions";
-        actions.append(
-            criarBotaoAdmin(uid, "edit", "Editar"),
-            criarBotaoAdmin(uid, "history", "Histórico"),
-            criarBotaoAdmin(uid, "renewCurrent", "Renovar plano"),
-            criarBotaoAdmin(uid, status.status === "blocked" ? "unblock" : "block", status.status === "blocked" ? "Liberar" : "Bloquear")
+        const planCell = document.createElement("div");
+        planCell.className = "admin-user-cell";
+        planCell.setAttribute("data-label", "Plano");
+        planCell.appendChild(criarPlanoAtualAdmin(usuario));
+
+        const statusCell = document.createElement("div");
+        statusCell.className = "admin-user-cell";
+        statusCell.setAttribute("data-label", "Status");
+        statusCell.appendChild(criarStatus(status));
+        if (usuario.isAdmin) {
+            const adminChip = document.createElement("span");
+            adminChip.className = "admin-role-chip";
+            adminChip.textContent = "Admin";
+            statusCell.appendChild(adminChip);
+        }
+
+        const expiresCell = document.createElement("div");
+        expiresCell.className = "admin-user-cell";
+        expiresCell.setAttribute("data-label", "Vencimento");
+        expiresCell.textContent = formatarVencimento(usuario);
+
+        const usageCell = document.createElement("div");
+        usageCell.className = "admin-user-cell admin-user-permissions";
+        usageCell.setAttribute("data-label", "Uso e permissões");
+        usageCell.append(
+            criarTextoMeta(`Limite: ${usuario.dailyDocumentLimit || 5}/dia`),
+            criarTextoMeta(usuario.dailyQuotaRenewalEnabled === false ? "Renovação off" : "Renovação diária"),
+            criarTextoMeta(documentosLiberados.length ? `${documentosLiberados.length} documentos` : "Todos os documentos"),
+            criarTextoMeta(usuario.allowPdfTools ? `PDF: ${usuario.pdfToolDailyLimit || 5}/dia` : "PDF bloqueado"),
+            criarTextoMeta(usuario.allowLiquidGlass ? "Liquid Glass" : "Tema padrão")
         );
 
-        item.append(identity, actions);
-        adminUsersList.appendChild(item);
+        const actions = document.createElement("div");
+        actions.className = "admin-user-cell admin-user-actions";
+        actions.setAttribute("data-label", "Ações");
+        const editButton = criarBotaoAdmin(uid, "edit", "Editar");
+        editButton.classList.add("admin-primary-inline");
+        const menu = document.createElement("details");
+        menu.className = "admin-row-menu";
+        menu.innerHTML = `
+            <summary aria-label="Mais ações para ${escaparHtmlSeguro(usuario.name || usuario.email || "usuário")}">
+                <i data-lucide="more-horizontal" aria-hidden="true"></i>
+            </summary>
+        `;
+        const menuList = document.createElement("div");
+        menuList.className = "admin-row-menu-list";
+        const historyButton = criarBotaoAdmin(uid, "history", "Histórico");
+        const renewButton = criarBotaoAdmin(uid, "renewCurrent", "Renovar plano");
+        const blockAction = status.status === "blocked" ? "unblock" : "block";
+        const blockButton = criarBotaoAdmin(uid, blockAction, status.status === "blocked" ? "Liberar" : "Bloquear");
+        blockButton.classList.toggle("danger-button", blockAction === "block");
+        menuList.append(historyButton, renewButton, blockButton);
+        menu.appendChild(menuList);
+        actions.append(editButton, menu);
+
+        const details = document.createElement("details");
+        details.className = "admin-user-details";
+        details.innerHTML = `<summary>Ver detalhes</summary>`;
+        const detailsBody = document.createElement("div");
+        detailsBody.className = "admin-user-details-grid";
+        detailsBody.append(
+            criarDetalheUsuarioAdmin("E-mail", usuario.email || "sem e-mail"),
+            criarDetalheUsuarioAdmin("Plano", getPlan(usuario.plan)?.label || usuario.planLabel || usuario.plan || "Sem plano"),
+            criarDetalheUsuarioAdmin("Status", status.label),
+            criarDetalheUsuarioAdmin("Vencimento", formatarVencimento(usuario)),
+            criarDetalheUsuarioAdmin("Limite diário", `${usuario.dailyDocumentLimit || 5} por documento`),
+            criarDetalheUsuarioAdmin("Renovação diária", usuario.dailyQuotaRenewalEnabled === false ? "Desativada" : "Ativada"),
+            criarDetalheUsuarioAdmin("Documentos liberados", documentosLiberados.length ? String(documentosLiberados.length) : "Todos"),
+            criarDetalheUsuarioAdmin("Ferramentas PDF", usuario.allowPdfTools ? `Liberadas (${usuario.pdfToolDailyLimit || 5}/dia)` : "Não liberadas"),
+            criarDetalheUsuarioAdmin("Renovação PDF", usuario.pdfToolQuotaRenewalEnabled === false ? "Desativada" : "Ativada"),
+            criarDetalheUsuarioAdmin("Liquid Glass", usuario.allowLiquidGlass ? "Liberado" : "Não liberado"),
+            criarDetalheUsuarioAdmin("Selo verificado", usuario.isVerified ? "Sim" : "Não"),
+            criarDetalheUsuarioAdmin("Administrador", usuario.isAdmin ? "Sim" : "Não")
+        );
+
+        if (usuario.notes) {
+            detailsBody.appendChild(criarDetalheUsuarioAdmin("Observações", usuario.notes));
+        }
+
+        details.appendChild(detailsBody);
+        item.append(identity, planCell, statusCell, expiresCell, usageCell, actions, details);
+        body.appendChild(item);
     });
 
+    table.appendChild(body);
+    adminUsersList.appendChild(table);
     inicializarIcones();
 }
+
+function criarDetalheUsuarioAdmin(label, value) {
+    const detail = document.createElement("div");
+    detail.className = "admin-user-detail";
+    const term = document.createElement("span");
+    term.textContent = label;
+    const description = document.createElement("strong");
+    description.textContent = value;
+    detail.append(term, description);
+    return detail;
+}
+
+
 
 function criarTextoMeta(texto) {
     const span = document.createElement("span");
@@ -7485,6 +8153,7 @@ function preencherFormularioAdminEdicao(uid) {
 
     adminEditingUid.value = uid;
     adminFormTitle.textContent = "Editar login";
+    atualizarTituloFormularioAdmin("Editar login");
     adminAccessButton.textContent = "Salvar alteracoes";
     adminUserPassword.required = false;
     adminUserPassword.value = "";
@@ -7509,14 +8178,16 @@ function preencherFormularioAdminEdicao(uid) {
     limparMensagemAdmin();
     carregarResumoSaldoUsuarioAdmin(uid);
     carregarResumoPdfUsuarioAdmin(uid);
-    adminAccessForm.scrollIntoView({ behavior: "smooth", block: "start" });
-    adminUserName.focus();
+    atualizarEstadoCamposDependentesAdmin();
+    mostrarSecaoAdmin("create");
+    adminUserName.focus({ preventScroll: true });
 }
 
 function limparFormularioAdmin() {
     adminAccessForm.reset();
     adminEditingUid.value = "";
     adminFormTitle.textContent = "Criar novo login";
+    atualizarTituloFormularioAdmin("Criar novo login");
     adminAccessButton.textContent = "Criar login";
     adminUserPassword.required = true;
     adminUserPassword.placeholder = "";
@@ -7532,6 +8203,8 @@ function limparFormularioAdmin() {
     aplicarDocumentosLiberadosAdmin([]);
     renderizarResumoSaldoAdmin(null);
     renderizarResumoPdfAdmin(null);
+    atualizarEstadoCamposDependentesAdmin();
+    atualizarContadorDocumentosAdmin();
 }
 
 function obterStatusVisual(usuario) {
