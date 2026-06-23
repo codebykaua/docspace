@@ -241,6 +241,10 @@ const adminAddPdfToolQuotaButton = document.getElementById("adminAddPdfToolQuota
 const adminSubtractPdfToolQuotaButton = document.getElementById("adminSubtractPdfToolQuotaButton");
 const adminUserVerified = document.getElementById("adminUserVerified");
 const adminUserLiquidGlass = document.getElementById("adminUserLiquidGlass");
+const adminUserAiEnabled = document.getElementById("adminUserAiEnabled");
+const adminUserAiLimitMode = document.getElementById("adminUserAiLimitMode");
+const adminUserAiDailyLimit = document.getElementById("adminUserAiDailyLimit");
+const adminUserAiUsageSummary = document.getElementById("adminUserAiUsageSummary");
 const adminAllowAllDocuments = document.getElementById("adminAllowAllDocuments");
 const adminDocumentAccessList = document.getElementById("adminDocumentAccessList");
 const adminUserQuotaSummary = document.getElementById("adminUserQuotaSummary");
@@ -5309,6 +5313,7 @@ function configurarDashboardAdminVisual() {
     configurarFiltrosUsuariosAdmin();
     configurarPreviaApkAdmin();
     atualizarEstadoCamposDependentesAdmin();
+    configurarCamposIaAdmin();
 }
 
 function configurarNavegacaoInternaAdmin() {
@@ -5445,7 +5450,7 @@ function organizarFormularioAdminPorEtapas() {
             title: "5. Permissões e aparência",
             subtitle: "Selo verificado, Liquid Glass e permissões visuais.",
             className: "admin-step-permissions",
-            items: ["adminUserVerified", "adminUserLiquidGlass"],
+            items: ["adminUserVerified", "adminUserLiquidGlass", "adminUserAiEnabled", "adminUserAiLimitMode", "adminUserAiDailyLimit", "adminUserAiUsageSummary"],
         },
         {
             title: "6. Documentos liberados",
@@ -5755,6 +5760,122 @@ function configurarPreviaApkAdmin() {
     updatePreview();
 }
 
+function configurarCamposIaAdmin() {
+    if (!adminUserAiLimitMode || adminUserAiLimitMode.dataset.aiConfigured === "yes") {
+        return;
+    }
+
+    adminUserAiLimitMode.dataset.aiConfigured = "yes";
+    adminUserAiLimitMode.addEventListener("change", atualizarCampoLimiteIaAdmin);
+    atualizarCampoLimiteIaAdmin();
+}
+
+function atualizarCampoLimiteIaAdmin() {
+    if (!adminUserAiLimitMode || !adminUserAiDailyLimit) {
+        return;
+    }
+
+    const custom = adminUserAiLimitMode.value === "custom";
+    adminUserAiDailyLimit.disabled = !custom;
+    adminUserAiDailyLimit.closest(".field")?.classList.toggle("is-disabled", !custom);
+}
+
+function obterDadosIaAdmin() {
+    if (!adminUserAiEnabled || !adminUserAiLimitMode || !adminUserAiDailyLimit) {
+        return {};
+    }
+
+    return {
+        aiEnabled: adminUserAiEnabled.value !== "no",
+        aiDailyLimitMode: adminUserAiLimitMode.value || "default",
+        aiDailyLimit: Number(adminUserAiDailyLimit.value || 10),
+    };
+}
+
+function preencherCamposIaAdmin(usuario) {
+    if (!adminUserAiEnabled || !adminUserAiLimitMode || !adminUserAiDailyLimit) {
+        return;
+    }
+
+    adminUserAiEnabled.value = usuario.aiEnabled === false ? "no" : "yes";
+    const mode = usuario.aiDailyLimitMode || (usuario.aiCustomDailyLimit === -1 ? "unlimited" : usuario.aiCustomDailyLimit ? "custom" : "default");
+    adminUserAiLimitMode.value = ["default", "custom", "unlimited"].includes(mode) ? mode : "default";
+    adminUserAiDailyLimit.value = String(usuario.aiCustomDailyLimit && usuario.aiCustomDailyLimit > 0 ? usuario.aiCustomDailyLimit : usuario.aiDailyLimit && usuario.aiDailyLimit > 0 ? usuario.aiDailyLimit : 10);
+    atualizarCampoLimiteIaAdmin();
+    renderizarResumoIaAdmin(usuario);
+}
+
+function resetarCamposIaAdmin() {
+    if (adminUserAiEnabled) {
+        adminUserAiEnabled.value = "yes";
+    }
+    if (adminUserAiLimitMode) {
+        adminUserAiLimitMode.value = "default";
+    }
+    if (adminUserAiDailyLimit) {
+        adminUserAiDailyLimit.value = "10";
+    }
+    atualizarCampoLimiteIaAdmin();
+    renderizarResumoIaAdmin(null);
+}
+
+function formatarResumoIaAdmin(usuario) {
+    if (!usuario) {
+        return "IA: padrao do plano";
+    }
+
+    if (usuario.aiEnabled === false) {
+        return "IA bloqueada";
+    }
+
+    const usage = usuario.aiUsageToday || {};
+    const used = Number(usage.used || 0);
+    const limit = Number(usage.limit ?? usuario.aiDailyLimit ?? 0);
+
+    return limit === -1 ? `IA: ${used}/ilimitado hoje` : `IA: ${used}/${limit || 0} hoje`;
+}
+
+function formatarDetalheIaAdmin(usuario) {
+    if (!usuario) {
+        return "Padrao do plano";
+    }
+
+    if (usuario.aiEnabled === false) {
+        return "Desativada para este login";
+    }
+
+    const mode = usuario.aiDailyLimitMode === "custom" ? "limite individual" : usuario.aiDailyLimitMode === "unlimited" ? "ilimitado" : "padrao do plano";
+    return `${formatarResumoIaAdmin(usuario)} (${mode})`;
+}
+
+function renderizarResumoIaAdmin(usuario) {
+    if (!adminUserAiUsageSummary) {
+        return;
+    }
+
+    if (!usuario) {
+        adminUserAiUsageSummary.innerHTML = "<p>Edite um usuario para ver o uso de IA no dia.</p>";
+        return;
+    }
+
+    const usage = usuario.aiUsageToday || {};
+    const limitText = usage.limit === -1 ? "Ilimitado" : String(usage.limit ?? usuario.aiDailyLimit ?? "padrao");
+    adminUserAiUsageSummary.innerHTML = `
+        <div class="admin-quota-summary-item">
+            <span>Uso hoje</span>
+            <strong>${Number(usage.used || 0)} solicitação(oes)</strong>
+        </div>
+        <div class="admin-quota-summary-item">
+            <span>Limite</span>
+            <strong>${escaparHtmlSeguro(limitText)}</strong>
+        </div>
+        <div class="admin-quota-summary-item">
+            <span>Status</span>
+            <strong>${usuario.aiEnabled === false ? "Desativada" : "Ativa"}</strong>
+        </div>
+    `;
+}
+
 function confirmarAcaoAdmin(action, usuario) {
     const nome = usuario?.name || usuario?.email || "este acesso";
     const mensagens = {
@@ -5916,6 +6037,7 @@ async function criarUsuarioAdmin() {
             pdfToolQuotaRenewalEnabled: adminUserPdfToolQuotaRenewal.value === "yes",
             isVerified: adminUserVerified.value === "yes",
             allowLiquidGlass: adminUserLiquidGlass.value === "yes",
+            ...obterDadosIaAdmin(),
             allowedDocumentTypes: obterDocumentosLiberadosAdmin(),
             notes: adminUserNotes.value.trim(),
             isAdmin: false,
@@ -6271,6 +6393,10 @@ function descreverEventoHistoricoAdmin(item) {
         renewAnnual: () => ({ titulo: "Plano renovado para Pro Max", detalhe: `Por ${actor}` }),
         addDocumentQuota: () => ({ titulo: `Saldo adicionado: +${details.amount || 0}`, detalhe: `${obterTituloSaldoAdmin(details.documentType || "all")} - por ${actor}` }),
         subtractDocumentQuota: () => ({ titulo: `Saldo diminuído: -${details.amount || 0}`, detalhe: `${obterTituloSaldoAdmin(details.documentType || "all")} - por ${actor}` }),
+        ai_request_completed: () => ({ titulo: "DocSpace IA utilizada", detalhe: `Modo: ${details.mode || "chat"} - ${details.totalTokens || 0} tokens` }),
+        ai_request_error: () => ({ titulo: "Falha no DocSpace IA", detalhe: `Modo: ${details.mode || "chat"} - status ${details.status || ""}` }),
+        ai_settings_updated: () => ({ titulo: "Permissão de IA atualizada", detalhe: `Por ${actor}` }),
+        ai_conversation_deleted: () => ({ titulo: "Conversa de IA removida", detalhe: `Por ${actor}` }),
         send_payment_proof: () => ({ titulo: "Comprovante enviado", detalhe: details.plan ? `Plano: ${getPlan(details.plan)?.label || details.plan}` : "" }),
         reply_support: () => ({ titulo: "Resposta de atendimento enviada", detalhe: `Por ${actor}` }),
         update_profile_avatar: () => ({ titulo: "Foto de perfil atualizada", detalhe: "" }),
@@ -6294,6 +6420,7 @@ function montarDadosUsuarioAdmin(uid) {
         pdfToolQuotaRenewalEnabled: adminUserPdfToolQuotaRenewal.value === "yes",
         isVerified: adminUserVerified.value === "yes",
         allowLiquidGlass: adminUserLiquidGlass.value === "yes",
+        ...obterDadosIaAdmin(),
         allowedDocumentTypes: obterDocumentosLiberadosAdmin(),
         notes: adminUserNotes.value.trim(),
         isAdmin: Boolean(usuarioOriginal.isAdmin),
@@ -8013,6 +8140,8 @@ function renderizarUsuariosAdmin(usuarios) {
             criarTextoMeta(usuario.allowLiquidGlass ? "Liquid Glass" : "Tema padrão")
         );
 
+        usageCell.appendChild(criarTextoMeta(formatarResumoIaAdmin(usuario)));
+
         const actions = document.createElement("div");
         actions.className = "admin-user-cell admin-user-actions";
         actions.setAttribute("data-label", "Ações");
@@ -8053,6 +8182,8 @@ function renderizarUsuariosAdmin(usuarios) {
             criarDetalheUsuarioAdmin("Renovação PDF", usuario.pdfToolQuotaRenewalEnabled === false ? "Desativada" : "Ativada"),
             criarDetalheUsuarioAdmin("Liquid Glass", usuario.allowLiquidGlass ? "Liberado" : "Não liberado"),
             criarDetalheUsuarioAdmin("Selo verificado", usuario.isVerified ? "Sim" : "Não"),
+            criarDetalheUsuarioAdmin("DocSpace IA", formatarDetalheIaAdmin(usuario)),
+
             criarDetalheUsuarioAdmin("Administrador", usuario.isAdmin ? "Sim" : "Não")
         );
 
@@ -8169,6 +8300,7 @@ function preencherFormularioAdminEdicao(uid) {
     adminUserPdfToolQuotaRenewal.value = usuario.pdfToolQuotaRenewalEnabled === false ? "no" : "yes";
     adminUserVerified.value = usuario.isVerified ? "yes" : "no";
     adminUserLiquidGlass.value = usuario.allowLiquidGlass ? "yes" : "no";
+    preencherCamposIaAdmin(usuario);
     adminUserQuotaDocument.value = "";
     adminUserQuotaAddAmount.value = "5";
     adminUserPdfToolOperation.value = "";
@@ -8200,6 +8332,7 @@ function limparFormularioAdmin() {
     adminUserPdfToolOperation.value = "";
     adminUserPdfToolQuotaAmount.value = "5";
     adminUserLiquidGlass.value = "no";
+    resetarCamposIaAdmin();
     aplicarDocumentosLiberadosAdmin([]);
     renderizarResumoSaldoAdmin(null);
     renderizarResumoPdfAdmin(null);

@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/LOGO1.png">
     <link rel="apple-touch-icon" href="assets/LOGO1.png">
     <link rel="stylesheet" href="style.css?v=57">
+    <link rel="stylesheet" href="ai-styles.css?v=1">
 </head>
 <body class="splash-open">
     <script>
@@ -1306,6 +1307,34 @@
                             </select>
                         </label>
 
+                        <label class="field">
+                            <span>DocSpace IA</span>
+                            <select id="adminUserAiEnabled">
+                                <option value="yes">Permitir acesso ao DocSpace IA</option>
+                                <option value="no">Desativar IA para este login</option>
+                            </select>
+                            <small>Controla o acesso ao assistente inteligente sem alterar as permissoes antigas.</small>
+                        </label>
+
+                        <label class="field">
+                            <span>Limite diario de IA</span>
+                            <select id="adminUserAiLimitMode">
+                                <option value="default">Usar padrao do plano</option>
+                                <option value="custom">Definir limite individual</option>
+                                <option value="unlimited">Uso ilimitado</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Quantidade diaria de IA</span>
+                            <input id="adminUserAiDailyLimit" type="number" min="1" max="999" step="1" value="10">
+                            <small>Usado apenas quando o limite individual estiver ativo.</small>
+                        </label>
+
+                        <div id="adminUserAiUsageSummary" class="admin-quota-summary ai-admin-summary field-wide">
+                            <p>Edite um usuario para ver o uso de IA no dia.</p>
+                        </div>
+
                         <fieldset class="admin-document-access">
                             <legend>Documentos liberados</legend>
                             <p>Controle quais documentos este usuário poderá ver e abrir no sistema.</p>
@@ -1917,6 +1946,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
     <script src="script.js?v=90"></script>
+    <script src="ai-ui.js?v=1"></script>
     <script src="pdf-preview.js?v=6"></script>
 </body>
 </html>

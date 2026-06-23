@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v104-app-update-notice-link";
+const CACHE_NAME = "docspace-v105-docspace-ia";
 
 const APP_ASSETS = [
     "./",
@@ -6,6 +6,8 @@ const APP_ASSETS = [
     "./contro.html",
     "./style.css",
     "./script.js",
+    "./ai-ui.js",
+    "./ai-styles.css",
     "./pdf-preview.js",
     "./contro.js",
     "./manifest.webmanifest",
