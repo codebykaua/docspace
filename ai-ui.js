@@ -56,6 +56,17 @@
             sidebarNav.insertBefore(button, adminButton || sidebarNav.lastElementChild);
         }
 
+        if (!document.getElementById("aiFloatingButton")) {
+            const floating = document.createElement("button");
+            floating.type = "button";
+            floating.id = "aiFloatingButton";
+            floating.className = "ai-floating-button";
+            floating.setAttribute("aria-label", "Abrir DocSpace IA");
+            floating.title = "DocSpace IA";
+            floating.innerHTML = '<i data-lucide="sparkles" aria-hidden="true"></i><span>IA</span>';
+            document.body.appendChild(floating);
+        }
+
         const headerActions = document.querySelector(".app-shell-actions");
 
         if (headerActions && !document.getElementById("aiAssistantButton")) {
@@ -126,7 +137,7 @@
                             <div class="ai-composer-footer">
                                 <span id="aiCharacterCounter">0/${MAX_MESSAGE_LENGTH}</span>
                                 <div class="ai-composer-actions">
-                                    <button type="button" id="aiStopButton" class="secondary-button is-hidden"><i data-lucide="square" aria-hidden="true"></i><span>Parar</span></button>
+                                    <button type="button" id="aiStopButton" class="secondary-button is-hidden"><i data-lucide="octagon-x" aria-hidden="true"></i><span>Parar</span></button>
                                     <button type="submit" id="aiSendButton"><i data-lucide="send" aria-hidden="true"></i><span>Enviar</span></button>
                                 </div>
                             </div>
@@ -163,7 +174,7 @@
         });
 
         document.addEventListener("click", (event) => {
-            const openButton = event.target.closest("#aiSidebarButton, #aiAssistantButton");
+            const openButton = event.target.closest("#aiSidebarButton, #aiAssistantButton, #aiFloatingButton");
 
             if (openButton) {
                 event.preventDefault();
@@ -362,7 +373,7 @@
                 appendMessage({ role: "system", content: "Solicitacao interrompida.", mode: "chat", transient: true });
                 setStatus("Solicitacao interrompida.");
             } else {
-                appendMessage({ role: "error", content: error.message || "Nao foi possivel falar com a IA.", mode: "chat", transient: true });
+                appendMessage({ role: "error", content: getFriendlyAiError(error), mode: "chat", transient: true });
                 setStatus("Falha ao responder.");
             }
         } finally {
@@ -472,6 +483,20 @@
         });
     }
 
+    function getFriendlyAiError(error) {
+        const message = String(error?.message || "").trim();
+
+        if (error?.status === 404 || /implanta/i.test(message) || /deployment/i.test(message)) {
+            return "A IA esta conectada ao Worker, mas o deployment configurado no Azure/Foundry nao foi encontrado. Confira AZURE_OPENAI_DEPLOYMENT e a URL Responses no Cloudflare.";
+        }
+
+        if (error?.status === 503) {
+            return "A IA ainda nao esta configurada no Cloudflare. Confira as variaveis AZURE_OPENAI_API_KEY, AZURE_OPENAI_RESPONSES_URL e AZURE_OPENAI_DEPLOYMENT.";
+        }
+
+        return message || "Nao foi possivel falar com a IA.";
+    }
+
     function appendMessage(message) {
         const list = document.getElementById("aiMessages");
         if (!list) {
@@ -521,6 +546,16 @@
         }
         stopButton?.classList.toggle("is-hidden", !loading);
         typing?.classList.toggle("is-hidden", !loading);
+
+        if (stopButton) {
+            stopButton.hidden = !loading;
+            stopButton.setAttribute("aria-hidden", String(!loading));
+        }
+
+        if (typing) {
+            typing.hidden = !loading;
+            typing.setAttribute("aria-hidden", String(!loading));
+        }
     }
 
     function setStatus(text) {

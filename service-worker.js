@@ -1,4 +1,4 @@
-const CACHE_NAME = "docspace-v105-docspace-ia";
+const CACHE_NAME = "docspace-v106-ui-ai-responsive";
 
 const APP_ASSETS = [
     "./",

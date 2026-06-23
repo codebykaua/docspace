@@ -591,3 +591,103 @@ body.liquid-glass-theme .ai-quick-prompt {
         border-radius: 10px;
     }
 }
+
+/* === DOCSPACE AI UI FIXES === */
+.ai-typing-indicator.is-hidden,
+#aiStopButton.is-hidden,
+#aiStopButton[hidden],
+#aiTypingIndicator[hidden] {
+    display: none !important;
+}
+
+.ai-composer-actions .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    border-radius: 12px;
+}
+
+.ai-message-error .ai-message-card {
+    max-width: 760px;
+    border-color: rgba(248, 113, 113, 0.5);
+    background: rgba(92, 26, 46, 0.72);
+}
+
+.ai-message-error .ai-message-text {
+    color: #f8d7df;
+}
+
+.ai-floating-button {
+    display: none;
+    position: fixed;
+    right: 190px;
+    bottom: 22px;
+    z-index: 82;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 16px;
+    border: 1px solid rgba(96, 165, 250, 0.46);
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.30);
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+
+body.document-home-open .ai-floating-button {
+    display: inline-flex;
+}
+
+.ai-floating-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 900px) {
+    .ai-floating-button {
+        right: 14px;
+        bottom: 154px;
+        width: 52px;
+        padding: 0;
+        border-radius: 16px;
+    }
+
+    .ai-floating-button span {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .ai-assistant-panel {
+        height: 100dvh;
+    }
+
+    .ai-assistant-topbar {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .ai-assistant-top-actions {
+        justify-content: stretch;
+    }
+
+    .ai-assistant-top-actions .secondary-button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .ai-quick-prompts {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-messages {
+        padding-right: 0;
+    }
+}
