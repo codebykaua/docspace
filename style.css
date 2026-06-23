@@ -10676,3 +10676,27 @@ body.system-light-theme .premium-plan-progress {
         min-width: 0;
     }
 }
+/* === DOCSPACE DASHBOARD ADMIN SIDEBAR FIX === */
+.dashboard-sidebar-item.is-hidden {
+    display: none !important;
+}
+
+.dashboard-sidebar-admin {
+    color: #fde68a;
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    background: rgba(245, 158, 11, 0.10);
+}
+
+.dashboard-sidebar-admin:hover {
+    color: #ffffff;
+    background: rgba(245, 158, 11, 0.18);
+}
+
+.dashboard-sidebar-admin svg {
+    color: #fbbf24;
+}
+
+.document-card-wrapper:has(#adminAccessCard),
+#adminAccessCard {
+    display: none !important;
+}

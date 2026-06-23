@@ -3747,6 +3747,8 @@ function configurarTelaInicialDocumentos() {
         inicializarIcones();
     });
 
+    document.getElementById("adminSidebarButton")?.addEventListener("click", () => abrirTipoDocumento("admin"));
+
     const fecharSugestoesBuscaAoSair = (event) => {
         const alvo = event.target;
 
@@ -8148,7 +8150,10 @@ function atualizarUsuario(user) {
 }
 
 function atualizarVisibilidadeAdmin() {
-    adminAccessCard.classList.toggle("is-hidden", !usuarioAtualEhAdmin);
+    const adminSidebarButton = document.getElementById("adminSidebarButton");
+    adminAccessCard?.classList.add("is-hidden");
+    adminAccessCard?.closest(".document-card-wrapper")?.classList.add("is-hidden");
+    adminSidebarButton?.classList.toggle("is-hidden", !usuarioAtualEhAdmin);
     filtrarDocumentos();
 }
 
