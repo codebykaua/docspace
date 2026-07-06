@@ -1,0 +1,29 @@
+{
+  "base_zip": "DocSpace_Web_Home_Usuario_Rodape.zip",
+  "cleaned": [
+    "style.css recreated from zero",
+    "dist/style.css recreated from zero",
+    "document header rebuilt",
+    "old hotfix JS files removed",
+    "docspace-clean-ui.js added",
+    "script.js logic preserved, only old UI hotfix blocks were targeted for removal",
+    "home/dashboard rebuilt with 50/50 layout"
+  ],
+  "logic_preserved": [
+    "script.js",
+    "ai-ui.js",
+    "service-worker.js",
+    "worker/api files",
+    "render-server files"
+  ],
+  "main_changed_files": [
+    "index.html",
+    "dist/index.html",
+    "style.css",
+    "dist/style.css",
+    "docspace-clean-ui.js",
+    "dist/docspace-clean-ui.js",
+    "script.js",
+    "dist/script.js"
+  ]
+}

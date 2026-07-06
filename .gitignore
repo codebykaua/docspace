@@ -1,2 +1,23 @@
-# Ignore Wrangler artifacts
+node_modules/
+dist/
 .wrangler/
+.env
+.env.*
+.env.local
+.env.production
+logs/
+*.log
+*.tmp
+*.temp
+.cache/
+cache/
+uploads/
+uploads-temp/
+temp/
+tmp/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

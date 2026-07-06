@@ -1,0 +1,22 @@
+{
+  "name": "docspace-frontend",
+  "version": "6.0.0-zero-wizard",
+  "description": "DocSpace - Sistema de documentos com preenchimento guiado",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node validate-templates.js && vite build && node build-pages.js",
+    "validate": "node validate-templates.js",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "eslint": "^8.57.0",
+    "vitest": "^2.0.0",
+    "@vitest/ui": "^2.0.0"
+  },
+  "dependencies": {}
+}

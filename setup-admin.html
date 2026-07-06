@@ -22,14 +22,14 @@
                 </label>
 
                 <label class="field">
-                    <span>Nome</span>
-                    <input id="setupName" type="text" value="Kaua Lucas" required autocomplete="name">
-                </label>
+                                    <span>Nome</span>
+                                    <input id="setupName" type="text" required autocomplete="name">
+                                </label>
 
                 <label class="field">
-                    <span>E-mail administrador</span>
-                    <input id="setupEmail" type="email" value="kaualucasfrancasantos@gmail.com" required autocomplete="email">
-                </label>
+                                    <span>E-mail administrador</span>
+                                    <input id="setupEmail" type="email" required autocomplete="email">
+                                </label>
 
                 <label class="field">
                     <span>Senha que você vai usar para entrar</span>
@@ -42,9 +42,14 @@
         </section>
     </main>
 
-    <script>
-        const API_BASE_URL = "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev";
-        const form = document.getElementById("setupAdminForm");
+    <script src="app-config.js?v=2"></script>
+        <script>
+            const API_BASE_URL = String(
+                window.DOCSPACE_CONFIG?.API_BASE_URL || ""
+            )
+                .trim()
+                .replace(/\/+$/, "");
+            const form = document.getElementById("setupAdminForm");
         const button = document.getElementById("setupButton");
         const message = document.getElementById("setupMessage");
 

@@ -21,5 +21,5 @@ EMAILJS_PUBLIC_KEY = "LmAZ7VQauBCPlPoFi"
 SUPPORT_ADMIN_EMAIL = "kaua.dev@outlook.com.br"
 
 MERCADO_PAGO_PUBLIC_KEY = "APP_USR-b73bcfd2-e773-4819-a006-08239308e311"
-PUBLIC_APP_URL = "https://codebykaua.github.io/gerador_de_documentos"
+PUBLIC_APP_URL = "https://gerador-documentos-rurais.pages.dev"
 MERCADO_PAGO_WEBHOOK_URL = "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev/api/billing/mercadopago/webhook"

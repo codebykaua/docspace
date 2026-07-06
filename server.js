@@ -8,21 +8,50 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { randomBytes } from 'crypto';
 
+// =============================================================================
+// AVISO IMPORTANT sobre REFACTOR APOS ESTUDO
+// Este arquivo (server.js na raiz) e um BACKEND PDF LEGADO/DUPLICADO.
+// A fonte da verdade em PRODUCCAO e render-server/server.js (com Dockerfile
+// proprio em render-server/Dockerfile). Este arquivo foi mantido apenas como
+// referencia e NAO deve ser usado como caminho de deploy.
+// Limites e politicas de segredo aqui foram unificados a render-server para
+// evitar divergencia de comportamento.
+//
+// Para subir o backend PDF:  cd render-server && npm install && npm start
+// =============================================================================
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const MAX_DOCX_BYTES = 10 * 1024 * 1024;
-const MAX_PDF_BYTES = 80 * 1024 * 1024;
-const RENDER_API_SECRET = process.env.RENDER_API_SECRET || '';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const MAX_DOCX_BYTES = 10 * 1024 * 1024; // 10 MB
+// Limite unificado com render-server/server.js (50 MB). Antes era 80 MB aqui.
+const MAX_PDF_BYTES = Number(process.env.MAX_PDF_BYTES) || 50 * 1024 * 1024;
+const RENDER_API_SECRET = String(process.env.RENDER_API_SECRET || '').trim();
 
 const convert = promisify(libre.convert);
 const execFileAsync = promisify(execFile);
 
 app.use(cors());
-app.use(express.json({ limit: '110mb' }));
+// Limite de body unificado com render-server/server.js (80 MB). Antes era 110 MB.
+app.use(express.json({ limit: '80mb' }));
 
+// Middleware de segredo obrigatorio. Em producao, NENHUMA rota sensivel pode
+// ficar publica se RENDER_API_SECRET estiver ausente (falha segura 503).
 app.use((req, res, next) => {
-    if (!RENDER_API_SECRET) {
+    // Permitir /health mesmo sem segredo, p/ check de liveness.
+    if (req.path === '/health') {
         return next();
+    }
+
+    if (!RENDER_API_SECRET) {
+        if (NODE_ENV === 'production') {
+            return res.status(503).json({
+                success: false,
+                error:
+                    'RENDER_API_SECRET nao configurado.DEFINE RENDER_API_SECRET antes de subir em producao.',
+            });
+        }
+        return next(); // dev: permite chamar localmente sem secret
     }
 
     const receivedSecret = req.get('X-Render-Secret') || '';

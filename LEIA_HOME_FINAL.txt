@@ -1,0 +1,5 @@
+Correção final da home/dashboard.
+
+Foram removidas camadas conflitantes antigas do dashboard no style.css/dist/style.css e aplicada uma camada única final.
+A home agora fica dividida em duas colunas reais, sem linha central, sem títulos marcados com X e sem a seção de atividades.
+Os botões do plano ficam lado a lado e a barra de progresso fica à direita.

@@ -1,4 +1,9 @@
-const API_BASE_URL = "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev";
+const API_BASE_URL = String(
+    window.DOCSPACE_CONFIG?.API_BASE_URL || ""
+)
+    .trim()
+    .replace(/\/+$/, "");
+window.API_BASE_URL = API_BASE_URL;
 const SESSION_TOKEN_KEY = "documentos_rurais_session_token";
 
 const controlLoginView = document.getElementById("controlLoginView");

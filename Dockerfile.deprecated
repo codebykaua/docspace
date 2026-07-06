@@ -1,0 +1,38 @@
+# Dockerfile Obsoleto - NÀO USAR EM PRODUÇÃO
+
+Este Dockerfile foi usado para versões antigas do DocSpace que rodavam o backend
+PDF localmente junto com o servidor Node.js.
+
+## Status: DEPRECATED
+
+A arquitetura atual separa:
+- **Frontend**: Cloudflare Workers (functions/api/[[path]].js)
+- **Backend PDF**: render-server/server.js (implantado separadamente)
+
+## Por que não usar este Dockerfile?
+
+1. O server.js da raiz foi marcado como legado/deprecated
+2. O backend PDF oficial agora está em render-server/server.js
+3. O frontend roda em Cloudflare Workers, não em container Node.js
+4. Este Dockerfile usa dependências e estrutura desatualizadas
+
+## Deploy Atual
+
+### Frontend (Cloudflare Workers)
+```bash
+npm run build
+npx wrangler deploy
+```
+
+### Backend PDF (Render/Railway/Fly.io)
+```bash
+cd render-server
+npm install
+npm start
+# Ou use o Dockerfile render-server/Dockerfile
+```
+
+## Histórico
+
+Este arquivo permaneceu no repositório apenas para referência histórica.
+Novos deploys devem usar a arquitetura separada descrita acima.

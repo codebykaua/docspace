@@ -67,18 +67,6 @@
             document.body.appendChild(floating);
         }
 
-        const headerActions = document.querySelector(".app-shell-actions");
-
-        if (headerActions && !document.getElementById("aiAssistantButton")) {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.id = "aiAssistantButton";
-            button.className = "icon-button ai-assistant-header-button";
-            button.setAttribute("aria-label", "Abrir DocSpace IA");
-            button.title = "DocSpace IA";
-            button.innerHTML = '<i data-lucide="sparkles" aria-hidden="true"></i><span>IA</span>';
-            headerActions.prepend(button);
-        }
     }
 
     function injectPanel() {

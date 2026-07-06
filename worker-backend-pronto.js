@@ -29,10 +29,15 @@ const DEFAULT_DAILY_PDF_TOOL_LIMIT = 5;
 const DAILY_DOCUMENT_RESET_HOUR = 4;
 const DAILY_DOCUMENT_RESET_MINUTE = 0;
 const DAILY_DOCUMENT_TIME_ZONE = "America/Sao_Paulo";
-const PASSWORD_ITERATIONS = 100000;
+const PASSWORD_ITERATIONS = 310000;
 const PASSWORD_ALGORITHM = "PBKDF2";
 const PASSWORD_HASH = "SHA-256";
 const MERCADO_PAGO_API_BASE = "https://api.mercadopago.com";
+const CORS_ALLOWED_ORIGINS = new Set([
+    "https://codebykaua.github.io",
+    "https://gerador-documentos-rurais.pages.dev",
+    "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev",
+]);
 const BILLING_PROVIDER = "mercado_pago";
 const BILLING_PLAN_PRICES = {
     basic30: {
@@ -4126,13 +4131,16 @@ async function verifyBillingToken(env, token) {
 }
 
 async function sign(env, text) {
-    const secret = String(env.APP_SECRET || "troque-este-segredo-em-producao");
+    const secret = String(env.APP_SECRET || "");
+    if (!secret || secret === "troque-este-segredo-em-producao") {
+        throw new Error("APP_SECRET nao configurado. Defina APP_SECRET no Worker com um valor longo e aleatorio.");
+    }
     const key = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(secret),
         { name: "HMAC", hash: "SHA-256" },
         false,
-        ["sign"]
+        ["sign"],
     );
     const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text));
     return base64UrlEncodeBytes(new Uint8Array(signature));
@@ -4367,9 +4375,35 @@ function createCorsPreflightResponse(request) {
     return withCors(request, new Response(null, { status: 204 }));
 }
 
+function getAllowedCorsOrigin(origin) {
+    const value = String(origin || "").trim().replace(/\/+$/, "");
+
+    if (!value) {
+        return "";
+    }
+
+    if (CORS_ALLOWED_ORIGINS.has(value)) {
+        return value;
+    }
+
+    try {
+        const url = new URL(value);
+        const isLocalDev = ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+        const isProjectPreview = url.protocol === "https:" && url.hostname.endsWith(".gerador-documentos-rurais.pages.dev");
+
+        if (isLocalDev || isProjectPreview) {
+            return value;
+        }
+    } catch (error) {
+        return "";
+    }
+
+    return "";
+}
+
 function withCors(request, response) {
     const headers = new Headers(response.headers);
-    const origin = request.headers.get("Origin");
+    const origin = getAllowedCorsOrigin(request.headers.get("Origin"));
 
     if (origin) {
         headers.set("Access-Control-Allow-Origin", origin);

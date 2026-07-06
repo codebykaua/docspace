@@ -1,0 +1,24 @@
+{
+  "style_original_bytes": 360907,
+  "style_clean_bytes": 299307,
+  "dist_style_original_bytes": 354107,
+  "dist_style_clean_bytes": 299307,
+  "total_css_original_bytes": 744134,
+  "total_css_clean_bytes": 627734,
+  "removed_files": [
+    "style.css.backup-before-clean-theme",
+    "style.css.backup-before-simple-global-v2",
+    "dist/style.css.backup-before-clean-theme",
+    "dist/style.css.backup-before-simple-global-v2"
+  ],
+  "removed_sections_from_style_css": [
+    "DOCSPACE CLEAN SAAS DASHBOARD LAYOUT",
+    "DOCSPACE CLEAN TOPBAR + SUPPORT CHAT PANEL",
+    "SIMPLE REDESIGN — DocSpace light layout from scratch",
+    "SIMPLE REDESIGN V2 — even simpler",
+    "SIMPLE REDESIGN V3 — handmade clean site",
+    "SIMPLE LOGIN V4 — quiet and plain",
+    "CORREÇÃO LOGIN SIMPLES - LOGO À ESQUERDA / FORM À DIREITA"
+  ],
+  "kept": "core project CSS + compact current simple layer"
+}

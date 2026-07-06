@@ -7,14 +7,6 @@ let currentPageNum = 1;
 let currentPdfProgress = 0;
 let pdfConversionProgressTimer = null;
 
-// Verificar se as constantes estão disponíveis
-if (typeof API_BASE_URL === 'undefined') {
-    window.API_BASE_URL = 'https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev';
-}
-if (typeof SESSION_TOKEN_KEY === 'undefined') {
-    window.SESSION_TOKEN_KEY = 'documentos_rurais_session_token';
-}
-
 async function converterDocumentoEmPdf(templatePath, docxBlob) {
     try {
         // Mostrar modal com loading
@@ -26,7 +18,7 @@ async function converterDocumentoEmPdf(templatePath, docxBlob) {
         pdfPrintButton.disabled = true;
         pdfDownloadButton.disabled = true;
         reiniciarProgressoPdf();
-''
+
         if (!(docxBlob instanceof Blob)) {
             throw new Error('Não foi possível preparar o documento para conversão.');
         }
@@ -44,7 +36,7 @@ async function converterDocumentoEmPdf(templatePath, docxBlob) {
             templatePath: templatePath,
             docxBase64: docxBase64,
         });
-        
+
         if (!result.success || !result.pdfBase64 || result.protected !== true) {
             throw new Error('Resposta inválida do servidor');
         }
@@ -342,7 +334,7 @@ function imprimirPdf() {
     }, { once: true });
 
     document.body.appendChild(iframe);
-    cleanupTimer = window.setTimeout(limparIframeImpressao, 120000);
+    cleanupTimer = window.setTimeout(limparIframeImpressao, 1200000);
 }
 
 function baixarPdfProtegido() {
@@ -385,60 +377,300 @@ function fecharModalPdf() {
     ocultarProgressoPdf();
 }
 
-// Event listeners
-printPdfButton?.addEventListener('click', async () => {
-    if (!validarCamposObrigatorios()) {
-        return;
+// Event listeners antigos substituídos pelo patch DocSpaceTemplatePdfFix.
+
+
+/* =========================================================
+   DOCSPACE — PDF PELO TEMPLATE WORD ORIGINAL
+   ========================================================= */
+
+(function () {
+    if (window.__docspaceTemplatePdfFix20260704) return;
+    window.__docspaceTemplatePdfFix20260704 = true;
+
+    function safeMessage(form, text, type) {
+        const target = form?.id === "contractForm"
+            ? document.getElementById("message")
+            : document.getElementById("simpleDocumentMessage");
+
+        if (!target) return;
+
+        target.textContent = text || "";
+        target.className = `message ${type || ""}`.trim();
     }
 
-    try {
-        await garantirBibliotecas();
-        const dados = coletarDadosDoFormulario();
-        const docxBlob = await gerarArquivoDocx(dados, obterCaminhoDoModelo());
-        await converterDocumentoEmPdf('comodato', docxBlob);
-    } catch (error) {
-        mostrarErroPreviewPdf(error);
-    }
-});
-
-simplePrintPdfButton?.addEventListener('click', async () => {
-    const templateType =
-        simplePrintPdfButton.dataset.documentType ||
-        window.documentoSimplesTipoAtual ||
-        "";
-
-    if (!templateType) {
-        pdfPreviewModal.classList.remove('is-hidden');
-        pdfPreviewLoading.classList.remove('is-hidden');
-        pdfCanvas.style.display = 'none';
-        ocultarProgressoPdf();
-        pdfLoadingMessage.textContent = 'Erro: tipo de documento não identificado.';
-        pdfLoadingMessage.style.color = '#c41e3a';
-        return;
+    function setPdfButtonLoading(button, loading) {
+        if (!button) return;
+        button.disabled = Boolean(loading);
+        button.textContent = loading ? "Gerando PDF..." : "Gerar PDF";
     }
 
-    if (!documentoSimplesAtual || !validarDocumentoSimples()) {
-        return;
+    function autoDownloadPdf() {
+        try {
+            if (typeof baixarPdfProtegido === "function") {
+                baixarPdfProtegido();
+            }
+        } catch (error) {
+            console.warn("PDF gerado, mas o download automático falhou.", error);
+        }
     }
 
-    try {
-        await garantirBibliotecas();
-        const dados = coletarDadosDocumentoSimples();
-        const docxBlob = await gerarArquivoDocx(dados, obterCaminhoModeloDocumentoSimples(dados));
-        await converterDocumentoEmPdf(templateType, docxBlob);
-    } catch (error) {
-        mostrarErroPreviewPdf(error);
-    }
-});
+    async function gerarPdfPorTemplate(button, form, tipoDocumento) {
+        if (!form) return;
 
-pdfPrintButton?.addEventListener('click', imprimirPdf);
-pdfDownloadButton?.addEventListener('click', baixarPdfProtegido);
-pdfPreviewCloseButton?.addEventListener('click', fecharModalPdf);
-pdfCloseButton?.addEventListener('click', fecharModalPdf);
+        const isSimple = form.id === "simpleDocumentForm";
+        const tipo = tipoDocumento || button?.dataset?.documentType || window.documentoSimplesTipoAtual || "comodato";
 
-// Fechar modal ao clicar fora
-pdfPreviewModal?.addEventListener('click', (event) => {
-    if (event.target === pdfPreviewModal) {
-        fecharModalPdf();
+        try {
+            safeMessage(form, "Preparando documento no modelo Word...", "");
+            setPdfButtonLoading(button, true);
+
+            if (typeof garantirBibliotecas === "function") {
+                await garantirBibliotecas();
+            }
+
+            let dados;
+            let modelo;
+
+            if (isSimple) {
+                if (!window.documentoSimplesAtual && typeof documentoSimplesAtual !== "undefined" && !documentoSimplesAtual) {
+                    throw new Error("Documento não identificado. Volte e abra o documento novamente.");
+                }
+
+                if (typeof validarDocumentoSimples === "function" && !validarDocumentoSimples()) {
+                    safeMessage(form, "Preencha os campos obrigatórios antes de gerar o PDF.", "error");
+                    return;
+                }
+
+                dados = typeof coletarDadosDocumentoSimples === "function"
+                    ? coletarDadosDocumentoSimples()
+                    : {};
+
+                modelo = typeof obterCaminhoModeloDocumentoSimples === "function"
+                    ? obterCaminhoModeloDocumentoSimples(dados)
+                    : "";
+            } else {
+                if (typeof validarCamposObrigatorios === "function" && !validarCamposObrigatorios()) {
+                    safeMessage(form, "Preencha os campos obrigatórios antes de gerar o PDF.", "error");
+                    return;
+                }
+
+                dados = typeof coletarDadosDoFormulario === "function"
+                    ? coletarDadosDoFormulario()
+                    : {};
+
+                modelo = typeof obterCaminhoDoModelo === "function"
+                    ? obterCaminhoDoModelo()
+                    : "";
+            }
+
+            if (typeof gerarArquivoDocx !== "function") {
+                throw new Error("Gerador Word não encontrado no sistema.");
+            }
+
+            if (!modelo) {
+                throw new Error("Modelo Word não encontrado para este documento.");
+            }
+
+            const docxBlob = await gerarArquivoDocx(dados, modelo);
+
+            if (typeof converterDocumentoEmPdf !== "function") {
+                throw new Error("Conversor de PDF não carregado.");
+            }
+
+            safeMessage(form, "Convertendo o modelo Word para PDF...", "");
+            await converterDocumentoEmPdf(tipo, docxBlob);
+
+            window.setTimeout(autoDownloadPdf, 350);
+            safeMessage(form, "PDF gerado pelo modelo Word. O download foi iniciado.", "success");
+        } catch (error) {
+            console.error(error);
+            safeMessage(form, error?.message || "Não foi possível gerar o PDF.", "error");
+
+            if (typeof mostrarErroPreviewPdf === "function") {
+                mostrarErroPreviewPdf(error);
+            }
+        } finally {
+            setPdfButtonLoading(button, false);
+        }
     }
-});
+
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest("#printPdfButton, #simplePrintPdfButton");
+        if (!button) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        const form = button.id === "printPdfButton"
+            ? document.getElementById("contractForm")
+            : document.getElementById("simpleDocumentForm");
+
+        gerarPdfPorTemplate(button, form, button.dataset.documentType);
+    }, true);
+
+    window.DocSpaceTemplatePdfFix = {
+        gerarPdfPorTemplate,
+    };
+})();
+
+
+/* =========================================================
+   DOCSPACE v116 — BOTÕES DO POPUP PDF FUNCIONANDO
+   ========================================================= */
+(function () {
+    if (window.__docspacePdfModalButtonsFix20260704) return;
+    window.__docspacePdfModalButtonsFix20260704 = true;
+
+    function stop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    function closePdfPreview() {
+        try {
+            if (typeof fecharModalPdf === "function") {
+                fecharModalPdf();
+                return;
+            }
+        } catch (error) {
+            console.warn("Falha ao fechar via fecharModalPdf.", error);
+        }
+
+        const modal = document.getElementById("pdfPreviewModal");
+        if (modal) modal.classList.add("is-hidden");
+        document.body.classList.remove("modal-open", "pdf-preview-open");
+    }
+
+    function downloadCurrentPdf() {
+        try {
+            if (typeof baixarPdfProtegido === "function") {
+                baixarPdfProtegido();
+                return;
+            }
+        } catch (error) {
+            console.warn("Falha no baixarPdfProtegido.", error);
+        }
+
+        if (!currentPdfData || !currentPdfData.pdfBase64) {
+            return;
+        }
+
+        const binaryString = atob(currentPdfData.pdfBase64);
+        const bytes = new Uint8Array(binaryString.length);
+
+        for (let i = 0; i < binaryString.length; i += 1) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = currentPdfData.fileName || "documento-protegido.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+
+    function printCurrentPdf() {
+        try {
+            if (typeof imprimirPdf === "function") {
+                imprimirPdf();
+                return;
+            }
+        } catch (error) {
+            console.warn("Falha no imprimirPdf.", error);
+        }
+
+        if (!currentPdfData || !currentPdfData.pdfBase64) {
+            return;
+        }
+
+        const binaryString = atob(currentPdfData.pdfBase64);
+        const bytes = new Uint8Array(binaryString.length);
+
+        for (let i = 0; i < binaryString.length; i += 1) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+
+        if (win) {
+            win.addEventListener("load", () => {
+                try { win.print(); } catch (_) {}
+            }, { once: true });
+        }
+
+        window.setTimeout(() => URL.revokeObjectURL(url), 120000);
+    }
+
+    function ensureModalState() {
+        const modal = document.getElementById("pdfPreviewModal");
+        if (!modal) return;
+
+        if (!modal.classList.contains("is-hidden")) {
+            document.body.classList.add("modal-open", "pdf-preview-open");
+            modal.setAttribute("data-open", "true");
+        }
+    }
+
+    document.addEventListener("click", (event) => {
+        const closeButton = event.target.closest("#pdfPreviewCloseButton, #pdfCloseButton");
+        if (closeButton) {
+            stop(event);
+            closePdfPreview();
+            return;
+        }
+
+        const downloadButton = event.target.closest("#pdfDownloadButton");
+        if (downloadButton) {
+            stop(event);
+            downloadCurrentPdf();
+            return;
+        }
+
+        const printButton = event.target.closest("#pdfPrintButton");
+        if (printButton) {
+            stop(event);
+            printCurrentPdf();
+            return;
+        }
+
+        const modal = document.getElementById("pdfPreviewModal");
+        if (modal && event.target === modal) {
+            stop(event);
+            closePdfPreview();
+        }
+    }, true);
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+
+        const modal = document.getElementById("pdfPreviewModal");
+        if (!modal || modal.classList.contains("is-hidden")) return;
+
+        event.preventDefault();
+        closePdfPreview();
+    }, true);
+
+    const observer = new MutationObserver(ensureModalState);
+    const modal = document.getElementById("pdfPreviewModal");
+    if (modal) {
+        observer.observe(modal, { attributes: true, attributeFilter: ["class"] });
+        ensureModalState();
+    }
+
+    window.DocSpacePdfModalButtonsFix = {
+        closePdfPreview,
+        downloadCurrentPdf,
+        printCurrentPdf,
+    };
+})();

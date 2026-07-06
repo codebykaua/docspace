@@ -4125,8 +4125,19 @@ async function verifyBillingToken(env, token) {
     return data;
 }
 
+function getAppSecret(env) {
+    const secret = String(env?.APP_SECRET || "").trim();
+    if (!secret) {
+        // Falha segura: nunca usar segardo padrao.
+        // Se APP_SECRET nao estiver configurado, todas as sessoes/tokens seriam
+        // assinados com um segredo publico conhecido -> bypass total de auth.
+        throw httpError(500, "APP_SECRET nao configurado no ambiente do Worker. Configure wrangler secret put APP_SECRET antes de subir.");
+    }
+    return secret;
+}
+
 async function sign(env, text) {
-    const secret = String(env.APP_SECRET || "troque-este-segredo-em-producao");
+    const secret = getAppSecret(env);
     const key = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(secret),

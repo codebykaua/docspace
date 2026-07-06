@@ -1,0 +1,8 @@
+Limpeza conservadora de CSS aplicada.
+
+Foram removidas camadas experimentais duplicadas e arquivos backup de CSS.
+O CSS principal foi sincronizado em style.css e dist/style.css.
+A lógica JS/HTML foi preservada.
+
+Substitua o seu style.css pelo arquivo style.css deste pacote.
+Se publicar via dist, substitua também dist/style.css.

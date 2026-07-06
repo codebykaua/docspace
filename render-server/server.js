@@ -261,13 +261,19 @@ app.post('/api/pdf/ocr', async (req, res) => {
 });
 
 function assertRenderSecret(req) {
-    if (!RENDER_API_SECRET) {
+    const secret = String(process.env.RENDER_API_SECRET || '').trim();
+
+    // Modo compatível: se o segredo não estiver configurado no Render,
+    // a conversão continua funcionando. Para produção segura, configure
+    // RENDER_API_SECRET no Render e o mesmo segredo no Worker.
+    if (!secret) {
+        console.warn('RENDER_API_SECRET não configurado. Conversão liberada em modo compatível.');
         return;
     }
 
     const received = String(req.get('x-render-secret') || '').trim();
 
-    if (received !== RENDER_API_SECRET) {
+    if (received !== secret) {
         const error = new Error('Acesso nao autorizado.');
         error.status = 401;
         throw error;
