@@ -5253,17 +5253,76 @@
        Isso remove campos duplicados/inventados e garante que Word/PDF usem as mesmas chaves do template. */
     const DOCSPACE_TEMPLATE_FIELDS = {"comodato":[{"name":"nome_comandante","label":"Nome completo do comodante","wide":false},{"name":"estado_civil_comandante","label":"Estado civil do comodante","wide":false},{"name":"profissao_comandante","label":"Profissão do comodante","wide":false},{"name":"rg_comandante","label":"RG do comodante","wide":false},{"name":"cpf_comandante","label":"CPF/CNPJ do comodante","wide":false},{"name":"localidade_comandante","label":"Localidade do comodante","wide":true},{"name":"nome_comandatario","label":"Nome completo do comodatário","wide":false},{"name":"estado_civil_comandatario","label":"Estado civil do comodatário","wide":false},{"name":"profissão_comandatario","label":"Profissão do comodatário","wide":false},{"name":"rg_comandatario","label":"RG do comodatário","wide":false},{"name":"cpf_comandatario","label":"CPF/CNPJ do comodatário","wide":false},{"name":"localidade_comandatario","label":"Localidade do comodatário","wide":true},{"name":"localidade_proxima_comandatario","label":"Comunidade/localidade próxima","wide":true},{"name":"município_comandatrio","label":"Município do comodatário","wide":false},{"name":"nome_imovel","label":"Nome do imóvel rural","wide":false},{"name":"localidade_imovel_rural","label":"Localidade do imóvel rural","wide":true},{"name":"nirf_terra","label":"NIRF do imóvel","wide":false},{"name":"tamanho_trerra_numeros","label":"Área do imóvel em números","wide":false},{"name":"tamanho_terra_letras","label":"Área do imóvel por extenso","wide":false},{"name":"oque_produz","label":"O que produz","wide":false},{"name":"tamanho_utilizado_numeros","label":"Área utilizada em números","wide":false},{"name":"tamanho_utilizado_letras","label":"Área utilizada por extenso","wide":false},{"name":"duração_contrato","label":"Duração do contrato","wide":false},{"name":"data_inicio","label":"Data de início","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false},{"name":"profissao_comandatario","label":"Profissão do comodatário","wide":false},{"name":"municipio_comandatario","label":"Municipio comandatario","wide":false},{"name":"nome_conjuge","label":"Nome conjuge","wide":false},{"name":"nacionalidade_conjuge","label":"Nacionalidade conjuge","wide":false},{"name":"estado_civil_conjuge","label":"Estado civil conjuge","wide":false},{"name":"profissao_conjuge","label":"Profissao conjuge","wide":false},{"name":"rg_conjuge","label":"RG conjuge","wide":false},{"name":"cpf_conjuge","label":"CPF conjuge","wide":false},{"name":"localidade_conjuge","label":"Localidade conjuge","wide":true},{"name":"localidade_proxima_conjuge","label":"Localidade proxima conjuge","wide":true},{"name":"municipio_conjuge","label":"Municipio conjuge","wide":false},{"name":"nome_comandante_falecido","label":"Nome comandante falecido","wide":false},{"name":"estado_civil_comandante_falecido","label":"Estado civil comandante falecido","wide":false},{"name":"profissao_comandante_falecido","label":"Profissao comandante falecido","wide":false},{"name":"rg_comandante_falecido","label":"RG comandante falecido","wide":false},{"name":"cpf_comandante_falecido","label":"CPF comandante falecido","wide":false},{"name":"localidade_comandante_falecido","label":"Localidade comandante falecido","wide":true},{"name":"numero_obito","label":"Numero obito","wide":false},{"name":"data_falecimento","label":"Data falecimento","wide":false},{"name":"representante_do_falecido","label":"Representante do falecido","wide":false},{"name":"parentesco_representante","label":"Parentesco representante","wide":false},{"name":"rg_representante","label":"RG representante","wide":false},{"name":"cpf_representante","label":"CPF representante","wide":false},{"name":"endereço_representante","label":"Endereço representante","wide":true}],"ufba-membros":[{"name":"nome_representante","label":"Nome representante","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"endereço","label":"Endereço","wide":true},{"name":"localidade","label":"Localidade","wide":true},{"name":"produto1","label":"Produto1","wide":true},{"name":"valor1","label":"Valor1","wide":false},{"name":"produto2","label":"Produto2","wide":true},{"name":"valor2","label":"Valor2","wide":false},{"name":"produto3","label":"Produto3","wide":true},{"name":"valor3","label":"Valor3","wide":false},{"name":"valor_total_numeros","label":"Valor total numeros","wide":false},{"name":"valor_total_escrito","label":"Valor total escrito","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mês","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"renda-membros":[{"name":"nome_representante","label":"Nome representante","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"endereço","label":"Endereço","wide":true},{"name":"localidade","label":"Localidade","wide":true},{"name":"tipo_renda","label":"Tipo renda","wide":false},{"name":"nome_mebro","label":"Nome mebro","wide":false},{"name":"valor_anual","label":"Valor anual","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mês","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"posse":[{"name":"nome_posseiro","label":"Nome posseiro","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"endereço","label":"Endereço","wide":true},{"name":"período_numero","label":"Período numero","wide":false},{"name":"período_extenso","label":"Período extenso","wide":false},{"name":"nome_imovel","label":"Nome do imóvel rural","wide":false},{"name":"área_total_imovel","label":"Área total imovel","wide":false},{"name":"ao_norte","label":"Ao norte","wide":false},{"name":"cpf_norte","label":"CPF norte","wide":false},{"name":"ao_leste","label":"Ao leste","wide":false},{"name":"cpf_leste","label":"CPF leste","wide":false},{"name":"ao_oeste","label":"Ao oeste","wide":false},{"name":"cpf_oeste","label":"CPF oeste","wide":false},{"name":"ao_sul","label":"Ao sul","wide":false},{"name":"cpf_sul","label":"CPF sul","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mês","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"autodeclaracao-rural":[{"name":"nome_segurado","label":"Nome segurado","wide":false},{"name":"escolaridade_segurado","label":"Escolaridade segurado","wide":false},{"name":"telefone1_segurado","label":"Telefone1 segurado","wide":false},{"name":"cor_raca_segurado","label":"Cor raca segurado","wide":false},{"name":"telefone2_segurado","label":"Telefone2 segurado","wide":false},{"name":"estado_civil_segurado","label":"Estado civil segurado","wide":false},{"name":"endereco_segurado","label":"Endereco segurado","wide":true},{"name":"cpf_segurado","label":"CPF segurado","wide":false},{"name":"beneficio","label":"Beneficio","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false},{"name":"apelido_segurado","label":"Apelido segurado","wide":false},{"name":"data_nascimento","label":"Data nascimento","wide":false},{"name":"local_nascimento","label":"Local nascimento","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"uf","label":"UF","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"local_expedicao","label":"Local expedicao","wide":false},{"name":"data_emissao","label":"Data emissao","wide":false},{"name":"periodo_inicial_1","label":"Periodo inicial 1","wide":false},{"name":"periodo_final_1","label":"Periodo final 1","wide":false},{"name":"condicao_1","label":"Condicao 1","wide":false},{"name":"situacao_individual_1","label":"Situacao individual 1","wide":false},{"name":"situacao_regime_1","label":"Situacao regime 1","wide":false},{"name":"periodo_inicial_2","label":"Periodo inicial 2","wide":false},{"name":"periodo_final_2","label":"Periodo final 2","wide":false},{"name":"condicao_2","label":"Condicao 2","wide":false},{"name":"situacao_individual_2","label":"Situacao individual 2","wide":false},{"name":"situacao_regime_2","label":"Situacao regime 2","wide":false},{"name":"periodo_inicial_3","label":"Periodo inicial 3","wide":false},{"name":"periodo_final_3","label":"Periodo final 3","wide":false},{"name":"condicao_3","label":"Condicao 3","wide":false},{"name":"situacao_individual_3","label":"Situacao individual 3","wide":false},{"name":"situacao_regime_3","label":"Situacao regime 3","wide":false},{"name":"titular","label":"Titular","wide":false},{"name":"componente","label":"Componente","wide":false},{"name":"nome_familiar_1","label":"Nome familiar 1","wide":false},{"name":"dn_familiar_1","label":"Dn familiar 1","wide":false},{"name":"cpf_familiar_1","label":"CPF familiar 1","wide":false},{"name":"estado_civil_familiar_1","label":"Estado civil familiar 1","wide":false},{"name":"parentesco_familiar_1","label":"Parentesco familiar 1","wide":false},{"name":"nome_familiar_2","label":"Nome familiar 2","wide":false},{"name":"dn_familiar_2","label":"Dn familiar 2","wide":false},{"name":"cpf_familiar_2","label":"CPF familiar 2","wide":false},{"name":"estado_civil_familiar_2","label":"Estado civil familiar 2","wide":false},{"name":"parentesco_familiar_2","label":"Parentesco familiar 2","wide":false},{"name":"nome_familiar_3","label":"Nome familiar 3","wide":false},{"name":"dn_familiar_3","label":"Dn familiar 3","wide":false},{"name":"cpf_familiar_3","label":"CPF familiar 3","wide":false},{"name":"estado_civil_familiar_3","label":"Estado civil familiar 3","wide":false},{"name":"parentesco_familiar_3","label":"Parentesco familiar 3","wide":false},{"name":"nome_familiar_4","label":"Nome familiar 4","wide":false},{"name":"dn_familiar_4","label":"Dn familiar 4","wide":false},{"name":"cpf_familiar_4","label":"CPF familiar 4","wide":false},{"name":"estado_civil_familiar_4","label":"Estado civil familiar 4","wide":false},{"name":"parentesco_familiar_4","label":"Parentesco familiar 4","wide":false},{"name":"itr_terra_1","label":"Itr terra 1","wide":false},{"name":"nome_propiedade_1","label":"Nome propiedade 1","wide":false},{"name":"municipio_uf_1","label":"Municipio UF 1","wide":false},{"name":"area_total_1","label":"Area total 1","wide":false},{"name":"area_explorada_1","label":"Area explorada 1","wide":false},{"name":"nome_proprietario_1","label":"Nome proprietario 1","wide":false},{"name":"cpf_proprietario_1","label":"CPF proprietario 1","wide":false},{"name":"itr_terra_2","label":"Itr terra 2","wide":false},{"name":"nome_propiedade_2","label":"Nome propiedade 2","wide":false},{"name":"municipio_uf_2","label":"Municipio UF 2","wide":false},{"name":"area_total_2","label":"Area total 2","wide":false},{"name":"area_explorada_2","label":"Area explorada 2","wide":false},{"name":"nome_proprietario_2","label":"Nome proprietario 2","wide":false},{"name":"cpf_proprietario_2","label":"CPF proprietario 2","wide":false},{"name":"itr_terra_3","label":"Itr terra 3","wide":false},{"name":"nome_propiedade_3","label":"Nome propiedade 3","wide":false},{"name":"municipio_uf_3","label":"Municipio UF 3","wide":false},{"name":"area_total_3","label":"Area total 3","wide":false},{"name":"area_explorada_3","label":"Area explorada 3","wide":false},{"name":"nome_proprietario_3","label":"Nome proprietario 3","wide":false},{"name":"cpf_proprietario_3","label":"CPF proprietario 3","wide":false},{"name":"itr_terra_4","label":"Itr terra 4","wide":false},{"name":"nome_propiedade_4","label":"Nome propiedade 4","wide":false},{"name":"municipio_uf_4","label":"Municipio UF 4","wide":false},{"name":"area_total_4","label":"Area total 4","wide":false},{"name":"area_explorada_4","label":"Area explorada 4","wide":false},{"name":"nome_proprietario_4","label":"Nome proprietario 4","wide":false},{"name":"cpf_proprietario_4","label":"CPF proprietario 4","wide":false},{"name":"atividade_rural_1","label":"Atividade rural 1","wide":true},{"name":"subsistencia_venda_1","label":"Subsistencia venda 1","wide":false},{"name":"atividade_rural_2","label":"Atividade rural 2","wide":true},{"name":"subsistencia_venda_2","label":"Subsistencia venda 2","wide":false},{"name":"atividade_rural_3","label":"Atividade rural 3","wide":true},{"name":"subsistencia_venda_3","label":"Subsistencia venda 3","wide":false},{"name":"sim_ipi","label":"Sim ipi","wide":false},{"name":"nao_ipi","label":"Nao ipi","wide":false},{"name":"ipi_periodo_1","label":"Ipi periodo 1","wide":false},{"name":"ipi_periodo_2","label":"Ipi periodo 2","wide":false},{"name":"sim_empregados","label":"Sim empregados","wide":false},{"name":"nao_empregados","label":"Nao empregados","wide":false},{"name":"empregado_nome_1","label":"Empregado nome 1","wide":false},{"name":"empregado_cpf_1","label":"Empregado CPF 1","wide":false},{"name":"empregado_periodo_1","label":"Empregado periodo 1","wide":false},{"name":"empregado_nome_2","label":"Empregado nome 2","wide":false},{"name":"empregado_cpf_2","label":"Empregado CPF 2","wide":false},{"name":"empregado_periodo_2","label":"Empregado periodo 2","wide":false},{"name":"empregado_nome_3","label":"Empregado nome 3","wide":false},{"name":"empregado_cpf_3","label":"Empregado CPF 3","wide":false},{"name":"empregado_periodo_3","label":"Empregado periodo 3","wide":false},{"name":"sim_outra_atividade","label":"Sim outra atividade","wide":true},{"name":"nao_outra_atividade","label":"Nao outra atividade","wide":true},{"name":"outra_atividade_renda_1","label":"Outra atividade renda 1","wide":true},{"name":"outra_atividade_local_1","label":"Outra atividade local 1","wide":true},{"name":"outra_atividade_periodo_1","label":"Outra atividade periodo 1","wide":true},{"name":"outra_atividade_renda_2","label":"Outra atividade renda 2","wide":true},{"name":"outra_atividade_local_2","label":"Outra atividade local 2","wide":true},{"name":"outra_atividade_periodo_2","label":"Outra atividade periodo 2","wide":true},{"name":"outra_atividade_renda_3","label":"Outra atividade renda 3","wide":true},{"name":"outra_atividade_local_3","label":"Outra atividade local 3","wide":true},{"name":"outra_atividade_periodo_3","label":"Outra atividade periodo 3","wide":true},{"name":"outra_atividade_renda_4","label":"Outra atividade renda 4","wide":true},{"name":"outra_atividade_local_4","label":"Outra atividade local 4","wide":true},{"name":"outra_atividade_periodo_4","label":"Outra atividade periodo 4","wide":true},{"name":"outra_atividade_renda_5","label":"Outra atividade renda 5","wide":true},{"name":"outra_atividade_local_5","label":"Outra atividade local 5","wide":true},{"name":"outra_atividade_periodo_5","label":"Outra atividade periodo 5","wide":true},{"name":"sim_outra_renda","label":"Sim outra renda","wide":false},{"name":"nao_outra_renda","label":"Nao outra renda","wide":false},{"name":"outra_renda_atividade_1","label":"Outra renda atividade 1","wide":true},{"name":"outra_renda_periodo_1","label":"Outra renda periodo 1","wide":false},{"name":"outra_renda_valor_1","label":"Outra renda valor 1","wide":false},{"name":"outra_renda_informacoes_1","label":"Outra renda informacoes 1","wide":false},{"name":"outra_renda_atividade_2","label":"Outra renda atividade 2","wide":true},{"name":"outra_renda_periodo_2","label":"Outra renda periodo 2","wide":false},{"name":"outra_renda_valor_2","label":"Outra renda valor 2","wide":false},{"name":"outra_renda_informacoes_2","label":"Outra renda informacoes 2","wide":false},{"name":"outra_renda_atividade_3","label":"Outra renda atividade 3","wide":true},{"name":"outra_renda_periodo_3","label":"Outra renda periodo 3","wide":false},{"name":"outra_renda_valor_3","label":"Outra renda valor 3","wide":false},{"name":"outra_renda_informacoes_3","label":"Outra renda informacoes 3","wide":false},{"name":"outra_renda_atividade_4","label":"Outra renda atividade 4","wide":true},{"name":"outra_renda_periodo_4","label":"Outra renda periodo 4","wide":false},{"name":"outra_renda_valor_4","label":"Outra renda valor 4","wide":false},{"name":"outra_renda_informacoes_4","label":"Outra renda informacoes 4","wide":false},{"name":"sim_cooperativa","label":"Sim cooperativa","wide":false},{"name":"nao_cooperativa","label":"Nao cooperativa","wide":false},{"name":"cooperativa_entidade","label":"Cooperativa entidade","wide":false},{"name":"cooperativa_cnpj","label":"Cooperativa CNPJ","wide":false},{"name":"cooperativa_tipo","label":"Cooperativa tipo","wide":false},{"name":"data","label":"Data","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"nome_beneficio","label":"Nome beneficio","wide":false}],"procuracao-consumidor":[{"name":"nome_pessoa","label":"Nome completo","wide":false},{"name":"profissao","label":"Profissão","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"telefone","label":"Telefone","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"municipio","label":"Município","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"procuracao-normal":[{"name":"nome_pessoa","label":"Nome completo","wide":false},{"name":"profissao","label":"Profissão","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"telefone","label":"Telefone","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"municipio","label":"Município","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"contrato-honorarios-50":[{"name":"nome_pessoa","label":"Nome completo","wide":false},{"name":"profissao","label":"Profissão","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"telefone","label":"Telefone","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"municipio","label":"Município","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"contrato-prev-40":[{"name":"nome_pessoa","label":"Nome completo","wide":false},{"name":"profissao","label":"Profissão","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"telefone","label":"Telefone","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"municipio","label":"Município","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"contrato-prev-30":[{"name":"nome_pessoa","label":"Nome completo","wide":false},{"name":"profissao","label":"Profissão","wide":false},{"name":"estado_civil","label":"Estado civil","wide":false},{"name":"rg","label":"RG","wide":false},{"name":"cpf","label":"CPF","wide":false},{"name":"endereco","label":"Endereço","wide":true},{"name":"municipio","label":"Município","wide":false},{"name":"cidade","label":"Cidade","wide":false},{"name":"dia","label":"Dia","wide":false},{"name":"mes","label":"Mês","wide":false},{"name":"ano","label":"Ano","wide":false}],"contrato-compra-venda-imovel":[{"name":"nome_vendedor","label":"Nome vendedor","wide":false},{"name":"nacionalidade_vendedor","label":"Nacionalidade vendedor","wide":false},{"name":"estado_civil_vendedor","label":"Estado civil vendedor","wide":false},{"name":"rg_vendedor","label":"RG vendedor","wide":false},{"name":"cpf_vendedor","label":"CPF vendedor","wide":false},{"name":"endereco_vendedor","label":"Endereco vendedor","wide":true},{"name":"nome_comprador","label":"Nome comprador","wide":false},{"name":"nacionalidade_comprador","label":"Nacionalidade comprador","wide":false},{"name":"estado_civil_comprador","label":"Estado civil comprador","wide":false},{"name":"rg_comprador","label":"RG comprador","wide":false},{"name":"cpf_comprador","label":"CPF comprador","wide":false},{"name":"endereco_comprador","label":"Endereco comprador","wide":true},{"name":"quantidade_bens","label":"Quantidade bens","wide":false},{"name":"denominacao_imovel","label":"Denominacao imovel","wide":false},{"name":"comprimento_imovel","label":"Comprimento imovel","wide":false},{"name":"largura_imovel","label":"LaRGura imovel","wide":false},{"name":"endereco_imovel","label":"Endereco imovel","wide":true},{"name":"valor_venda","label":"Valor venda","wide":false},{"name":"valor_venda_extenso","label":"Valor venda extenso","wide":false},{"name":"foro_comarca","label":"Foro comarca","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"contrato-compra-venda-veiculo":[{"name":"nome_vendedor","label":"Nome vendedor","wide":false},{"name":"nacionalidade_vendedor","label":"Nacionalidade vendedor","wide":false},{"name":"estado_civil_vendedor","label":"Estado civil vendedor","wide":false},{"name":"rg_vendedor","label":"RG vendedor","wide":false},{"name":"cpf_vendedor","label":"CPF vendedor","wide":false},{"name":"endereco_vendedor","label":"Endereco vendedor","wide":true},{"name":"nome_comprador","label":"Nome comprador","wide":false},{"name":"nacionalidade_comprador","label":"Nacionalidade comprador","wide":false},{"name":"estado_civil_comprador","label":"Estado civil comprador","wide":false},{"name":"rg_comprador","label":"RG comprador","wide":false},{"name":"cpf_comprador","label":"CPF comprador","wide":false},{"name":"endereco_comprador","label":"Endereco comprador","wide":true},{"name":"tipo_bem","label":"Tipo bem","wide":false},{"name":"marca_bem","label":"Marca bem","wide":false},{"name":"modelo_bem","label":"Modelo bem","wide":false},{"name":"ano_modelo_bem","label":"Ano modelo bem","wide":false},{"name":"cor_bem","label":"Cor bem","wide":false},{"name":"placa_veiculo","label":"Placa veiculo","wide":false},{"name":"renavam_veiculo","label":"Renavam veiculo","wide":false},{"name":"chassi_ou_serie","label":"Chassi ou serie","wide":false},{"name":"quilometragem_veiculo","label":"Quilometragem veiculo","wide":false},{"name":"descricao_complementar_bem","label":"Descricao complementar bem","wide":true},{"name":"valor_venda","label":"Valor venda","wide":false},{"name":"valor_venda_extenso","label":"Valor venda extenso","wide":false},{"name":"forma_pagamento","label":"Forma pagamento","wide":false},{"name":"data_assinatura","label":"Data assinatura","wide":false},{"name":"estado_conservacao_bem","label":"Estado conservacao bem","wide":false},{"name":"local_entrega_bem","label":"Local entrega bem","wide":false},{"name":"data_entrega_bem","label":"Data entrega bem","wide":false},{"name":"responsavel_transferencia","label":"Responsavel transferencia","wide":false},{"name":"foro_comarca","label":"Foro comarca","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false},{"name":"cpf_testemunha_1","label":"CPF testemunha 1","wide":false},{"name":"cpf_testemunha_2","label":"CPF testemunha 2","wide":false}],"cadastro-confrontantes":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"nome_imovel_rural","label":"Nome imovel rural","wide":false},{"name":"endereco_imovel_rural","label":"Endereco imovel rural","wide":true},{"name":"municipio_imovel","label":"Municipio imovel","wide":false},{"name":"uf_imovel","label":"UF imovel","wide":false},{"name":"area_imovel","label":"Area imovel","wide":false},{"name":"registro_imovel","label":"Registro imovel","wide":false},{"name":"nome_confrontante_norte","label":"Nome confrontante norte","wide":true},{"name":"cpf_cnpj_confrontante_norte","label":"CPF CNPJ confrontante norte","wide":true},{"name":"imovel_confrontante_norte","label":"Imovel confrontante norte","wide":true},{"name":"endereco_confrontante_norte","label":"Endereco confrontante norte","wide":true},{"name":"nome_confrontante_sul","label":"Nome confrontante sul","wide":true},{"name":"cpf_cnpj_confrontante_sul","label":"CPF CNPJ confrontante sul","wide":true},{"name":"imovel_confrontante_sul","label":"Imovel confrontante sul","wide":true},{"name":"endereco_confrontante_sul","label":"Endereco confrontante sul","wide":true},{"name":"nome_confrontante_leste","label":"Nome confrontante leste","wide":true},{"name":"cpf_cnpj_confrontante_leste","label":"CPF CNPJ confrontante leste","wide":true},{"name":"imovel_confrontante_leste","label":"Imovel confrontante leste","wide":true},{"name":"endereco_confrontante_leste","label":"Endereco confrontante leste","wide":true},{"name":"nome_confrontante_oeste","label":"Nome confrontante oeste","wide":true},{"name":"cpf_cnpj_confrontante_oeste","label":"CPF CNPJ confrontante oeste","wide":true},{"name":"imovel_confrontante_oeste","label":"Imovel confrontante oeste","wide":true},{"name":"endereco_confrontante_oeste","label":"Endereco confrontante oeste","wide":true},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"controle-producao-anual":[{"name":"nome_produtor","label":"Nome produtor","wide":true},{"name":"nacionalidade_produtor","label":"Nacionalidade produtor","wide":true},{"name":"estado_civil_produtor","label":"Estado civil produtor","wide":true},{"name":"rg_produtor","label":"RG produtor","wide":true},{"name":"cpf_produtor","label":"CPF produtor","wide":true},{"name":"endereco_produtor","label":"Endereco produtor","wide":true},{"name":"nome_imovel_rural","label":"Nome imovel rural","wide":false},{"name":"endereco_imovel_rural","label":"Endereco imovel rural","wide":true},{"name":"municipio_imovel","label":"Municipio imovel","wide":false},{"name":"uf_imovel","label":"UF imovel","wide":false},{"name":"area_imovel","label":"Area imovel","wide":false},{"name":"registro_rural","label":"Registro rural","wide":false},{"name":"ano_referencia","label":"Ano referencia","wide":false},{"name":"data_inicio_ano","label":"Data inicio ano","wide":false},{"name":"data_fim_ano","label":"Data fim ano","wide":false},{"name":"atividade_1","label":"Atividade 1","wide":true},{"name":"quantidade_produzida_1","label":"Quantidade produzida 1","wide":false},{"name":"unidade_1","label":"Unidade 1","wide":false},{"name":"quantidade_vendida_1","label":"Quantidade vendida 1","wide":false},{"name":"estoque_final_1","label":"Estoque final 1","wide":false},{"name":"valor_total_1","label":"Valor total 1","wide":false},{"name":"atividade_2","label":"Atividade 2","wide":true},{"name":"quantidade_produzida_2","label":"Quantidade produzida 2","wide":false},{"name":"unidade_2","label":"Unidade 2","wide":false},{"name":"quantidade_vendida_2","label":"Quantidade vendida 2","wide":false},{"name":"estoque_final_2","label":"Estoque final 2","wide":false},{"name":"valor_total_2","label":"Valor total 2","wide":false},{"name":"atividade_3","label":"Atividade 3","wide":true},{"name":"quantidade_produzida_3","label":"Quantidade produzida 3","wide":false},{"name":"unidade_3","label":"Unidade 3","wide":false},{"name":"quantidade_vendida_3","label":"Quantidade vendida 3","wide":false},{"name":"estoque_final_3","label":"Estoque final 3","wide":false},{"name":"valor_total_3","label":"Valor total 3","wide":false},{"name":"receita_bruta_anual","label":"Receita bruta anual","wide":false},{"name":"receita_bruta_extenso","label":"Receita bruta extenso","wide":false},{"name":"despesas_anuais","label":"Despesas anuais","wide":false},{"name":"despesas_anuais_extenso","label":"Despesas anuais extenso","wide":false},{"name":"saldo_estimado","label":"Saldo estimado","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"controle-rebanho":[{"name":"nome_produtor","label":"Nome produtor","wide":true},{"name":"nacionalidade_produtor","label":"Nacionalidade produtor","wide":true},{"name":"estado_civil_produtor","label":"Estado civil produtor","wide":true},{"name":"rg_produtor","label":"RG produtor","wide":true},{"name":"cpf_produtor","label":"CPF produtor","wide":true},{"name":"endereco_produtor","label":"Endereco produtor","wide":true},{"name":"nome_propriedade","label":"Nome propriedade","wide":false},{"name":"endereco_propriedade","label":"Endereco propriedade","wide":true},{"name":"municipio_propriedade","label":"Municipio propriedade","wide":false},{"name":"uf_propriedade","label":"UF propriedade","wide":false},{"name":"registro_propriedade","label":"Registro propriedade","wide":false},{"name":"data_inicio_controle","label":"Data inicio controle","wide":false},{"name":"data_fim_controle","label":"Data fim controle","wide":false},{"name":"ano_controle","label":"Ano controle","wide":false},{"name":"especie_1","label":"Especie 1","wide":false},{"name":"categoria_1","label":"Categoria 1","wide":false},{"name":"quantidade_inicial_1","label":"Quantidade inicial 1","wide":false},{"name":"entradas_1","label":"Entradas 1","wide":false},{"name":"saidas_1","label":"Saidas 1","wide":false},{"name":"quantidade_final_1","label":"Quantidade final 1","wide":false},{"name":"especie_2","label":"Especie 2","wide":false},{"name":"categoria_2","label":"Categoria 2","wide":false},{"name":"quantidade_inicial_2","label":"Quantidade inicial 2","wide":false},{"name":"entradas_2","label":"Entradas 2","wide":false},{"name":"saidas_2","label":"Saidas 2","wide":false},{"name":"quantidade_final_2","label":"Quantidade final 2","wide":false},{"name":"especie_3","label":"Especie 3","wide":false},{"name":"categoria_3","label":"Categoria 3","wide":false},{"name":"quantidade_inicial_3","label":"Quantidade inicial 3","wide":false},{"name":"entradas_3","label":"Entradas 3","wide":false},{"name":"saidas_3","label":"Saidas 3","wide":false},{"name":"quantidade_final_3","label":"Quantidade final 3","wide":false},{"name":"total_nascimentos","label":"Total nascimentos","wide":false},{"name":"total_compras","label":"Total compras","wide":false},{"name":"total_vendas","label":"Total vendas","wide":false},{"name":"total_mortes","label":"Total mortes","wide":false},{"name":"total_transferencias","label":"Total transferencias","wide":false},{"name":"controle_sanitario","label":"Controle sanitario","wide":false},{"name":"vacinacao_rebanho","label":"Vacinacao rebanho","wide":false},{"name":"forma_identificacao","label":"Forma identificacao","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"inventario-producao-rural":[{"name":"nome_produtor","label":"Nome produtor","wide":true},{"name":"nacionalidade_produtor","label":"Nacionalidade produtor","wide":true},{"name":"estado_civil_produtor","label":"Estado civil produtor","wide":true},{"name":"rg_produtor","label":"RG produtor","wide":true},{"name":"cpf_produtor","label":"CPF produtor","wide":true},{"name":"endereco_produtor","label":"Endereco produtor","wide":true},{"name":"nome_imovel_rural","label":"Nome imovel rural","wide":false},{"name":"endereco_imovel_rural","label":"Endereco imovel rural","wide":true},{"name":"municipio_imovel","label":"Municipio imovel","wide":false},{"name":"uf_imovel","label":"UF imovel","wide":false},{"name":"area_imovel","label":"Area imovel","wide":false},{"name":"registro_rural","label":"Registro rural","wide":false},{"name":"data_inicio_periodo","label":"Data inicio periodo","wide":false},{"name":"data_fim_periodo","label":"Data fim periodo","wide":false},{"name":"ano_safra","label":"Ano safra","wide":false},{"name":"produto_1","label":"Produto 1","wide":true},{"name":"area_produto_1","label":"Area produto 1","wide":true},{"name":"quantidade_produto_1","label":"Quantidade produto 1","wide":true},{"name":"unidade_produto_1","label":"Unidade produto 1","wide":true},{"name":"valor_produto_1","label":"Valor produto 1","wide":true},{"name":"produto_2","label":"Produto 2","wide":true},{"name":"area_produto_2","label":"Area produto 2","wide":true},{"name":"quantidade_produto_2","label":"Quantidade produto 2","wide":true},{"name":"unidade_produto_2","label":"Unidade produto 2","wide":true},{"name":"valor_produto_2","label":"Valor produto 2","wide":true},{"name":"produto_3","label":"Produto 3","wide":true},{"name":"area_produto_3","label":"Area produto 3","wide":true},{"name":"quantidade_produto_3","label":"Quantidade produto 3","wide":true},{"name":"unidade_produto_3","label":"Unidade produto 3","wide":true},{"name":"valor_produto_3","label":"Valor produto 3","wide":true},{"name":"local_armazenamento","label":"Local armazenamento","wide":false},{"name":"destino_producao","label":"Destino producao","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"contrato-arrendamento-rural":[{"name":"nome_arrendador","label":"Nome arrendador","wide":false},{"name":"nacionalidade_arrendador","label":"Nacionalidade arrendador","wide":false},{"name":"estado_civil_arrendador","label":"Estado civil arrendador","wide":false},{"name":"profissao_arrendador","label":"Profissao arrendador","wide":false},{"name":"rg_arrendador","label":"RG arrendador","wide":false},{"name":"cpf_cnpj_arrendador","label":"CPF CNPJ arrendador","wide":false},{"name":"endereco_arrendador","label":"Endereco arrendador","wide":true},{"name":"nome_arrendatario","label":"Nome arrendatario","wide":false},{"name":"nacionalidade_arrendatario","label":"Nacionalidade arrendatario","wide":false},{"name":"estado_civil_arrendatario","label":"Estado civil arrendatario","wide":false},{"name":"profissao_arrendatario","label":"Profissao arrendatario","wide":false},{"name":"rg_arrendatario","label":"RG arrendatario","wide":false},{"name":"cpf_cnpj_arrendatario","label":"CPF CNPJ arrendatario","wide":false},{"name":"endereco_arrendatario","label":"Endereco arrendatario","wide":true},{"name":"denominacao_imovel","label":"Denominacao imovel","wide":false},{"name":"area_total_ha","label":"Area total ha","wide":false},{"name":"localizacao_imovel","label":"Localizacao imovel","wide":false},{"name":"municipio","label":"Município","wide":false},{"name":"uf","label":"UF","wide":false},{"name":"matricula_imovel","label":"Matricula imovel","wide":false},{"name":"ccir_incra","label":"Ccir incra","wide":false},{"name":"car_imovel","label":"Car imovel","wide":false},{"name":"confrontacoes_imovel","label":"Confrontacoes imovel","wide":true},{"name":"finalidade_arrendamento","label":"Finalidade arrendamento","wide":true},{"name":"prazo_arrendamento","label":"Prazo arrendamento","wide":false},{"name":"data_inicio","label":"Data de início","wide":false},{"name":"data_fim","label":"Data fim","wide":false},{"name":"valor_arrendamento","label":"Valor arrendamento","wide":false},{"name":"valor_arrendamento_extenso","label":"Valor arrendamento extenso","wide":false},{"name":"dia_vencimento","label":"Dia vencimento","wide":false},{"name":"periodicidade_pagamento","label":"Periodicidade pagamento","wide":false},{"name":"forma_pagamento","label":"Forma pagamento","wide":false},{"name":"indice_reajuste","label":"Indice reajuste","wide":false},{"name":"prazo_inadimplencia","label":"Prazo inadimplencia","wide":false},{"name":"prazo_aviso_rescisao","label":"Prazo aviso rescisao","wide":false},{"name":"foro_comarca","label":"Foro comarca","wide":false},{"name":"foro_uf","label":"Foro UF","wide":false},{"name":"numero_vias","label":"Numero vias","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"contrato-comodato-equipamentos":[{"name":"nome_comodante","label":"Nome comodante","wide":false},{"name":"nacionalidade_comodante","label":"Nacionalidade comodante","wide":false},{"name":"estado_civil_comodante","label":"Estado civil comodante","wide":false},{"name":"profissao_comodante","label":"Profissao comodante","wide":false},{"name":"rg_comodante","label":"RG comodante","wide":false},{"name":"cpf_cnpj_comodante","label":"CPF CNPJ comodante","wide":false},{"name":"endereco_comodante","label":"Endereco comodante","wide":true},{"name":"nome_comodatario","label":"Nome completo do comodatário","wide":false},{"name":"nacionalidade_comodatario","label":"Nacionalidade comodatario","wide":false},{"name":"estado_civil_comodatario","label":"Estado civil do comodatário","wide":false},{"name":"profissao_comodatario","label":"Profissao comodatario","wide":false},{"name":"rg_comodatario","label":"RG do comodatário","wide":false},{"name":"cpf_cnpj_comodatario","label":"CPF CNPJ comodatario","wide":false},{"name":"endereco_comodatario","label":"Endereco comodatario","wide":true},{"name":"finalidade_uso_equipamento","label":"Finalidade uso equipamento","wide":true},{"name":"equipamento_1","label":"Equipamento 1","wide":false},{"name":"marca_modelo_1","label":"Marca modelo 1","wide":false},{"name":"serie_chassi_1","label":"Serie chassi 1","wide":false},{"name":"estado_conservacao_1","label":"Estado conservacao 1","wide":false},{"name":"acessorios_1","label":"Acessorios 1","wide":false},{"name":"equipamento_2","label":"Equipamento 2","wide":false},{"name":"marca_modelo_2","label":"Marca modelo 2","wide":false},{"name":"serie_chassi_2","label":"Serie chassi 2","wide":false},{"name":"estado_conservacao_2","label":"Estado conservacao 2","wide":false},{"name":"acessorios_2","label":"Acessorios 2","wide":false},{"name":"equipamento_3","label":"Equipamento 3","wide":false},{"name":"marca_modelo_3","label":"Marca modelo 3","wide":false},{"name":"serie_chassi_3","label":"Serie chassi 3","wide":false},{"name":"estado_conservacao_3","label":"Estado conservacao 3","wide":false},{"name":"acessorios_3","label":"Acessorios 3","wide":false},{"name":"prazo_comodato","label":"Prazo comodato","wide":false},{"name":"data_inicio","label":"Data de início","wide":false},{"name":"data_fim","label":"Data fim","wide":false},{"name":"responsavel_despesas","label":"Responsavel despesas","wide":false},{"name":"regra_manutencao_extraordinaria","label":"Regra manutencao extraordinaria","wide":false},{"name":"foro_comarca","label":"Foro comarca","wide":false},{"name":"foro_uf","label":"Foro UF","wide":false},{"name":"numero_vias","label":"Numero vias","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"contrato-parceria-rural":[{"name":"nome_outorgante","label":"Nome outoRGante","wide":false},{"name":"nacionalidade_outorgante","label":"Nacionalidade outoRGante","wide":false},{"name":"estado_civil_outorgante","label":"Estado civil outoRGante","wide":false},{"name":"profissao_outorgante","label":"Profissao outoRGante","wide":false},{"name":"rg_outorgante","label":"RG outoRGante","wide":false},{"name":"cpf_cnpj_outorgante","label":"CPF CNPJ outoRGante","wide":false},{"name":"endereco_outorgante","label":"Endereco outoRGante","wide":true},{"name":"nome_outorgado","label":"Nome outoRGado","wide":false},{"name":"nacionalidade_outorgado","label":"Nacionalidade outoRGado","wide":false},{"name":"estado_civil_outorgado","label":"Estado civil outoRGado","wide":false},{"name":"profissao_outorgado","label":"Profissao outoRGado","wide":false},{"name":"rg_outorgado","label":"RG outoRGado","wide":false},{"name":"cpf_cnpj_outorgado","label":"CPF CNPJ outoRGado","wide":false},{"name":"endereco_outorgado","label":"Endereco outoRGado","wide":true},{"name":"denominacao_area","label":"Denominacao area","wide":false},{"name":"area_parceria_ha","label":"Area parceria ha","wide":false},{"name":"localizacao_area","label":"Localizacao area","wide":false},{"name":"municipio","label":"Município","wide":false},{"name":"uf","label":"UF","wide":false},{"name":"matricula_area","label":"Matricula area","wide":false},{"name":"atividade_parceria","label":"Atividade parceria","wide":true},{"name":"descricao_atividade","label":"Descricao atividade","wide":true},{"name":"percentual_outorgante","label":"Percentual outoRGante","wide":false},{"name":"percentual_outorgado","label":"Percentual outoRGado","wide":false},{"name":"periodicidade_apuracao","label":"Periodicidade apuracao","wide":false},{"name":"divisao_despesas","label":"Divisao despesas","wide":false},{"name":"prazo_parceria","label":"Prazo parceria","wide":false},{"name":"data_inicio","label":"Data de início","wide":false},{"name":"data_fim","label":"Data fim","wide":false},{"name":"periodicidade_prestacao_contas","label":"Periodicidade prestacao contas","wide":false},{"name":"prazo_aviso_rescisao","label":"Prazo aviso rescisao","wide":false},{"name":"foro_comarca","label":"Foro comarca","wide":false},{"name":"foro_uf","label":"Foro UF","wide":false},{"name":"numero_vias","label":"Numero vias","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-posse-mansa-pacifica":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_cnpj_declarante","label":"CPF CNPJ declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"denominacao_imovel","label":"Denominacao imovel","wide":false},{"name":"localizacao_imovel","label":"Localizacao imovel","wide":false},{"name":"municipio","label":"Município","wide":false},{"name":"uf","label":"UF","wide":false},{"name":"area_aproximada","label":"Area aproximada","wide":false},{"name":"coordenadas_referencia","label":"Coordenadas referencia","wide":false},{"name":"confrontante_norte","label":"Confrontante norte","wide":true},{"name":"confrontante_sul","label":"Confrontante sul","wide":true},{"name":"confrontante_leste","label":"Confrontante leste","wide":true},{"name":"confrontante_oeste","label":"Confrontante oeste","wide":true},{"name":"data_inicio_posse","label":"Data inicio posse","wide":false},{"name":"finalidade_uso","label":"Finalidade uso","wide":true},{"name":"benfeitorias_atividades","label":"Benfeitorias atividades","wide":true},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-residencia":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"endereco_residencia","label":"Endereco residencia","wide":true},{"name":"bairro_residencia","label":"Bairro residencia","wide":false},{"name":"cidade_residencia","label":"Cidade residencia","wide":false},{"name":"uf_residencia","label":"UF residencia","wide":false},{"name":"cep_residencia","label":"Cep residencia","wide":false},{"name":"data_inicio_residencia","label":"Data inicio residencia","wide":false},{"name":"nome_titular_comprovante","label":"Nome titular comprovante","wide":false},{"name":"cpf_titular_comprovante","label":"CPF titular comprovante","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-nao-possuir-renda":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"valor_ajuda_eventual","label":"Valor ajuda eventual","wide":false},{"name":"forma_manutencao","label":"Forma manutencao","wide":false},{"name":"nome_responsavel_ajuda","label":"Nome responsavel ajuda","wide":false},{"name":"cpf_responsavel_ajuda","label":"CPF responsavel ajuda","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-agricultura-familiar":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"nome_imovel_rural","label":"Nome imovel rural","wide":false},{"name":"endereco_imovel_rural","label":"Endereco imovel rural","wide":true},{"name":"municipio_imovel_rural","label":"Municipio imovel rural","wide":false},{"name":"uf_imovel_rural","label":"UF imovel rural","wide":false},{"name":"produtos_agricultura_familiar","label":"Produtos agricultura familiar","wide":true},{"name":"membros_familiares_atividade","label":"Membros familiares atividade","wide":true},{"name":"fonte_renda_agricultura_familiar","label":"Fonte renda agricultura familiar","wide":false},{"name":"data_inicio_agricultura_familiar","label":"Data inicio agricultura familiar","wide":false},{"name":"area_explorada","label":"Area explorada","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-dependencia-economica":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"nome_dependente","label":"Nome dependente","wide":false},{"name":"parentesco_dependente","label":"Parentesco dependente","wide":false},{"name":"cpf_dependente","label":"CPF dependente","wide":false},{"name":"data_inicio_dependencia","label":"Data inicio dependencia","wide":false},{"name":"motivo_dependencia","label":"Motivo dependencia","wide":false},{"name":"renda_dependente","label":"Renda dependente","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-convivencia-familiar":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"nome_familiar_convivente","label":"Nome familiar convivente","wide":false},{"name":"cpf_familiar_convivente","label":"CPF familiar convivente","wide":false},{"name":"grau_parentesco_convivente","label":"Grau parentesco convivente","wide":false},{"name":"data_inicio_convivencia","label":"Data inicio convivencia","wide":false},{"name":"endereco_convivencia_familiar","label":"Endereco convivencia familiar","wide":true},{"name":"finalidade_declaracao","label":"Finalidade declaracao","wide":true},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-baixa-renda":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"renda_mensal_individual","label":"Renda mensal individual","wide":false},{"name":"renda_familiar_mensal","label":"Renda familiar mensal","wide":false},{"name":"quantidade_membros_familiares","label":"Quantidade membros familiares","wide":true},{"name":"nomes_membros_familiares","label":"Nomes membros familiares","wide":true},{"name":"renda_per_capita","label":"Renda per capita","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-autenticidade-documentos":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"lista_documentos_autenticados","label":"Lista documentos autenticados","wide":true},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-atividade-rural":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"funcao_rural","label":"Funcao rural","wide":false},{"name":"descricao_atividade_rural","label":"Descricao atividade rural","wide":true},{"name":"nome_imovel_rural","label":"Nome imovel rural","wide":false},{"name":"endereco_imovel_rural","label":"Endereco imovel rural","wide":true},{"name":"municipio_imovel_rural","label":"Municipio imovel rural","wide":false},{"name":"uf_imovel_rural","label":"UF imovel rural","wide":false},{"name":"data_inicio_atividade_rural","label":"Data inicio atividade rural","wide":true},{"name":"data_fim_atividade_rural","label":"Data fim atividade rural","wide":true},{"name":"forma_exercicio_atividade","label":"Forma exercicio atividade","wide":true},{"name":"renda_media_rural","label":"Renda media rural","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-uniao-estavel":[{"name":"nome_convivente_1","label":"Nome convivente 1","wide":false},{"name":"nacionalidade_convivente_1","label":"Nacionalidade convivente 1","wide":false},{"name":"estado_civil_convivente_1","label":"Estado civil convivente 1","wide":false},{"name":"profissao_convivente_1","label":"Profissao convivente 1","wide":false},{"name":"rg_convivente_1","label":"RG convivente 1","wide":false},{"name":"cpf_convivente_1","label":"CPF convivente 1","wide":false},{"name":"endereco_convivente_1","label":"Endereco convivente 1","wide":true},{"name":"nome_convivente_2","label":"Nome convivente 2","wide":false},{"name":"nacionalidade_convivente_2","label":"Nacionalidade convivente 2","wide":false},{"name":"estado_civil_convivente_2","label":"Estado civil convivente 2","wide":false},{"name":"profissao_convivente_2","label":"Profissao convivente 2","wide":false},{"name":"rg_convivente_2","label":"RG convivente 2","wide":false},{"name":"cpf_convivente_2","label":"CPF convivente 2","wide":false},{"name":"endereco_convivente_2","label":"Endereco convivente 2","wide":true},{"name":"data_inicio_uniao_estavel","label":"Data inicio uniao estavel","wide":false},{"name":"endereco_residencia_casal","label":"Endereco residencia casal","wide":true},{"name":"regime_bens_uniao","label":"Regime bens uniao","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}],"declaracao-tempo-trabalho-rural":[{"name":"nome_declarante","label":"Nome declarante","wide":false},{"name":"nacionalidade_declarante","label":"Nacionalidade declarante","wide":false},{"name":"estado_civil_declarante","label":"Estado civil declarante","wide":false},{"name":"profissao_declarante","label":"Profissao declarante","wide":false},{"name":"rg_declarante","label":"RG declarante","wide":false},{"name":"cpf_declarante","label":"CPF declarante","wide":false},{"name":"endereco_declarante","label":"Endereco declarante","wide":true},{"name":"data_inicio_trabalho_rural","label":"Data inicio trabalho rural","wide":false},{"name":"data_fim_trabalho_rural","label":"Data fim trabalho rural","wide":false},{"name":"nome_propriedade_rural","label":"Nome propriedade rural","wide":false},{"name":"endereco_propriedade_rural","label":"Endereco propriedade rural","wide":true},{"name":"municipio_propriedade_rural","label":"Municipio propriedade rural","wide":false},{"name":"uf_propriedade_rural","label":"UF propriedade rural","wide":false},{"name":"atividades_desempenhadas","label":"Atividades desempenhadas","wide":true},{"name":"condicao_trabalho_rural","label":"Condicao trabalho rural","wide":false},{"name":"frequencia_trabalho_rural","label":"Frequencia trabalho rural","wide":false},{"name":"nome_responsavel_propriedade","label":"Nome responsavel propriedade","wide":false},{"name":"cpf_responsavel_propriedade","label":"CPF responsavel propriedade","wide":false},{"name":"orgao_destino","label":"ORGao destino","wide":false},{"name":"cidade_assinatura","label":"Cidade assinatura","wide":false},{"name":"uf_assinatura","label":"UF assinatura","wide":false},{"name":"data_assinatura_extenso","label":"Data assinatura extenso","wide":false}]};
 
+
+    const DOCSPACE_FIELD_ALIAS_MAP = {
+        "profissão_comandatario": "profissao_comandatario",
+        "profissão_comodatario": "profissao_comandatario",
+        "profissao_comodatario": "profissao_comandatario",
+        "município_comandatrio": "municipio_comandatario",
+        "municipio_comandatrio": "municipio_comandatario",
+        "municipio_comodatario": "municipio_comandatario",
+        "endereço_representante": "endereco_representante",
+        "duração_contrato": "duracao_contrato",
+        "mês": "mes",
+        "endereço": "endereco",
+        "período_numero": "periodo_numero",
+        "período_extenso": "periodo_extenso",
+        "área_total_imovel": "area_total_imovel",
+        "benefício": "beneficio",
+        "órgão_destino": "orgao_destino",
+        "função_rural": "funcao_rural",
+    };
+
+    function normalizeFieldKey(name) {
+        return String(name || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim()
+            .replace(/[\s-]+/g, "_");
+    }
+
+    const DOCSPACE_FIELD_CANONICAL_BY_NORMALIZED = Object.entries(DOCSPACE_FIELD_ALIAS_MAP).reduce((acc, [original, canonical]) => {
+        acc[normalizeFieldKey(original)] = canonical;
+        acc[normalizeFieldKey(canonical)] = canonical;
+        return acc;
+    }, {});
+
+    const DOCSPACE_FIELD_REVERSE_ALIASES = Object.entries(DOCSPACE_FIELD_ALIAS_MAP).reduce((acc, [original, canonical]) => {
+        if (!acc[canonical]) acc[canonical] = [];
+        acc[canonical].push(original);
+        return acc;
+    }, {});
+
+    function canonicalFieldName(name) {
+        const raw = String(name || "").trim();
+        return DOCSPACE_FIELD_ALIAS_MAP[raw] || DOCSPACE_FIELD_CANONICAL_BY_NORMALIZED[normalizeFieldKey(raw)] || raw;
+    }
+
+    function normalizeTemplateFieldForUi(field) {
+        const name = canonicalFieldName(field?.name);
+        return {
+            ...field,
+            name,
+            originalName: field?.name,
+            label: field?.label || formatLabel(name),
+        };
+    }
+
+
     function normalizeDocumentDefinitionsFromTemplates() {
         DOCS.forEach((doc) => {
             const cleanFields = DOCSPACE_TEMPLATE_FIELDS[doc.id];
             if (Array.isArray(cleanFields) && cleanFields.length) {
                 const seen = new Set();
-                doc.fields = cleanFields.filter((field) => {
-                    const key = String(field.name || '').trim();
-                    if (!key || seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                });
+                doc.fields = cleanFields
+                    .map(normalizeTemplateFieldForUi)
+                    .filter((field) => {
+                        const key = String(field.name || '').trim();
+                        if (!key || seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
             }
 
             if (doc.id === 'comodato') {
@@ -5547,6 +5606,42 @@
         `;
     }
 
+
+    function updateConditionalDocumentFields(form) {
+        if (!form || form.dataset.documentId !== "comodato") return;
+
+        const conjuge = (form.querySelector('[name="possui_conjuge"]')?.value || "nao") === "sim";
+        const obito = (form.querySelector('[name="possui_obito"]')?.value || "nao") === "sim";
+
+        const shouldShow = (name) => {
+            const key = String(name || "");
+            const isConjuge = key.includes("conjuge");
+            const isObito =
+                key.includes("falecido") ||
+                key.includes("obito") ||
+                key.includes("falecimento") ||
+                key.includes("representante") ||
+                key.includes("parentesco");
+
+            if (isConjuge && !conjuge) return false;
+            if (isObito && !obito) return false;
+            return true;
+        };
+
+        form.querySelectorAll("[data-field-name]").forEach((field) => {
+            const wrapper = field.closest(".field");
+            if (!wrapper) return;
+
+            const visible = shouldShow(field.dataset.fieldName);
+            wrapper.classList.toggle("is-conditional-hidden", !visible);
+            wrapper.hidden = !visible;
+
+            field.disabled = !visible;
+            if (!visible && "value" in field) field.value = "";
+        });
+    }
+
+
     function renderDocuments() {
         const filtered = getFilteredDocs();
         refs.content.innerHTML = `
@@ -5641,23 +5736,125 @@
     function renderChoiceField(choice) {
         return `<label class="field">
             <span>${escapeHtml(choice.label)}</span>
-            <select name="${escapeAttr(choice.name)}">${choice.options.map((option) => `<option value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</option>`).join("")}</select>
+            <select name="${escapeAttr(choice.name)}" data-field-name="${escapeAttr(choice.name)}" autocomplete="off">${choice.options.map((option) => `<option value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</option>`).join("")}</select>
         </label>`;
     }
 
+
+    const SIMPLIFIED_SELECT_OPTIONS = {
+        estado_civil: [
+            ["", "Selecione o estado civil"],
+            ["solteiro(a)", "Solteiro(a)"],
+            ["casado(a)", "Casado(a)"],
+            ["divorciado(a)", "Divorciado(a)"],
+            ["separado(a)", "Separado(a)"],
+            ["viúvo(a)", "Viúvo(a)"],
+            ["união estável", "União estável"],
+        ],
+        mes: [
+            ["", "Selecione o mês"],
+            ["janeiro", "Janeiro"],
+            ["fevereiro", "Fevereiro"],
+            ["março", "Março"],
+            ["abril", "Abril"],
+            ["maio", "Maio"],
+            ["junho", "Junho"],
+            ["julho", "Julho"],
+            ["agosto", "Agosto"],
+            ["setembro", "Setembro"],
+            ["outubro", "Outubro"],
+            ["novembro", "Novembro"],
+            ["dezembro", "Dezembro"],
+        ],
+        uf: [
+            ["", "UF"],
+            ["AC", "AC"], ["AL", "AL"], ["AP", "AP"], ["AM", "AM"], ["BA", "BA"], ["CE", "CE"],
+            ["DF", "DF"], ["ES", "ES"], ["GO", "GO"], ["MA", "MA"], ["MT", "MT"], ["MS", "MS"],
+            ["MG", "MG"], ["PA", "PA"], ["PB", "PB"], ["PR", "PR"], ["PE", "PE"], ["PI", "PI"],
+            ["RJ", "RJ"], ["RN", "RN"], ["RS", "RS"], ["RO", "RO"], ["RR", "RR"], ["SC", "SC"],
+            ["SP", "SP"], ["SE", "SE"], ["TO", "TO"],
+        ],
+        nacionalidade: [
+            ["", "Selecione"],
+            ["brasileiro(a)", "Brasileiro(a)"],
+            ["estrangeiro(a)", "Estrangeiro(a)"],
+        ],
+    };
+
+    const SIMPLIFIED_DATALIST_OPTIONS = {
+        profissao: ["agricultor(a)", "lavrador(a)", "produtor(a) rural", "trabalhador(a) rural", "autônomo(a)", "aposentado(a)", "comerciante", "servidor(a) público(a)", "estudante", "do lar"],
+        orgao: ["INSS", "Banco do Brasil", "Caixa Econômica Federal", "Cartório", "Prefeitura Municipal", "Receita Federal", "Secretaria de Agricultura"],
+        documento: ["RG", "CPF", "CNH", "CTPS", "Certidão", "Comprovante de residência", "Contrato", "Procuração"],
+    };
+
+    function getSimplifiedSelectType(name, label) {
+        const key = String(name || "").toLowerCase();
+        const text = `${key} ${String(label || "").toLowerCase()}`;
+        if (key.includes("estado_civil") || text.includes("estado civil")) return "estado_civil";
+        if (key === "mes" || key.endsWith("_mes") || text.includes(" mês") || text.trim() === "mês") return "mes";
+        if (key === "uf" || key.endsWith("_uf") || text.includes(" uf") || text.includes("estado/uf")) return "uf";
+        if (key.includes("nacionalidade")) return "nacionalidade";
+        return "";
+    }
+
+    function getSimplifiedDatalistType(name, label) {
+        const key = String(name || "").toLowerCase();
+        const text = `${key} ${String(label || "").toLowerCase()}`;
+        if (key.includes("profissao") || key.includes("profissão") || text.includes("profissão")) return "profissao";
+        if (key.includes("orgao") || key.includes("órgão") || text.includes("órgão") || text.includes("orgão")) return "orgao";
+        if (key.includes("documento") || text.includes("documento")) return "documento";
+        return "";
+    }
+
+    function renderSimplifiedSelect(name, selectType) {
+        const options = SIMPLIFIED_SELECT_OPTIONS[selectType] || [];
+        return `<select name="${escapeAttr(name)}" data-field-name="${escapeAttr(name)}" autocomplete="off">${options.map(([value, label]) => `<option value="${escapeAttr(value)}">${escapeHtml(label)}</option>`).join("")}</select>`;
+    }
+
+    function renderSimplifiedDatalist(name, common, datalistType) {
+        const id = `list-${String(name).replace(/[^\w-]/g, "-")}`;
+        const options = SIMPLIFIED_DATALIST_OPTIONS[datalistType] || [];
+        return `<input ${common} ${inputModeFor(name)} list="${escapeAttr(id)}"><datalist id="${escapeAttr(id)}">${options.map((value) => `<option value="${escapeAttr(value)}"></option>`).join("")}</datalist>`;
+    }
+
+    function simplifyFieldLabel(name, label) {
+        const key = String(name || "").toLowerCase();
+        const raw = String(label || formatLabel(name));
+        if (key.includes("estado_civil")) return raw.replace(/estado civil/i, "Estado civil");
+        if (key.includes("profissao") || key.includes("profissão")) return raw.replace(/profissão/i, "Profissão");
+        if (key === "mes" || key.endsWith("_mes")) return "Mês";
+        if (key === "uf" || key.endsWith("_uf")) return "UF";
+        return raw;
+    }
+
+
     function renderField(field) {
         const name = field.name;
-        const label = field.label || formatLabel(name);
+        const label = simplifyFieldLabel(name, field.label || formatLabel(name));
+        const selectType = getSimplifiedSelectType(name, label);
+        const datalistType = getSimplifiedDatalistType(name, label);
         const wide = field.wide || isLongField(name, label) ? " wide" : "";
-        const textarea = isLongField(name, label);
-        const common = `name="${escapeAttr(name)}" placeholder="${escapeAttr(placeholderFor(name))}"`;
-        return `<label class="field${wide}"><span>${escapeHtml(label)}</span>${textarea ? `<textarea ${common}></textarea>` : `<input ${common} ${inputModeFor(name)}>`}</label>`;
+        const textarea = isLongField(name, label) && !selectType && !datalistType;
+        const common = `name="${escapeAttr(name)}" data-field-name="${escapeAttr(name)}" placeholder="${escapeAttr(placeholderFor(name))}" autocomplete="off"`;
+
+        let control = "";
+        if (selectType) {
+            control = renderSimplifiedSelect(name, selectType);
+        } else if (textarea) {
+            control = `<textarea ${common}></textarea>`;
+        } else if (datalistType) {
+            control = renderSimplifiedDatalist(name, common, datalistType);
+        } else {
+            control = `<input ${common} ${inputModeFor(name)}>`;
+        }
+
+        return `<label class="field${wide}"><span>${escapeHtml(label)}</span>${control}</label>`;
     }
 
     async function generateDocument(event) {
         if (event?.preventDefault) event.preventDefault();
 
-        const form = event.target;
+        const form = event.target?.closest?.("#documentGenerateForm") || event.target;
         const submitter = event.submitter || document.activeElement?.closest?.("[data-generate-type]");
         const generateType = submitter?.dataset?.generateType || "docx";
         const doc = DOC_MAP.get(form.dataset.documentId);
@@ -5666,13 +5863,17 @@
 
         const msg = $("#documentFormMessage");
         setMessage(msg, generateType === "pdf" ? "Preparando PDF..." : "Preparando Word...", "");
-        setFormLoading(form, true);
 
+        let data = {};
         try {
+            // IMPORTANTE: coleta antes de desabilitar o formulário.
+            // Inputs desabilitados não entram no FormData e isso estava gerando Word/PDF vazio.
+            data = collectFormData(form, doc);
+            setFormLoading(form, true);
+
             ensureDocumentAvailable(doc.id);
             await ensureDocxLibs();
 
-            const data = collectFormData(form, doc);
             const modelPath = getModelPath(doc, data);
             const fileName = getFileName(doc, data, generateType === "pdf" ? "pdf" : "docx");
             const docxBlob = await buildDocx(modelPath, data);
@@ -5730,26 +5931,58 @@
     }
 
     function collectFormData(form, doc) {
-        const fd = new FormData(form);
         const data = {};
 
-        // Coleta tudo que está no formulário, não apenas uma lista antiga de campos.
-        // Isso evita PDF/Word vazio quando o layout muda ou quando o template exige uma chave específica.
-        for (const [key, value] of fd.entries()) {
-            data[key] = String(value ?? "").trim();
-        }
+        // Lê diretamente os campos do formulário. Não depende de FormData,
+        // porque FormData ignora inputs disabled. Isso era a causa do DOCX/PDF vazio.
+        Array.from(form.querySelectorAll("input[name], select[name], textarea[name]")).forEach((field) => {
+            if (!field.name) return;
+            if (field.type === "submit" || field.type === "button" || field.type === "reset" || field.type === "file") return;
+            if (field.closest(".is-conditional-hidden") || field.closest("[hidden]")) return;
 
-        // Garante que todas as chaves do template existam, mesmo vazias.
+            const key = canonicalFieldName(field.name);
+
+            if (field.type === "checkbox") {
+                if (!data[key]) data[key] = [];
+                if (field.checked) data[key].push(field.value || "Sim");
+                return;
+            }
+
+            if (field.type === "radio") {
+                if (field.checked) data[key] = String(field.value || "").trim();
+                return;
+            }
+
+            data[key] = String(field.value ?? "").trim();
+        });
+
+        Object.keys(data).forEach((key) => {
+            if (Array.isArray(data[key])) data[key] = data[key].join(", ");
+        });
+
+        // Garante que todas as chaves canônicas do template existam, mesmo vazias.
         (doc.fields || []).forEach((field) => {
-            if (!(field.name in data)) data[field.name] = "";
+            const key = canonicalFieldName(field.name);
+            if (!(key in data)) data[key] = "";
         });
         (doc.choices || []).forEach((choice) => {
-            if (!(choice.name in data)) data[choice.name] = "";
+            const key = canonicalFieldName(choice.name);
+            if (!(key in data)) data[key] = "";
         });
 
         applyCommonTemplateAliases(data);
         if (doc.id === "comodato") applyComodatoAliases(data);
+        applyReverseTemplateAliases(data);
         return data;
+    }
+
+    function applyReverseTemplateAliases(data) {
+        Object.entries(DOCSPACE_FIELD_REVERSE_ALIASES).forEach(([canonical, originals]) => {
+            originals.forEach((original) => {
+                if (!data[original] && data[canonical]) data[original] = data[canonical];
+                if (!data[canonical] && data[original]) data[canonical] = data[original];
+            });
+        });
     }
 
     function applyCommonTemplateAliases(data) {
@@ -5780,28 +6013,51 @@
     }
 
     function applyComodatoAliases(data) {
-        data.municipio_comandatario = data["município_comandatrio"] || data.municipio_comandatario || "";
-        data.nome_comodatario = data.nome_comandatario || "";
-        data.nacionalidade_comandatario = "brasileiro";
-        data.nacionalidade_comodatario = "brasileiro";
-        data.estado_civil_comodatario = data.estado_civil_comandatario || "";
-        data.profissao_comodatario = data.profissao_comandatario || "";
-        data["profissão_comandatario"] = data.profissao_comandatario || "";
-        data["profissão_comodatario"] = data.profissao_comandatario || "";
-        data.rg_comodatario = data.rg_comandatario || "";
-        data.cpf_comodatario = data.cpf_comandatario || "";
-        data.localidade_comodatario = data.localidade_comandatario || "";
-        data.localidade_proxima_comodatario = data.localidade_proxima_comandatario || "";
-        data.municipio_comodatario = data["município_comandatrio"] || "";
-        data["profissão_comandante"] = data.profissao_comandante || "";
-        data.duracao_contrato = data["duração_contrato"] || "";
-        data.nome_comandante_falecido = data.nome_comandante || "";
-        data.estado_civil_comandante_falecido = data.estado_civil_comandante || "";
-        data.profissao_comandante_falecido = data.profissao_comandante || "";
-        data.rg_comandante_falecido = data.rg_comandante || "";
-        data.cpf_comandante_falecido = data.cpf_comandante || "";
-        data.localidade_comandante_falecido = data.localidade_comandante || "";
-        data["endereço_representante"] = data.endereco_representante || "";
+        const copy = (target, source) => {
+            if (!data[target] && data[source]) data[target] = data[source];
+        };
+
+        copy("nome_comodatario", "nome_comandatario");
+        copy("nome_comandatario", "nome_comodatario");
+
+        copy("estado_civil_comodatario", "estado_civil_comandatario");
+        copy("estado_civil_comandatario", "estado_civil_comodatario");
+
+        copy("profissao_comodatario", "profissao_comandatario");
+        copy("profissao_comandatario", "profissao_comodatario");
+        data["profissão_comandatario"] = data["profissão_comandatario"] || data.profissao_comandatario || data.profissao_comodatario || "";
+        data["profissão_comodatario"] = data["profissão_comodatario"] || data.profissao_comandatario || data.profissao_comodatario || "";
+        data["profissão_comandante"] = data["profissão_comandante"] || data.profissao_comandante || "";
+
+        copy("rg_comodatario", "rg_comandatario");
+        copy("rg_comandatario", "rg_comodatario");
+        copy("cpf_comodatario", "cpf_comandatario");
+        copy("cpf_comandatario", "cpf_comodatario");
+        copy("localidade_comodatario", "localidade_comandatario");
+        copy("localidade_comandatario", "localidade_comodatario");
+        copy("localidade_proxima_comodatario", "localidade_proxima_comandatario");
+        copy("localidade_proxima_comandatario", "localidade_proxima_comodatario");
+
+        data["município_comandatrio"] = data["município_comandatrio"] || data.municipio_comandatario || data.municipio_comodatario || "";
+        data.municipio_comandatario = data.municipio_comandatario || data["município_comandatrio"] || data.municipio_comodatario || "";
+        data.municipio_comodatario = data.municipio_comodatario || data.municipio_comandatario || "";
+
+        data["duração_contrato"] = data["duração_contrato"] || data.duracao_contrato || "";
+        data.duracao_contrato = data.duracao_contrato || data["duração_contrato"] || "";
+
+        // Se o modelo escolhido é de falecido, aproveita os dados do comodante se o usuário não duplicar.
+        copy("nome_comandante_falecido", "nome_comandante");
+        copy("estado_civil_comandante_falecido", "estado_civil_comandante");
+        copy("profissao_comandante_falecido", "profissao_comandante");
+        copy("rg_comandante_falecido", "rg_comandante");
+        copy("cpf_comandante_falecido", "cpf_comandante");
+        copy("localidade_comandante_falecido", "localidade_comandante");
+
+        data["endereço_representante"] = data["endereço_representante"] || data.endereco_representante || "";
+        data.endereco_representante = data.endereco_representante || data["endereço_representante"] || "";
+
+        data.nacionalidade_comandatario = data.nacionalidade_comandatario || "brasileiro";
+        data.nacionalidade_comodatario = data.nacionalidade_comodatario || data.nacionalidade_comandatario;
     }
 
     function getModelPath(doc, data) {
@@ -5834,31 +6090,207 @@
         if (!response.ok) throw new Error(`Modelo não encontrado: ${path}`);
 
         const buffer = await response.arrayBuffer();
-        const zip = new window.PizZip(buffer);
+        const originalData = normalizeTemplateData(data || {});
 
         try {
+            const renderedBlob = renderDocxWithDocxtemplater(buffer, originalData);
+            if (renderedBlob) return renderedBlob;
+        } catch (error) {
+            console.warn("Docxtemplater não conseguiu renderizar; tentando substituição direta.", error);
+        }
+
+        try {
+            const directBlob = await buildDocxByDirectXmlReplace(buffer, originalData);
+            if (directBlob) return directBlob;
+        } catch (directError) {
+            console.warn("Fallback direto DOCX falhou.", directError);
+        }
+
+        throw new Error("Não foi possível preencher o modelo Word. Verifique os placeholders do template.");
+    }
+
+    function renderDocxWithDocxtemplater(buffer, data) {
+        if (!window.PizZip || !window.docxtemplater) {
+            throw new Error("Bibliotecas DOCX não carregadas.");
+        }
+
+        let currentBytes = buffer;
+        const rawZip = new window.PizZip(buffer);
+        const allXml = rawZip.file(/word\/.*\.xml$/).map((file) => file.asText()).join("\n");
+        const hasDoubleTags = /\{\{\s*[^{}]+?\s*\}\}/.test(allXml);
+        const hasSingleTags = /(^|[^\{])\{\s*[a-zA-ZÀ-ÿ0-9_.-]+\s*\}([^\}]|$)/.test(allXml);
+
+        const passes = [];
+        if (hasDoubleTags) passes.push({ delimiters: { start: "{{", end: "}}" } });
+        if (hasSingleTags) passes.push({ delimiters: { start: "{", end: "}" } });
+        if (!passes.length) return null;
+
+        for (const pass of passes) {
+            const zip = new window.PizZip(currentBytes);
             const doc = new window.docxtemplater(zip, {
                 paragraphLoop: true,
                 linebreaks: true,
-                delimiters: { start: "{{", end: "}}" },
+                delimiters: pass.delimiters,
                 nullGetter: () => "",
             });
 
             doc.render(data || {});
-
-            return doc.getZip().generate({
-                type: "blob",
-                mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            currentBytes = doc.getZip().generate({
+                type: "uint8array",
                 compression: "DEFLATE",
             });
-        } catch (error) {
-            const details = error?.properties?.errors
-                ?.map((item) => item?.properties?.explanation || item?.message)
-                ?.filter(Boolean)
-                ?.join(" | ");
-
-            throw new Error(details ? `Erro no modelo Word: ${details}` : `Erro ao preencher o modelo Word: ${error.message || error}`);
         }
+
+        return new Blob([currentBytes], {
+            type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+    }
+
+    function normalizeTemplateData(data) {
+        const out = { ...(data || {}) };
+
+        const put = (key, value) => {
+            if (!key) return;
+            if (value === undefined || value === null) value = "";
+            const text = String(value);
+            if (out[key] === undefined || out[key] === null || out[key] === "") out[key] = text;
+        };
+
+        const normalizeKey = (key) => String(key || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+
+        Object.entries(out).forEach(([key, value]) => {
+            put(key, value);
+            put(normalizeKey(key), value);
+            put(String(key).replace(/[\s-]+/g, "_"), value);
+            put(normalizeKey(key).replace(/[\s-]+/g, "_"), value);
+        });
+
+        const aliases = {
+            nome: ["nome_pessoa", "nome_declarante", "nome_cliente", "requerente", "outorgante"],
+            nome_pessoa: ["nome", "nome_declarante", "nome_cliente", "requerente", "outorgante"],
+            profissao: ["profissão", "profissao_declarante", "profissão_declarante"],
+            estado_civil: ["estado_civil_declarante"],
+            rg: ["rg_declarante"],
+            cpf: ["cpf_declarante", "cpf_cnpj"],
+            endereco: ["endereço", "endereco_declarante", "endereço_declarante"],
+            municipio: ["município", "municipio_declarante", "município_declarante"],
+            cidade: ["cidade_assinatura", "localidade"],
+            data: ["data_assinatura", "data_assinatura_extenso"],
+            nome_comandatario: ["nome_comodatario"],
+            nome_comodatario: ["nome_comandatario"],
+            estado_civil_comandatario: ["estado_civil_comodatario"],
+            estado_civil_comodatario: ["estado_civil_comandatario"],
+            profissao_comandatario: ["profissão_comandatario", "profissao_comodatario", "profissão_comodatario"],
+            "profissão_comandatario": ["profissao_comandatario", "profissao_comodatario", "profissão_comodatario"],
+            profissao_comandante: ["profissão_comandante"],
+            "profissão_comandante": ["profissao_comandante"],
+            rg_comandatario: ["rg_comodatario"],
+            rg_comodatario: ["rg_comandatario"],
+            cpf_comandatario: ["cpf_comodatario"],
+            cpf_comodatario: ["cpf_comandatario"],
+            localidade_comandatario: ["localidade_comodatario"],
+            localidade_comodatario: ["localidade_comandatario"],
+            localidade_proxima_comandatario: ["localidade_proxima_comodatario"],
+            localidade_proxima_comodatario: ["localidade_proxima_comandatario"],
+            municipio_comandatario: ["município_comandatrio", "municipio_comandatrio", "municipio_comodatario"],
+            "município_comandatrio": ["municipio_comandatario", "municipio_comandatrio", "municipio_comodatario"],
+            duracao_contrato: ["duração_contrato"],
+            "duração_contrato": ["duracao_contrato"],
+            endereco_representante: ["endereço_representante"],
+            "endereço_representante": ["endereco_representante"],
+        };
+
+        let changed = true;
+        while (changed) {
+            changed = false;
+            Object.entries(aliases).forEach(([key, list]) => {
+                const value = out[key];
+                if (value !== undefined && value !== null && String(value) !== "") {
+                    list.forEach((alias) => {
+                        if (out[alias] === undefined || out[alias] === null || out[alias] === "") {
+                            out[alias] = String(value);
+                            changed = true;
+                        }
+                    });
+                }
+                list.forEach((alias) => {
+                    const aliasValue = out[alias];
+                    if ((out[key] === undefined || out[key] === null || out[key] === "") && aliasValue !== undefined && aliasValue !== null && String(aliasValue) !== "") {
+                        out[key] = String(aliasValue);
+                        changed = true;
+                    }
+                });
+            });
+        }
+
+        Object.entries({ ...out }).forEach(([key, value]) => {
+            put(normalizeKey(key), value);
+        });
+
+        return out;
+    }
+
+    async function buildDocxByDirectXmlReplace(buffer, data) {
+        if (!window.PizZip) throw new Error("PizZip não carregado.");
+
+        const zip = new window.PizZip(buffer);
+        const escapeXml = (value) => String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;");
+
+        const normalizeKey = (key) => String(key || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+
+        const getValue = (rawKey) => {
+            const key = String(rawKey || "").trim();
+            const candidates = [
+                key,
+                normalizeKey(key),
+                key.replace(/[\s-]+/g, "_"),
+                normalizeKey(key).replace(/[\s-]+/g, "_"),
+                canonicalFieldName(key),
+                normalizeKey(canonicalFieldName(key)),
+            ];
+
+            for (const candidate of candidates) {
+                if (data[candidate] !== undefined && data[candidate] !== null) return data[candidate];
+            }
+            return "";
+        };
+
+        let touched = false;
+        zip.file(/word\/.*\.xml$/).forEach((file) => {
+            const before = file.asText();
+            let after = before.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, key) => {
+                touched = true;
+                return escapeXml(getValue(key));
+            });
+
+            after = after.replace(/(?<!\{)\{\s*([a-zA-ZÀ-ÿ0-9_.-]+)\s*\}(?!\})/g, (_match, key) => {
+                touched = true;
+                return escapeXml(getValue(key));
+            });
+
+            if (after !== before) zip.file(file.name, after);
+        });
+
+        if (!touched) return null;
+
+        return zip.generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            compression: "DEFLATE",
+        });
     }
 
     function renderPdfTools() {
@@ -6277,7 +6709,10 @@
         }
     }
 
-    function handleContentChange(_event) {}
+    function handleContentChange(event) {
+        const form = event.target?.closest?.("#documentGenerateForm");
+        if (form) updateConditionalDocumentFields(form);
+    }
 
 
     function moveDocumentStep(form, delta) {
@@ -6299,6 +6734,7 @@
             item.classList.toggle('is-active', index === current);
             item.classList.toggle('is-done', index < current);
         });
+        updateConditionalDocumentFields(form);
     }
 
     function countDocumentFields(doc) {

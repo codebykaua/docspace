@@ -152,3 +152,49 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spa
     .form-grid, .stat-grid { grid-template-columns: 1fr; }
     .main-nav { grid-template-columns: repeat(2, 1fr); }
 }
+
+
+/* =========================================================
+   v122 — CAMPOS CONDICIONAIS E DUPLICADOS
+   ========================================================= */
+.field.is-conditional-hidden,
+[hidden].field {
+    display: none !important;
+}
+
+
+/* v123 */
+.document-debug-message{margin-top:8px!important;color:#475569!important;font-size:.85rem!important;font-weight:700!important}
+
+
+/* =========================================================
+   v125 — AUDITORIA CAMPOS, SELECTS E DATALISTS
+   ========================================================= */
+.field.is-conditional-hidden,
+[hidden].field {
+    display: none !important;
+}
+
+.field select {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0 14px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font: inherit !important;
+    font-weight: 700 !important;
+    outline: none !important;
+}
+
+.field select:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+body.system-dark-theme .field select {
+    background: #111827 !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
