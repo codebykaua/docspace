@@ -449,6 +449,15 @@ async function handleRequest(request, env) {
         if (!item) throw httpError(404, "Registro nao encontrado.");
         return json({ item });
     }
+    if (request.method === "GET" && path.length === 3 && path[0] === "history" && path[2] === "file") {
+        const session = await requireSession(request, env);
+        return downloadHistoryFile(env, session.user.id, path[1]);
+    }
+    if (request.method === "DELETE" && path.length === 2 && path[0] === "history") {
+        const session = await requireSession(request, env);
+        await deleteHistoryItem(env, session.user.id, path[1]);
+        return json({ message: "Historico e arquivo removidos." });
+    }
 
     if (request.method === "GET" && match(path, ["share", "links"])) {
         const session = await requireSession(request, env);
@@ -757,9 +766,14 @@ async function ensureDatabaseSchema(env) {
             output_format TEXT NOT NULL DEFAULT 'docx',
             file_name TEXT NOT NULL DEFAULT '',
             draft_id TEXT NOT NULL DEFAULT '',
+            file_key TEXT NOT NULL DEFAULT '',
+            file_size INTEGER NOT NULL DEFAULT 0,
+            mime_type TEXT NOT NULL DEFAULT '',
+            storage_provider TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL
         )`,
         "CREATE INDEX IF NOT EXISTS idx_document_history_user_created ON document_history(user_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_document_history_file_key ON document_history(file_key)",
         `CREATE TABLE IF NOT EXISTS share_fill_links (
             id TEXT PRIMARY KEY,
             token TEXT NOT NULL UNIQUE,
@@ -788,6 +802,8 @@ async function ensureDatabaseSchema(env) {
             signer_email TEXT NOT NULL DEFAULT '',
             signature_data_url TEXT NOT NULL DEFAULT '',
             pdf_base64 TEXT NOT NULL DEFAULT '',
+            file_key TEXT NOT NULL DEFAULT '',
+            file_size INTEGER NOT NULL DEFAULT 0,
             ip_hint TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL
         )`,
@@ -831,7 +847,28 @@ async function ensureDatabaseSchema(env) {
     await ensureAppReleaseColumn(env, "update_message", "TEXT NOT NULL DEFAULT ''");
     await ensureAppReleaseColumn(env, "download_url", "TEXT NOT NULL DEFAULT ''");
     await ensureAppReleaseColumn(env, "is_active", "INTEGER NOT NULL DEFAULT 1");
+    await ensureTableColumn(env, "document_history", "file_key", "TEXT NOT NULL DEFAULT ''");
+    await ensureTableColumn(env, "document_history", "file_size", "INTEGER NOT NULL DEFAULT 0");
+    await ensureTableColumn(env, "document_history", "mime_type", "TEXT NOT NULL DEFAULT ''");
+    await ensureTableColumn(env, "document_history", "storage_provider", "TEXT NOT NULL DEFAULT ''");
+    await ensureTableColumn(env, "document_signatures", "file_key", "TEXT NOT NULL DEFAULT ''");
+    await ensureTableColumn(env, "document_signatures", "file_size", "INTEGER NOT NULL DEFAULT 0");
     schemaReady = true;
+}
+
+async function ensureTableColumn(env, tableName, columnName, definition) {
+    const safeTable = String(tableName || "").replace(/[^a-z0-9_]/gi, "");
+    if (!safeTable) return;
+    const result = await env.DB.prepare(`PRAGMA table_info(${safeTable})`).all();
+    const columns = result.results || [];
+    if (columns.some((column) => column.name === columnName)) return;
+    try {
+        await env.DB.prepare(`ALTER TABLE ${safeTable} ADD COLUMN ${columnName} ${definition}`).run();
+    } catch (error) {
+        if (!String(error.message || "").toLowerCase().includes("duplicate column")) {
+            throw error;
+        }
+    }
 }
 
 async function ensureUserColumn(env, columnName, definition) {
@@ -4983,6 +5020,7 @@ async function deleteDraft(env, userId, id) {
 
 function mapHistory(row) {
     if (!row) return null;
+    const hasFile = Boolean(row.file_key);
     return {
         id: row.id,
         userId: row.user_id,
@@ -4992,6 +5030,13 @@ function mapHistory(row) {
         outputFormat: row.output_format || "docx",
         fileName: row.file_name || "",
         draftId: row.draft_id || "",
+        fileKey: row.file_key || "",
+        fileSize: Number(row.file_size || 0),
+        mimeType: row.mime_type || "",
+        storageProvider: row.storage_provider || "",
+        hasFile,
+        // URL autenticada via API (não expõe Appwrite/R2 direto)
+        downloadPath: hasFile ? `/api/history/${row.id}/file` : "",
         createdAt: row.created_at,
     };
 }
@@ -5008,26 +5053,260 @@ async function getHistoryItem(env, userId, id) {
     return mapHistory(row);
 }
 
+const MAX_HISTORY_FILE_BASE64 = 9 * 1024 * 1024; // ~6.5MB binário
+
+function base64ToUint8Array(base64) {
+    const clean = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
+    if (!clean) return new Uint8Array(0);
+    const binary = atob(clean);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+function isAppwriteStorageConfigured(env) {
+    return Boolean(
+        String(env.APPWRITE_ENDPOINT || "").trim() &&
+        String(env.APPWRITE_PROJECT_ID || "").trim() &&
+        String(env.APPWRITE_API_KEY || "").trim() &&
+        String(env.APPWRITE_BUCKET_HISTORY || "").trim()
+    );
+}
+
+function isR2HistoryConfigured(env) {
+    return Boolean(env.HISTORY_BUCKET);
+}
+
+function historyStorageMode(env) {
+    if (isR2HistoryConfigured(env)) return "r2";
+    if (isAppwriteStorageConfigured(env)) return "appwrite";
+    return "none";
+}
+
+async function storeHistoryBinary(env, { userId, historyId, fileName, mimeType, bytes }) {
+    const mode = historyStorageMode(env);
+    if (mode === "none") {
+        return { fileKey: "", fileSize: 0, storageProvider: "", mimeType: mimeType || "" };
+    }
+    if (!bytes?.length) {
+        return { fileKey: "", fileSize: 0, storageProvider: mode, mimeType: mimeType || "" };
+    }
+
+    if (mode === "r2") {
+        const key = `history/${userId}/${historyId}/${fileName || "documento.bin"}`;
+        await env.HISTORY_BUCKET.put(key, bytes, {
+            httpMetadata: { contentType: mimeType || "application/octet-stream" },
+            customMetadata: { userId, historyId },
+        });
+        return { fileKey: key, fileSize: bytes.length, storageProvider: "r2", mimeType: mimeType || "application/octet-stream" };
+    }
+
+    // Appwrite Storage — arquivos fora do D1 (5GB)
+    const endpoint = String(env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "");
+    const project = String(env.APPWRITE_PROJECT_ID || "").trim();
+    const apiKey = String(env.APPWRITE_API_KEY || "").trim();
+    const bucket = String(env.APPWRITE_BUCKET_HISTORY || "").trim();
+    const fileId = crypto.randomUUID().replace(/-/g, "");
+    const safeName = String(fileName || "documento.bin").replace(/[^\w.\-()+ ]+/g, "_").slice(0, 180) || "documento.bin";
+
+    const form = new FormData();
+    form.append("fileId", fileId);
+    form.append("file", new Blob([bytes], { type: mimeType || "application/octet-stream" }), safeName);
+
+    const response = await fetch(`${endpoint}/storage/buckets/${encodeURIComponent(bucket)}/files`, {
+        method: "POST",
+        headers: {
+            "X-Appwrite-Project": project,
+            "X-Appwrite-Key": apiKey,
+        },
+        body: form,
+    });
+
+    if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        console.error("Appwrite upload failed", response.status, text);
+        throw httpError(502, "Falha ao salvar arquivo no Appwrite Storage. Verifique bucket e API key.");
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    const storedId = payload.$id || fileId;
+    return {
+        fileKey: storedId,
+        fileSize: bytes.length,
+        storageProvider: "appwrite",
+        mimeType: mimeType || "application/octet-stream",
+    };
+}
+
+async function fetchHistoryBinary(env, row) {
+    if (!row?.file_key) return null;
+    const provider = row.storage_provider || "";
+
+    if (provider === "r2" || (!provider && env.HISTORY_BUCKET)) {
+        if (!env.HISTORY_BUCKET) return null;
+        const object = await env.HISTORY_BUCKET.get(row.file_key);
+        if (!object) return null;
+        const buffer = await object.arrayBuffer();
+        return {
+            bytes: new Uint8Array(buffer),
+            mimeType: row.mime_type || object.httpMetadata?.contentType || "application/octet-stream",
+            fileName: row.file_name || "documento.bin",
+        };
+    }
+
+    if (provider === "appwrite" || isAppwriteStorageConfigured(env)) {
+        const endpoint = String(env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "");
+        const project = String(env.APPWRITE_PROJECT_ID || "").trim();
+        const apiKey = String(env.APPWRITE_API_KEY || "").trim();
+        const bucket = String(env.APPWRITE_BUCKET_HISTORY || "").trim();
+        const response = await fetch(
+            `${endpoint}/storage/buckets/${encodeURIComponent(bucket)}/files/${encodeURIComponent(row.file_key)}/download`,
+            {
+                headers: {
+                    "X-Appwrite-Project": project,
+                    "X-Appwrite-Key": apiKey,
+                },
+            }
+        );
+        if (!response.ok) return null;
+        const buffer = await response.arrayBuffer();
+        return {
+            bytes: new Uint8Array(buffer),
+            mimeType: row.mime_type || response.headers.get("content-type") || "application/octet-stream",
+            fileName: row.file_name || "documento.bin",
+        };
+    }
+
+    return null;
+}
+
+async function deleteHistoryBinary(env, row) {
+    if (!row?.file_key) return;
+    const provider = row.storage_provider || "";
+    try {
+        if (provider === "r2" && env.HISTORY_BUCKET) {
+            await env.HISTORY_BUCKET.delete(row.file_key);
+            return;
+        }
+        if ((provider === "appwrite" || !provider) && isAppwriteStorageConfigured(env)) {
+            const endpoint = String(env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "");
+            const project = String(env.APPWRITE_PROJECT_ID || "").trim();
+            const apiKey = String(env.APPWRITE_API_KEY || "").trim();
+            const bucket = String(env.APPWRITE_BUCKET_HISTORY || "").trim();
+            await fetch(
+                `${endpoint}/storage/buckets/${encodeURIComponent(bucket)}/files/${encodeURIComponent(row.file_key)}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "X-Appwrite-Project": project,
+                        "X-Appwrite-Key": apiKey,
+                    },
+                }
+            );
+        }
+    } catch (error) {
+        console.warn("Falha ao apagar arquivo do storage:", error);
+    }
+}
+
 async function createHistoryItem(env, userId, body) {
     const documentType = String(body.documentType || body.document_type || "").trim();
     if (!documentType) throw httpError(400, "Informe documentType.");
     const id = crypto.randomUUID();
     const now = productNow();
+    const outputFormat = String(body.outputFormat || body.output_format || "docx").slice(0, 20);
+    const fileName = String(body.fileName || body.file_name || `documento.${outputFormat === "pdf" ? "pdf" : "docx"}`).slice(0, 240);
+    const mimeType = String(body.mimeType || body.mime_type || (outputFormat === "pdf"
+        ? "application/pdf"
+        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document")).slice(0, 120);
+
+    // Arquivo NUNCA fica no D1 — só Appwrite/R2 (ou metadata-only se storage não configurado)
+    let fileKey = "";
+    let fileSize = 0;
+    let storageProvider = "";
+    let storedMime = mimeType;
+    const fileBase64 = body.fileBase64 || body.file_base64 || body.pdfBase64 || body.docxBase64 || "";
+
+    if (fileBase64) {
+        if (String(fileBase64).length > MAX_HISTORY_FILE_BASE64) {
+            throw httpError(413, "Arquivo grande demais para historico (limite ~6MB).");
+        }
+        const bytes = base64ToUint8Array(fileBase64);
+        if (bytes.length) {
+            const stored = await storeHistoryBinary(env, {
+                userId,
+                historyId: id,
+                fileName,
+                mimeType,
+                bytes,
+            });
+            fileKey = stored.fileKey;
+            fileSize = stored.fileSize;
+            storageProvider = stored.storageProvider;
+            storedMime = stored.mimeType || mimeType;
+        }
+    }
+
+    // form_data fica no D1 (JSON leve). Não grava binário.
+    let formJson = productStringify(body.formData || body.form_data || {});
+    if (formJson.length > 200000) {
+        formJson = productStringify({ _truncated: true, note: "form_data omitido por tamanho" });
+    }
+
     await env.DB.prepare(
-        `INSERT INTO document_history (id, user_id, document_type, title, form_data, output_format, file_name, draft_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO document_history (
+            id, user_id, document_type, title, form_data, output_format, file_name, draft_id,
+            file_key, file_size, mime_type, storage_provider, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
         id,
         userId,
         documentType,
         String(body.title || documentType).trim().slice(0, 200),
-        productStringify(body.formData || body.form_data || {}),
-        String(body.outputFormat || body.output_format || "docx").slice(0, 20),
-        String(body.fileName || body.file_name || "").slice(0, 240),
+        formJson,
+        outputFormat,
+        fileName,
         String(body.draftId || body.draft_id || "").slice(0, 80),
+        fileKey,
+        fileSize,
+        storedMime,
+        storageProvider,
         now
     ).run();
-    return getHistoryItem(env, userId, id);
+
+    const item = await getHistoryItem(env, userId, id);
+    if (item) {
+        item.storageMode = historyStorageMode(env);
+        item.fileStored = Boolean(fileKey);
+        if (!fileKey && fileBase64) {
+            item.warning = "Arquivo nao foi persistido: configure Appwrite Storage ou R2 no Worker.";
+        } else if (!fileKey && !fileBase64) {
+            item.warning = "Historico salvo sem arquivo (apenas dados do formulario).";
+        }
+    }
+    return item;
+}
+
+async function downloadHistoryFile(env, userId, id) {
+    const row = await env.DB.prepare("SELECT * FROM document_history WHERE id = ? AND user_id = ?").bind(id, userId).first();
+    if (!row) throw httpError(404, "Registro nao encontrado.");
+    if (!row.file_key) throw httpError(404, "Este historico nao tem arquivo armazenado.");
+
+    const file = await fetchHistoryBinary(env, row);
+    if (!file) throw httpError(404, "Arquivo nao encontrado no storage externo.");
+
+    const headers = new Headers();
+    headers.set("Content-Type", file.mimeType || "application/octet-stream");
+    headers.set("Content-Disposition", `attachment; filename="${String(file.fileName || "documento").replace(/"/g, "")}"`);
+    headers.set("Cache-Control", "private, no-store");
+    return new Response(file.bytes, { status: 200, headers });
+}
+
+async function deleteHistoryItem(env, userId, id) {
+    const row = await env.DB.prepare("SELECT * FROM document_history WHERE id = ? AND user_id = ?").bind(id, userId).first();
+    if (!row) throw httpError(404, "Registro nao encontrado.");
+    await deleteHistoryBinary(env, row);
+    await env.DB.prepare("DELETE FROM document_history WHERE id = ? AND user_id = ?").bind(id, userId).run();
 }
 
 function mapShareLink(row, { includeToken = true } = {}) {
@@ -5161,9 +5440,12 @@ function mapSignature(row) {
         fileName: row.file_name || "",
         signerName: row.signer_name || "",
         signerEmail: row.signer_email || "",
+        // Traço da assinatura (PNG pequeno) pode ficar no D1; PDF grande vai pro Appwrite/R2
         signatureDataUrl: row.signature_data_url || "",
-        hasPdf: Boolean(row.pdf_base64),
-        pdfBase64: row.pdf_base64 || "",
+        hasPdf: Boolean(row.file_key) || Boolean(row.pdf_base64),
+        fileKey: row.file_key || "",
+        fileSize: Number(row.file_size || 0),
+        pdfBase64: "",
         ipHint: row.ip_hint || "",
         createdAt: row.created_at,
     };
@@ -5171,7 +5453,10 @@ function mapSignature(row) {
 
 async function listSignatures(env, userId) {
     const rows = await env.DB.prepare(
-        "SELECT id, user_id, history_id, document_type, file_name, signer_name, signer_email, signature_data_url, CASE WHEN length(pdf_base64) > 0 THEN 1 ELSE 0 END AS has_pdf_flag, ip_hint, created_at, '' AS pdf_base64 FROM document_signatures WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
+        `SELECT id, user_id, history_id, document_type, file_name, signer_name, signer_email, signature_data_url,
+                file_key, file_size, ip_hint, created_at,
+                CASE WHEN length(COALESCE(file_key,'')) > 0 OR length(COALESCE(pdf_base64,'')) > 0 THEN 1 ELSE 0 END AS has_pdf_flag
+         FROM document_signatures WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`
     ).bind(userId).all();
     return (rows.results || []).map((row) => ({
         ...mapSignature(row),
@@ -5185,24 +5470,46 @@ async function createSignature(env, userId, body, request) {
     if (!signatureDataUrl.startsWith("data:image/")) throw httpError(400, "Envie signatureDataUrl (imagem base64).");
     if (signatureDataUrl.length > 900000) throw httpError(413, "Assinatura grande demais.");
     const pdfBase64 = String(body.pdfBase64 || body.pdf_base64 || "").replace(/^data:[^;]+;base64,/, "");
-    if (pdfBase64 && pdfBase64.length > 12 * 1024 * 1024) throw httpError(413, "PDF assinado grande demais para armazenamento.");
+    if (pdfBase64 && pdfBase64.length > MAX_HISTORY_FILE_BASE64) {
+        throw httpError(413, "PDF assinado grande demais (limite ~6MB no upload).");
+    }
     const id = crypto.randomUUID();
     const now = productNow();
     const ip = request?.headers?.get?.("cf-connecting-ip") || request?.headers?.get?.("x-forwarded-for") || "";
+    const fileName = String(body.fileName || body.file_name || "documento-assinado.pdf").slice(0, 240);
+
+    let fileKey = "";
+    let fileSize = 0;
+    // PDF assinado NÃO fica em pdf_base64 no D1 — sobe para Appwrite/R2
+    if (pdfBase64) {
+        const bytes = base64ToUint8Array(pdfBase64);
+        const stored = await storeHistoryBinary(env, {
+            userId,
+            historyId: `sig-${id}`,
+            fileName,
+            mimeType: "application/pdf",
+            bytes,
+        });
+        fileKey = stored.fileKey;
+        fileSize = stored.fileSize;
+    }
+
     await env.DB.prepare(
         `INSERT INTO document_signatures (
-            id, user_id, history_id, document_type, file_name, signer_name, signer_email, signature_data_url, pdf_base64, ip_hint, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            id, user_id, history_id, document_type, file_name, signer_name, signer_email,
+            signature_data_url, pdf_base64, file_key, file_size, ip_hint, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?)`
     ).bind(
         id,
         userId,
         String(body.historyId || body.history_id || "").slice(0, 80),
         String(body.documentType || body.document_type || "").slice(0, 120),
-        String(body.fileName || body.file_name || "").slice(0, 240),
+        fileName,
         String(body.signerName || body.signer_name || "").trim().slice(0, 160),
         String(body.signerEmail || body.signer_email || "").trim().slice(0, 180),
         signatureDataUrl,
-        pdfBase64.slice(0, 12 * 1024 * 1024),
+        fileKey,
+        fileSize,
         String(ip).slice(0, 120),
         now
     ).run();

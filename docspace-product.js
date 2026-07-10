@@ -6,7 +6,7 @@
 (() => {
     "use strict";
 
-    const PRODUCT_VERSION = "6.1.0";
+    const PRODUCT_VERSION = "6.1.1-history-storage";
     const state = {
         people: [],
         drafts: [],
@@ -441,7 +441,7 @@
             <article class="panel">
                 <p class="eyebrow">Biblioteca</p>
                 <h2>Rascunhos, histórico e links</h2>
-                <p>Continue preenchimentos, reabra gerações anteriores e gerencie links enviados ao cliente.</p>
+                <p>Continue preenchimentos e reabra gerações. Os <strong>arquivos PDF/Word</strong> ficam no storage externo (Appwrite/R2) — o banco Cloudflare (D1) só guarda dados leves, sem estourar o limite de 5&nbsp;GB.</p>
             </article>
             <div class="split">
                 <article class="panel">
@@ -471,11 +471,19 @@
                             <tbody>
                                 ${state.history.length ? state.history.map((h) => `
                                     <tr>
-                                        <td><strong>${esc(h.title || h.documentType)}</strong><br><small>${esc(h.fileName || "")}</small></td>
+                                        <td>
+                                            <strong>${esc(h.title || h.documentType)}</strong><br>
+                                            <small>${esc(h.fileName || "")}</small>
+                                            ${h.hasFile
+                                                ? `<br><span class="badge">Arquivo no storage (${esc(h.storageProvider || "externo")})${h.fileSize ? ` · ${formatBytes(h.fileSize)}` : ""}</span>`
+                                                : `<br><span class="badge warn">Só dados (sem arquivo)</span>`}
+                                        </td>
                                         <td>${esc((h.outputFormat || "").toUpperCase())}</td>
                                         <td>${esc(formatDate(h.createdAt))}</td>
                                         <td class="actions-cell">
                                             <button type="button" data-reopen-history="${attr(h.id)}">Reabrir dados</button>
+                                            ${h.hasFile ? `<button type="button" data-download-history="${attr(h.id)}" data-history-name="${attr(h.fileName || "documento")}">Baixar arquivo</button>` : ""}
+                                            <button type="button" data-delete-history="${attr(h.id)}">Excluir</button>
                                         </td>
                                     </tr>
                                 `).join("") : `<tr><td colspan="4"><p class="message">Nenhuma geração registrada.</p></td></tr>`}
@@ -523,6 +531,22 @@
         container.querySelectorAll("[data-reopen-history]").forEach((btn) => {
             btn.addEventListener("click", () => reopenHistory(btn.dataset.reopenHistory));
         });
+        container.querySelectorAll("[data-download-history]").forEach((btn) => {
+            btn.addEventListener("click", () => downloadHistoryFile(btn.dataset.downloadHistory, btn.dataset.historyName));
+        });
+        container.querySelectorAll("[data-delete-history]").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                if (!confirm("Excluir este item do histórico e o arquivo no storage?")) return;
+                try {
+                    await api(`/api/history/${encodeURIComponent(btn.dataset.deleteHistory)}`, { method: "DELETE" });
+                    await loadLibrary();
+                    renderLibraryView(container);
+                    toast("Histórico removido.", "success");
+                } catch (error) {
+                    toast(error.message || "Erro ao excluir.", "error");
+                }
+            });
+        });
         container.querySelectorAll("[data-copy-share]").forEach((btn) => {
             btn.addEventListener("click", async () => {
                 try {
@@ -555,6 +579,43 @@
             return new Date(value).toLocaleString("pt-BR");
         } catch (_) {
             return String(value);
+        }
+    }
+
+    function formatBytes(bytes) {
+        const n = Number(bytes) || 0;
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    async function downloadHistoryFile(id, fileName = "documento") {
+        const c = core();
+        if (!c?.apiRequest) return;
+        try {
+            toast("Baixando arquivo do storage...", "");
+            const token = localStorage.getItem("documentos_rurais_session_token") || "";
+            const base = String(window.DOCSPACE_CONFIG?.API_BASE_URL || window.API_BASE_URL || "").replace(/\/+$/, "");
+            const response = await fetch(`${base}/api/history/${encodeURIComponent(id)}/file`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                credentials: "include",
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `Erro HTTP ${response.status}`);
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName || "documento";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            toast("Download iniciado.", "success");
+        } catch (error) {
+            toast(error.message || "Falha no download.", "error");
         }
     }
 
@@ -1014,19 +1075,29 @@
         return false;
     }
 
-    async function onAfterGenerate({ form, doc, formData, generateType, fileName }) {
+    async function onAfterGenerate({ form, doc, formData, generateType, fileName, fileBase64, mimeType }) {
         try {
-            await api("/api/history", {
-                method: "POST",
-                body: {
-                    documentType: doc?.id || form?.dataset?.documentId,
-                    title: doc?.title || "",
-                    formData,
-                    outputFormat: generateType,
-                    fileName: fileName || "",
-                    draftId: state.activeDraftId || "",
-                },
-            });
+            const body = {
+                documentType: doc?.id || form?.dataset?.documentId,
+                title: doc?.title || "",
+                formData,
+                outputFormat: generateType,
+                fileName: fileName || "",
+                draftId: state.activeDraftId || "",
+                mimeType: mimeType || (generateType === "pdf"
+                    ? "application/pdf"
+                    : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            };
+            // Arquivo vai para Appwrite/R2 via API — NÃO fica no D1 (limite 5GB)
+            if (fileBase64) body.fileBase64 = fileBase64;
+
+            const result = await api("/api/history", { method: "POST", body });
+            if (result?.item?.fileStored) {
+                toast("Documento salvo na Biblioteca (storage externo).", "success");
+            } else if (result?.item?.warning) {
+                console.warn(result.item.warning);
+            }
+
             if (state.activeDraftId) {
                 await api("/api/drafts", {
                     method: "POST",

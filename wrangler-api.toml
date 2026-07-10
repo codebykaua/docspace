@@ -21,3 +21,12 @@ MERCADO_PAGO_PUBLIC_KEY = "APP_USR-b73bcfd2-e773-4819-a006-08239308e311"
 PUBLIC_APP_URL = "https://docspace-web.pages.dev"
 MERCADO_PAGO_WEBHOOK_URL = "https://docspace-api.kaualucas9773.workers.dev/api/billing/mercadopago/webhook"
 RENDER_API_URL = "https://gerador-de-documentos-1.onrender.com"
+# Storage de arquivos do histórico (PDF/DOCX) — NÃO usa o limite de 5GB do D1.
+# Configure secrets: APPWRITE_API_KEY
+# APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"
+# APPWRITE_PROJECT_ID = "seu-project-id"
+# APPWRITE_BUCKET_HISTORY = "docspace-history"
+# Descomente e preencha quando o Appwrite estiver pronto:
+# APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"
+# APPWRITE_PROJECT_ID = ""
+# APPWRITE_BUCKET_HISTORY = "docspace-history"
