@@ -16,9 +16,8 @@ const staticFilesToCopy = [
     'app-config.js',
     'style.css',
     'script.js',
-    'ai-ui.js',
-    'ai-styles.css',
-    'pdf-preview.js',
+    'docspace-product.js',
+    'share.html',
     'contro.js',
     'service-worker.js',
     'manifest.webmanifest',
@@ -111,10 +110,8 @@ function copyDirRecursive(from, to) {
         if (entry.isDirectory()) {
             count += copyDirRecursive(sourcePath, targetPath);
         } else if (entry.isFile()) {
-            // Não sobrescreve assets já processados pelo Vite (com hash)
-            if (fs.existsSync(targetPath)) {
-                continue;
-            }
+            // Sobrescreve para garantir modelos/assets atualizados no dist.
+            // Assets hasheados do Vite ficam em dist/assets/*-HASH.* e não colidem.
             fs.copyFileSync(sourcePath, targetPath);
             count++;
         }
@@ -146,5 +143,70 @@ for (const d of staticDirs) {
     console.log(`  📁 ${d}/ (${n} arquivos)`);
 }
 
+// Garante que HTMLs de produção apontem para style.css/script.js locais
+// (Vite às vezes reescreve CSS para um asset hasheado compartilhado).
+patchHtmlAssets();
+ensureHeadersFile();
+
 console.log(`\n✅ Build complementar concluído: ${copiedFiles} arquivos + ${copiedDirs} assets de diretório`);
 console.log(`📦 dist/ pronto para deploy no Cloudflare Pages`);
+
+function patchHtmlAssets() {
+    const htmlFiles = ['index.html', 'contro.html', 'setup-admin.html'];
+    const assetVersion = '131';
+
+    for (const fileName of htmlFiles) {
+        const filePath = path.join(distDir, fileName);
+        if (!fs.existsSync(filePath)) continue;
+
+        let html = fs.readFileSync(filePath, 'utf8');
+        const original = html;
+
+        // Normaliza links de CSS gerados pelo Vite de volta para style.css (quando aplicável)
+        if (fileName === 'index.html') {
+            html = html.replace(
+                /<link rel="stylesheet"[^>]*href="[^"]*contro-[^"]+\.css"[^>]*>/i,
+                `<link rel="stylesheet" href="style.css?v=${assetVersion}">`
+            );
+            if (!/href="style\.css/i.test(html)) {
+                html = html.replace(
+                    /<\/head>/i,
+                    `  <link rel="stylesheet" href="style.css?v=${assetVersion}">\n</head>`
+                );
+            }
+            html = html.replace(/script\.js\?v=\d+/g, `script.js?v=${assetVersion}`);
+            html = html.replace(/style\.css\?v=\d+/g, `style.css?v=${assetVersion}`);
+
+            // Manifest na raiz (não o hasheado do Vite em /assets/) — PWA precisa do start_url certo
+            html = html.replace(
+                /<link rel="manifest"[^>]*>/i,
+                '<link rel="manifest" href="manifest.webmanifest">'
+            );
+        }
+
+        // Caminhos absolutos (/assets/...) quebram em alguns contextos de PWA/standalone.
+        // Força relativos para assets locais.
+        html = html.replace(/src="\/(assets\/[^"]+)"/g, 'src="$1"');
+        html = html.replace(/href="\/(assets\/[^"]+)"/g, 'href="$1"');
+        html = html.replace(/src="\/(app-config\.js[^"]*)"/g, 'src="$1"');
+        html = html.replace(/src="\/(script\.js[^"]*)"/g, 'src="$1"');
+        html = html.replace(/src="\/(contro\.js[^"]*)"/g, 'src="$1"');
+        html = html.replace(/href="\/(style\.css[^"]*)"/g, 'href="$1"');
+        html = html.replace(/href="\/(manifest\.webmanifest)"/g, 'href="$1"');
+
+        if (html !== original) {
+            fs.writeFileSync(filePath, html, 'utf8');
+            console.log(`  🔧 HTML ajustado: ${fileName}`);
+        }
+    }
+}
+
+// Garante _headers do Cloudflare Pages (public/ já vai via Vite; fallback se faltar)
+function ensureHeadersFile() {
+    const fromPublic = path.join(rootDir, 'public', '_headers');
+    const toDist = path.join(distDir, '_headers');
+    if (fs.existsSync(fromPublic)) {
+        fs.copyFileSync(fromPublic, toDist);
+        console.log('  ✅ _headers');
+    }
+}

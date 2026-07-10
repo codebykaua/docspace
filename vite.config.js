@@ -10,7 +10,8 @@ export default defineConfig({
       input: {
         main: 'index.html',
         contro: 'contro.html',
-        setupAdmin: 'setup-admin.html'
+        setupAdmin: 'setup-admin.html',
+        share: 'share.html',
       }
     },
     copyPublicDir: true

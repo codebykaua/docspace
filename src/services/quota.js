@@ -1,7 +1,10 @@
 // Quota Service - Generic quota management for documents and PDF tools
 // Eliminates duplication between ensureDocumentQuotaBalances and ensurePdfToolQuotaBalances
 
-import { env } from '../env.js'; // Will be injected at runtime
+// env is available via injectRuntimeDependencies / Cloudflare bindings.
+// Import kept optional for tooling compatibility.
+import { env as _envPlaceholder } from "../env.js";
+void _envPlaceholder;
 
 // Types of quotas
 export const QuotaType = {

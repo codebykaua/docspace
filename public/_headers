@@ -1,0 +1,23 @@
+# Cloudflare Pages headers — PWA / assets
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: application/javascript; charset=utf-8
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+  Content-Type: application/manifest+json; charset=utf-8
+
+/style.css
+  Content-Type: text/css; charset=utf-8
+
+/script.js
+  Content-Type: application/javascript; charset=utf-8
+
+/app-config.js
+  Content-Type: application/javascript; charset=utf-8
+
+/*.css
+  Content-Type: text/css; charset=utf-8
+
+/*.js
+  Content-Type: application/javascript; charset=utf-8

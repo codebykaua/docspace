@@ -6,10 +6,14 @@
     <meta name="theme-color" content="#f4f1ea">
     <title>DocSpace</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/LOGO1.png">
-    <link rel="apple-touch-icon" href="assets/LOGO1.png">
-    <link rel="stylesheet" href="style.css?v=125">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev https://api.mercadopago.com https://api.emailjs.com; frame-src 'self' https://www.mercadopago.com; worker-src 'self' blob:;">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DocSpace">
+    <link rel="stylesheet" href="style.css?v=132">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://docspace-api.kaualucas9773.workers.dev https://api.mercadopago.com https://api.emailjs.com https://viacep.com.br; frame-src 'self' blob: https://www.mercadopago.com; object-src 'self' blob:; worker-src 'self' blob:;">
 </head>
 <body>
     <div id="authView" class="auth-view">
@@ -29,11 +33,12 @@
             <form id="loginForm" class="login-card" novalidate>
                 <p class="eyebrow">Acesso</p>
                 <h2 id="loginTitle">Entrar no sistema</h2>
-                <p>Use o mesmo e-mail e senha cadastrados.</p>
-                <label class="field"><span>E-mail</span><input id="loginEmail" type="email" autocomplete="email" required placeholder="seu@email.com"></label>
-                <label class="field"><span>Senha</span><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Digite sua senha"></label>
+                <p>Use o e-mail e a senha cadastrados neste ambiente (Cloudflare).</p>
+                <label class="field"><span>E-mail</span><input id="loginEmail" type="email" autocomplete="username" required placeholder="seu@email.com" spellcheck="false"></label>
+                <label class="field"><span>Senha</span><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Digite sua senha" minlength="1"></label>
                 <p id="loginMessage" class="message" aria-live="polite"></p>
                 <button id="loginButton" class="primary-button" type="submit">Entrar</button>
+                <p class="login-help">Não tem acesso? Peça ao administrador para liberar o login no painel Admin/Controle.</p>
             </form>
         </section>
     </div>
@@ -47,6 +52,8 @@
             <nav id="mainNav" class="main-nav">
                 <button data-view="dashboard" class="is-active">Início</button>
                 <button data-view="documents">Documentos</button>
+                <button data-view="library">Biblioteca</button>
+                <button data-view="people">Pessoas</button>
                 <button data-view="pdf">PDF</button>
                 <button data-view="support">Atendimento</button>
                 <button data-view="ai">IA</button>
@@ -81,6 +88,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="app-config.js?v=120"></script>
-    <script src="script.js?v=125"></script>
+    <script src="docspace-product.js?v=132"></script>
+    <script src="script.js?v=132"></script>
 </body>
 </html>

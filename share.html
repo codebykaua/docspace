@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preencher documento — DocSpace</title>
+    <link rel="stylesheet" href="style.css?v=132">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://docspace-api.kaualucas9773.workers.dev https://viacep.com.br;">
+    <style>
+        body { min-height: 100vh; background: #f4f1ea; }
+        .share-shell { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+        .share-shell h1 { margin: 0 0 8px; }
+        .share-shell .lead { color: #53657d; margin-bottom: 20px; }
+        .share-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+        input.is-invalid, textarea.is-invalid { border-color: #c0392b !important; }
+        input.is-valid { border-color: #1f8f4e !important; }
+    </style>
+</head>
+<body>
+    <div class="share-shell">
+        <article class="panel" id="sharePanel">
+            <p class="eyebrow">DocSpace · Preenchimento compartilhado</p>
+            <h1 id="shareTitle">Carregando link...</h1>
+            <p class="lead" id="shareLead">Validando token de acesso.</p>
+            <form id="shareForm" class="form-grid is-hidden"></form>
+            <p id="shareMessage" class="message" aria-live="polite"></p>
+            <div class="share-actions is-hidden" id="shareActions">
+                <button type="submit" form="shareForm" class="primary-button">Enviar dados</button>
+            </div>
+        </article>
+    </div>
+
+    <script src="app-config.js?v=120"></script>
+    <script>
+    (() => {
+        const API = String(window.DOCSPACE_CONFIG?.API_BASE_URL || "").replace(/\/+$/, "");
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token") || "";
+        const titleEl = document.getElementById("shareTitle");
+        const leadEl = document.getElementById("shareLead");
+        const form = document.getElementById("shareForm");
+        const msg = document.getElementById("shareMessage");
+        const actions = document.getElementById("shareActions");
+
+        function onlyDigits(v) { return String(v || "").replace(/\D/g, ""); }
+        function formatCpf(v) {
+            const d = onlyDigits(v).slice(0, 11);
+            return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        }
+        function formatCep(v) {
+            const d = onlyDigits(v).slice(0, 8);
+            return d.replace(/(\d{5})(\d{1,3})$/, "$1-$2");
+        }
+        function formatPhone(v) {
+            const d = onlyDigits(v).slice(0, 11);
+            if (d.length <= 10) return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+            return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+        }
+        function esc(v) {
+            return String(v ?? "").replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c]));
+        }
+
+        async function load() {
+            if (!token) {
+                titleEl.textContent = "Link inválido";
+                leadEl.textContent = "Token ausente na URL.";
+                return;
+            }
+            try {
+                const res = await fetch(`${API}/api/share/public/${encodeURIComponent(token)}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Não foi possível abrir o link.");
+                const link = data.link;
+                titleEl.textContent = link.title || "Preenchimento de documento";
+                leadEl.textContent = `Documento: ${link.documentType}. Preencha os campos e envie. Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}.`;
+
+                const allowed = Array.isArray(link.allowedFields) && link.allowedFields.length
+                    ? link.allowedFields
+                    : Object.keys(link.formData || {});
+                const keys = allowed.length ? allowed : ["nome", "cpf", "email", "telefone", "endereco", "cidade", "uf", "cep"];
+                const values = link.formData || {};
+
+                form.innerHTML = `
+                    <label class="field"><span>Seu nome (quem está preenchendo)</span><input name="__submitterName" required></label>
+                    <label class="field"><span>Seu e-mail</span><input name="__submitterEmail" type="email"></label>
+                    ${keys.map((key) => {
+                        const label = key.replace(/_/g, " ");
+                        const val = values[key] ?? "";
+                        const lower = key.toLowerCase();
+                        const kind = lower.includes("cpf") ? "cpf" : lower.includes("cep") ? "cep" : (lower.includes("telefone") || lower.includes("celular") ? "phone" : "");
+                        return `<label class="field"><span>${esc(label)}</span><input name="${esc(key)}" value="${esc(val)}" data-kind="${kind}"></label>`;
+                    }).join("")}
+                `;
+                form.classList.remove("is-hidden");
+                actions.classList.remove("is-hidden");
+
+                form.querySelectorAll("input[data-kind]").forEach((input) => {
+                    input.addEventListener("input", () => {
+                        const k = input.dataset.kind;
+                        if (k === "cpf") input.value = formatCpf(input.value);
+                        if (k === "cep") input.value = formatCep(input.value);
+                        if (k === "phone") input.value = formatPhone(input.value);
+                    });
+                });
+            } catch (error) {
+                titleEl.textContent = "Não foi possível abrir";
+                leadEl.textContent = error.message || "Erro desconhecido.";
+            }
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const fd = new FormData(form);
+            const submitterName = String(fd.get("__submitterName") || "").trim();
+            const submitterEmail = String(fd.get("__submitterEmail") || "").trim();
+            const formData = {};
+            fd.forEach((value, key) => {
+                if (key.startsWith("__")) return;
+                formData[key] = String(value || "").trim();
+            });
+            msg.textContent = "Enviando...";
+            msg.className = "message";
+            try {
+                const res = await fetch(`${API}/api/share/public/${encodeURIComponent(token)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ formData, submitterName, submitterEmail }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Falha ao enviar.");
+                msg.textContent = data.message || "Enviado com sucesso.";
+                msg.className = "message success";
+                form.classList.add("is-hidden");
+                actions.classList.add("is-hidden");
+            } catch (error) {
+                msg.textContent = error.message || "Erro ao enviar.";
+                msg.className = "message error";
+            }
+        });
+
+        load();
+    })();
+    </script>
+</body>
+</html>

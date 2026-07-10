@@ -1,7 +1,7 @@
 // State Module - Central reactive state management
 
-// Internal state
-let state = {
+// Internal state (also exposed as reactiveState for consumers)
+export const reactiveState = {
   // User & Auth
   user: null,
   sessionToken: null,
@@ -9,7 +9,7 @@ let state = {
   isAuthenticated: false,
 
   // UI State
-  activeView: 'dashboard',
+  activeView: "dashboard",
   sidebarOpen: true,
   modalOpen: false,
   loading: false,
@@ -21,22 +21,26 @@ let state = {
   aiUsage: null,
   aiConversations: [],
   currentAiConversation: null,
+  aiFirstName: "",
 
   // Settings
   settings: {
-    theme: 'light',
-    language: 'pt-BR'
-  }
+    theme: "light",
+    language: "pt-BR",
+  },
 };
+
+// Backwards-compatible alias
+const state = reactiveState;
 
 // Subscribers for reactive updates
 const subscribers = new Set();
 
 function notifySubscribers() {
-  subscribers.forEach(callback => callback(state));
+  subscribers.forEach((callback) => callback(state));
 }
 
-// Getter - returns a copy to prevent direct mutation
+// Getter - returns a shallow copy to prevent accidental top-level mutation
 export function getState() {
   return { ...state };
 }
@@ -72,9 +76,9 @@ export function setActiveView(view) {
 export function setSessionToken(token) {
   state.sessionToken = token;
   if (token) {
-    localStorage.setItem('documentos_rurais_session_token', token);
+    localStorage.setItem("documentos_rurais_session_token", token);
   } else {
-    localStorage.removeItem('documentos_rurais_session_token');
+    localStorage.removeItem("documentos_rurais_session_token");
   }
   notifySubscribers();
 }
@@ -87,11 +91,11 @@ export function subscribe(callback) {
 
 // Initialize state from localStorage
 export function initState() {
-  const token = localStorage.getItem('documentos_rurais_session_token');
+  const token = localStorage.getItem("documentos_rurais_session_token");
   if (token) {
     state.sessionToken = token;
   }
-  const billingToken = localStorage.getItem('documentos_rurais_billing_token');
+  const billingToken = localStorage.getItem("documentos_rurais_billing_token");
   if (billingToken) {
     state.billingToken = billingToken;
   }

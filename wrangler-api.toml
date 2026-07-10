@@ -1,25 +1,23 @@
-name = "tiny-bread-b482gerador-documentos-rurais-api"
+name = "docspace-api"
 main = "worker-backend-pronto.js"
 compatibility_date = "2026-05-27"
+account_id = "3f72c0cbfa4a3afde1c87e411a4a20da"
 
-send_email = [{ name = "EMAIL" }]
+# send_email opcional: descomente se o Email Sending estiver ativo na conta
+# send_email = [{ name = "EMAIL" }]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "gerador_documentos_rurais"
-database_id = "20da6561-a547-4b2a-ba29-685ea8d149d5"
-
+database_id = "2f8261c2-0c2f-49c4-8080-6c78320367c1"
 
 [vars]
-EMAIL_FROM_NAME = "Gerador Rural Pro"
-# EMAIL_FROM_ADDRESS precisa ser um e-mail de dominio habilitado no Cloudflare Email Sending.
-# EMAIL_FROM_ADDRESS = "atendimento@seudominio.com"
-
+EMAIL_FROM_NAME = "DocSpace"
 EMAILJS_SERVICE_ID = "service_2x0hqq6"
 EMAILJS_TEMPLATE_ID = "template_7an08gf"
 EMAILJS_PUBLIC_KEY = "LmAZ7VQauBCPlPoFi"
 SUPPORT_ADMIN_EMAIL = "kaua.dev@outlook.com.br"
-
 MERCADO_PAGO_PUBLIC_KEY = "APP_USR-b73bcfd2-e773-4819-a006-08239308e311"
-PUBLIC_APP_URL = "https://gerador-documentos-rurais.pages.dev"
-MERCADO_PAGO_WEBHOOK_URL = "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev/api/billing/mercadopago/webhook"
+PUBLIC_APP_URL = "https://docspace-web.pages.dev"
+MERCADO_PAGO_WEBHOOK_URL = "https://docspace-api.kaualucas9773.workers.dev/api/billing/mercadopago/webhook"
+RENDER_API_URL = "https://gerador-de-documentos-1.onrender.com"

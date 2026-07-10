@@ -7,7 +7,7 @@
     window.API_BASE_URL = API_BASE_URL;
     const SESSION_TOKEN_KEY = "documentos_rurais_session_token";
     const BILLING_TOKEN_KEY = "documentos_rurais_billing_token";
-    const APP_VERSION = "6.0.0-zero-wizard";
+    const APP_VERSION = "6.1.0-product";
     const DOCS = [
     {
         "id": "comodato",
@@ -5381,17 +5381,89 @@
         { id: "basic30", label: "Plano Básico", price: "R$ 39,90" },
         { id: "proMax365", label: "Plano Pro Max", price: "R$ 490,90" },
     ];
+    const PDF_MAX_SERVER_BYTES = 45 * 1024 * 1024;
+    const PDF_MAX_LOCAL_BYTES = 80 * 1024 * 1024;
     const PDF_TOOLS = {
-        merge: { title: "Juntar PDFs", description: "Combine vários PDFs em um único arquivo.", accept: ".pdf,application/pdf", multiple: true },
-        split: { title: "Dividir PDF", description: "Baixe páginas selecionadas em PDFs separados.", accept: ".pdf,application/pdf", pages: "Páginas opcional: 1,3-5" },
-        organize: { title: "Organizar páginas", description: "Crie um PDF na ordem informada.", accept: ".pdf,application/pdf", pages: "Nova ordem: 3,1,2,4-6", requiredPages: true },
-        remove: { title: "Remover páginas", description: "Exclua páginas específicas.", accept: ".pdf,application/pdf", pages: "Remover: 2,4-6", requiredPages: true },
-        extract: { title: "Extrair páginas", description: "Gere um novo PDF só com as páginas escolhidas.", accept: ".pdf,application/pdf", pages: "Extrair: 1,3-5", requiredPages: true },
-        rotate: { title: "Girar páginas", description: "Gire todas as páginas ou apenas as informadas.", accept: ".pdf,application/pdf", pages: "Páginas opcional", rotation: true },
-        compress: { title: "Comprimir PDF", description: "Envia para a API de compressão configurada no Worker.", accept: ".pdf,application/pdf", pages: "Páginas específicas opcional", compression: true, server: true },
-        images: { title: "Imagens para PDF", description: "Transforme JPG/PNG em PDF.", accept: ".jpg,.jpeg,.png,image/jpeg,image/png", multiple: true },
-        wordPdf: { title: "Word para PDF", description: "Converte DOCX para PDF simples no navegador.", accept: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-        ocr: { title: "PDF pesquisável com OCR", description: "Envia para a API de OCR configurada no Worker.", accept: ".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp", multiple: true, ocr: true, server: true },
+        compress: {
+            title: "Comprimir PDF",
+            description: "Reduz o tamanho do PDF no servidor (Ghostscript/qpdf). Se a API falhar, usa compactação local de fallback.",
+            accept: ".pdf,application/pdf",
+            pages: "Páginas opcional (ex.: 1,3-5) — comprime só estas",
+            compression: true,
+            server: true,
+            icon: "📦",
+            hint: "Ideal para enviar por e-mail ou WhatsApp.",
+        },
+        merge: {
+            title: "Juntar PDFs",
+            description: "Combine vários PDFs em um único arquivo, na ordem selecionada.",
+            accept: ".pdf,application/pdf",
+            multiple: true,
+            icon: "🔗",
+            hint: "Selecione 2 ou mais arquivos.",
+        },
+        split: {
+            title: "Dividir PDF",
+            description: "Gera um PDF por página (ou só as páginas informadas).",
+            accept: ".pdf,application/pdf",
+            pages: "Páginas opcional: 1,3-5",
+            icon: "✂️",
+        },
+        extract: {
+            title: "Extrair páginas",
+            description: "Cria um novo PDF apenas com as páginas escolhidas.",
+            accept: ".pdf,application/pdf",
+            pages: "Extrair: 1,3-5",
+            requiredPages: true,
+            icon: "📄",
+        },
+        remove: {
+            title: "Remover páginas",
+            description: "Exclui páginas específicas e baixa o PDF resultante.",
+            accept: ".pdf,application/pdf",
+            pages: "Remover: 2,4-6",
+            requiredPages: true,
+            icon: "🗑️",
+        },
+        organize: {
+            title: "Organizar páginas",
+            description: "Reordena as páginas na sequência informada.",
+            accept: ".pdf,application/pdf",
+            pages: "Nova ordem: 3,1,2,4-6",
+            requiredPages: true,
+            icon: "📑",
+        },
+        rotate: {
+            title: "Girar páginas",
+            description: "Gira todas as páginas ou apenas as informadas.",
+            accept: ".pdf,application/pdf",
+            pages: "Páginas opcional (vazio = todas)",
+            rotation: true,
+            icon: "🔄",
+        },
+        images: {
+            title: "Imagens para PDF",
+            description: "Transforma JPG/PNG em um PDF único.",
+            accept: ".jpg,.jpeg,.png,image/jpeg,image/png",
+            multiple: true,
+            icon: "🖼️",
+        },
+        wordPdf: {
+            title: "Word para PDF",
+            description: "Converte o texto de um DOCX em PDF simples no navegador.",
+            accept: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            icon: "📝",
+        },
+        ocr: {
+            title: "OCR (PDF pesquisável)",
+            description: "Torna PDFs escaneados ou imagens pesquisáveis no servidor.",
+            accept: ".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp",
+            multiple: true,
+            ocr: true,
+            server: true,
+            icon: "🔍",
+            hint: "Pode demorar em arquivos grandes.",
+        },
     };
     const state = {
         view: "dashboard",
@@ -5407,6 +5479,17 @@
         adminSupportMessages: [],
         appRelease: null,
         aiConversationId: null,
+        pdfPreviewUrl: null,
+        pdfPreviewFileName: "",
+        pdfPreviewBase64: "",
+        pdfToolResultUrl: null,
+        pdfToolResultBase64: "",
+        pdfToolResultFileName: "",
+        pdfToolSelectedFiles: [],
+        pendingFormData: null,
+        pendingFormStep: null,
+        templateSettings: {},
+        disabledTemplateIds: new Set(),
     };
 
     const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -5432,9 +5515,14 @@
         refs.adminNavButton = $("#adminNavButton");
         refs.toast = $("#toast");
 
+        if (!refs.authView || !refs.appView || !refs.content || !refs.loginForm) {
+            console.error("DocSpace: markup essencial não encontrado. Verifique index.html.");
+            return;
+        }
+
         refs.loginForm.addEventListener("submit", handleLogin);
-        $("#logoutButton").addEventListener("click", logout);
-        $("#mainNav").addEventListener("click", (event) => {
+        $("#logoutButton")?.addEventListener("click", logout);
+        $("#mainNav")?.addEventListener("click", (event) => {
             const button = event.target.closest("[data-view]");
             if (!button) return;
             navigate(button.dataset.view);
@@ -5449,8 +5537,41 @@
     }
 
     async function registerServiceWorker() {
-        if ("serviceWorker" in navigator) {
-            try { await navigator.serviceWorker.register("service-worker.js?v=120"); } catch (error) { console.warn("Service Worker não registrado", error); }
+        if (!("serviceWorker" in navigator)) return;
+        try {
+            // Sem query string na URL do SW (quebra escopo/cache em alguns browsers).
+            // updateViaCache: "none" força buscar o SW atualizado no deploy.
+            const hadController = Boolean(navigator.serviceWorker.controller);
+            const reg = await navigator.serviceWorker.register("./service-worker.js", {
+                scope: "./",
+                updateViaCache: "none",
+            });
+            reg.update().catch(() => undefined);
+
+            // Se já houver SW esperando (após deploy), ativa na hora.
+            if (reg.waiting) {
+                reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+            reg.addEventListener("updatefound", () => {
+                const worker = reg.installing;
+                if (!worker) return;
+                worker.addEventListener("statechange", () => {
+                    if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                        worker.postMessage({ type: "SKIP_WAITING" });
+                    }
+                });
+            });
+
+            // Só recarrega quando um SW NOVO assume (tinha controller antes).
+            // Evita loop no primeiro install e limpa JS/CSS cacheados errados.
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+                if (refreshing || !hadController) return;
+                refreshing = true;
+                window.location.reload();
+            });
+        } catch (error) {
+            console.warn("Service Worker não registrado", error);
         }
     }
 
@@ -5476,27 +5597,65 @@
         setLoginLoading(true);
         refs.loginMessage.textContent = "";
         refs.loginMessage.className = "message";
+
+        const email = String(refs.loginEmail?.value || "").trim().toLowerCase();
+        const password = String(refs.loginPassword?.value || "");
+
+        if (!email || !password) {
+            refs.loginMessage.textContent = "Informe e-mail e senha.";
+            refs.loginMessage.className = "message error";
+            setLoginLoading(false);
+            return;
+        }
+
+        if (!API_BASE_URL) {
+            refs.loginMessage.textContent = "API não configurada (app-config.js). Contate o suporte.";
+            refs.loginMessage.className = "message error";
+            setLoginLoading(false);
+            return;
+        }
+
         try {
             const data = await apiRequest("/api/auth/login", {
                 method: "POST",
-                body: { email: refs.loginEmail.value.trim(), password: refs.loginPassword.value },
+                body: { email, password },
                 allowBillingToken: true,
             });
+
+            if (!data?.sessionToken && !data?.user) {
+                throw new Error("Resposta de login inválida da API.");
+            }
+
             applySession(data);
             showApp();
             navigate("dashboard");
             toast(data.message || "Login realizado com sucesso.", "success");
         } catch (error) {
-            if (error.data?.billingToken) {
-                localStorage.setItem(BILLING_TOKEN_KEY, error.data.billingToken);
-                state.user = error.data.user || null;
-                showApp();
-                navigate("billing");
+            if (error.data?.billingToken || error.status === 403) {
+                if (error.data?.billingToken) {
+                    localStorage.setItem(BILLING_TOKEN_KEY, error.data.billingToken);
+                }
+                state.user = error.data?.user || null;
+                if (state.user) {
+                    showApp();
+                    navigate("billing");
+                }
                 toast(error.message || "Acesso bloqueado. Regularize o plano.", "error");
+                refs.loginMessage.textContent = error.message || "Acesso bloqueado por pagamento/plano.";
+                refs.loginMessage.className = "message error";
                 return;
             }
-            refs.loginMessage.textContent = translateError(error);
+
+            let message = translateError(error);
+            if (error.status === 401) {
+                message = "E-mail ou senha incorretos. Confira se o login existe neste ambiente Cloudflare.";
+            } else if (/Failed to fetch|NetworkError|Load failed/i.test(String(error.message || ""))) {
+                message = "Não foi possível conectar na API. Verifique internet e app-config.js.";
+            }
+
+            refs.loginMessage.textContent = message;
             refs.loginMessage.className = "message error";
+            console.error("Login falhou:", error);
         } finally {
             setLoginLoading(false);
         }
@@ -5516,6 +5675,9 @@
         state.documentUsage = data.documentUsage || state.documentUsage;
         state.pdfToolUsage = data.pdfToolUsage || state.pdfToolUsage;
         updateUserChrome();
+        window.DocSpaceProduct?.onSessionReady?.().catch?.((error) => {
+            console.warn("Catálogo de modelos não carregado:", error);
+        });
     }
 
     function showAuth(message = "") {
@@ -5533,7 +5695,7 @@
 
     function setLoginLoading(loading) {
         refs.loginButton.disabled = loading;
-        refs.loginButton.textContent = loading ? "Entrando..." : "Entrar no sistema";
+        refs.loginButton.textContent = loading ? "Entrando..." : "Entrar";
     }
 
     function updateUserChrome() {
@@ -5546,6 +5708,11 @@
 
     function navigate(view) {
         if (view === "admin" && !isAdmin()) return;
+        if (view !== "documents") clearDocumentPdfPreview();
+        if (view !== "pdf") {
+            clearPdfToolResult();
+            state.pdfToolSelectedFiles = [];
+        }
         state.view = view;
         $$("#mainNav [data-view]").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.view === view));
         render();
@@ -5553,14 +5720,32 @@
 
     function render() {
         const titles = {
-            dashboard: ["Painel", "Início"], documents: ["Modelos", "Documentos"], pdf: ["Ferramentas", "PDF"],
-            support: ["Atendimento", "Suporte"], admin: ["Administração", "Admin"], billing: ["Assinatura", "Planos"], ai: ["Assistente", "IA"],
+            dashboard: ["Painel", "Início"],
+            documents: ["Modelos", "Documentos"],
+            library: ["Biblioteca", "Rascunhos e histórico"],
+            people: ["Cadastro", "Pessoas e clientes"],
+            pdf: ["Ferramentas", "PDF"],
+            support: ["Atendimento", "Suporte"],
+            admin: ["Administração", "Admin"],
+            billing: ["Assinatura", "Planos"],
+            ai: ["Assistente", "IA"],
         };
         const [kicker, title] = titles[state.view] || titles.dashboard;
         refs.pageKicker.textContent = kicker;
         refs.pageTitle.textContent = title;
         if (state.view === "dashboard") renderDashboard();
         if (state.view === "documents") renderDocuments();
+        if (state.view === "library" || state.view === "people") {
+            if (!window.DocSpaceProduct?.onView) {
+                refs.content.innerHTML = `<p class="message">Módulo de produto não carregado.</p>`;
+            } else {
+                refs.content.innerHTML = `<p class="message">Carregando...</p>`;
+                Promise.resolve(window.DocSpaceProduct.onView(state.view, refs.content))
+                    .catch((error) => {
+                        refs.content.innerHTML = `<p class="message error">${escapeHtml(error.message || "Erro ao carregar.")}</p>`;
+                    });
+            }
+        }
         if (state.view === "pdf") renderPdfTools();
         if (state.view === "support") renderSupport();
         if (state.view === "billing") renderBilling();
@@ -5581,6 +5766,8 @@
                     <p>Esta versão foi refeita de novo, sem a cara anterior. O foco agora é trabalho: escolher documento, preencher por etapas e gerar o arquivo sem bagunça.</p>
                     <div class="action-row">
                         <button class="primary-button" data-goto="documents">Preencher documento</button>
+                        <button class="secondary-button" data-goto="library">Biblioteca</button>
+                        <button class="secondary-button" data-goto="people">Pessoas</button>
                         <button class="secondary-button" data-goto="pdf">Ferramentas de PDF</button>
                         ${isAdmin() ? '<button class="secondary-button" data-goto="admin">Administração</button>' : ''}
                     </div>
@@ -5659,6 +5846,22 @@
             <div class="grid">${filtered.map(docCard).join("")}</div>
             ${state.activeDocId ? renderDocumentForm(DOC_MAP.get(state.activeDocId)) : ""}
         `;
+        if (state.activeDocId) {
+            setTimeout(() => {
+                const form = $("#documentGenerateForm");
+                if (form) window.DocSpaceProduct?.onDocumentFormReady?.(form);
+                if (state.pendingFormData) {
+                    window.DocSpaceProduct?.applyDataToForm?.(form, state.pendingFormData);
+                    if (Number.isInteger(state.pendingFormStep)) {
+                        form.dataset.currentStep = String(state.pendingFormStep);
+                        updateDocumentWizard(form);
+                    }
+                    state.pendingFormData = null;
+                    state.pendingFormStep = null;
+                }
+                window.DocSpaceProduct?.injectSignatureUi?.();
+            }, 0);
+        }
     }
 
     function docCard(doc) {
@@ -5699,6 +5902,27 @@
                     </div>
                 </div>
             </form>
+            <section id="documentPdfPreview" class="pdf-preview-panel is-hidden" aria-live="polite">
+                <div class="pdf-preview-head">
+                    <div>
+                        <p class="eyebrow">Pré-visualização</p>
+                        <h3 id="documentPdfPreviewTitle">PDF gerado</h3>
+                        <p id="documentPdfPreviewName" class="pdf-preview-name"></p>
+                    </div>
+                    <div class="pdf-preview-actions">
+                        <button type="button" class="secondary-button" data-pdf-preview-download>Baixar PDF</button>
+                        <button type="button" class="secondary-button" data-pdf-preview-open>Abrir em nova aba</button>
+                        <button type="button" class="ghost-button" data-pdf-preview-close>Ocultar preview</button>
+                    </div>
+                </div>
+                <div class="pdf-preview-frame-wrap">
+                    <iframe id="documentPdfPreviewFrame" class="pdf-preview-frame" title="Pré-visualização do PDF gerado"></iframe>
+                </div>
+                <p class="pdf-preview-fallback is-hidden" id="documentPdfPreviewFallback">
+                    Seu navegador não conseguiu exibir o PDF embutido.
+                    Use <strong>Baixar PDF</strong> ou <strong>Abrir em nova aba</strong>.
+                </p>
+            </section>
         </article>`;
     }
 
@@ -5712,13 +5936,27 @@
                 <p>${escapeHtml(step.description || "Preencha esta parte e continue.")}</p>
             </div>
             <div class="form-grid">
-                ${step.items.length ? step.items.map(renderWizardItem).join("") : `<div class="summary-box field wide">Revise os dados preenchidos. Depois gere o Word ou PDF.</div>`}
-                ${isLast ? `<div class="field wide"><p id="documentFormMessage" class="message"></p></div>` : ""}
+                ${step.items.length ? step.items.map(renderWizardItem).join("") : `<div class="summary-box field wide">Revise os dados de cada parte. Se estiver tudo certo, gere o Word ou o PDF.</div>`}
+                ${isLast ? `
+                    <div class="field wide">
+                        <p id="documentFormMessage" class="message"></p>
+                        <div id="documentGenerateProgress" class="generate-progress is-hidden" aria-live="polite">
+                            <div class="generate-progress-head">
+                                <strong id="documentGenerateProgressLabel">Gerando documento...</strong>
+                                <span id="documentGenerateProgressPct">0%</span>
+                            </div>
+                            <div class="generate-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div id="documentGenerateProgressBar" class="generate-progress-bar"></div>
+                            </div>
+                            <p id="documentGenerateProgressHint" class="generate-progress-hint">Aguarde — o PDF costuma levar alguns segundos.</p>
+                        </div>
+                    </div>
+                ` : ""}
                 <div class="wizard-actions">
                     <button class="ghost-button" type="button" data-close-doc>Fechar</button>
                     <div class="right">
                         ${!isFirst ? `<button class="secondary-button" type="button" data-doc-step-prev>Voltar</button>` : ""}
-                        ${!isLast ? `<button class="primary-button" type="button" data-doc-step-next>Continuar</button>` : `
+                        ${!isLast ? `<button class="primary-button" type="button" data-doc-step-next>Próximo</button>` : `
                             <button class="primary-button" type="submit" data-generate-type="docx">Gerar Word</button>
                             <button class="secondary-button" type="submit" data-generate-type="pdf">Gerar PDF protegido</button>
                         `}
@@ -5862,7 +6100,8 @@
         if (!doc) return;
 
         const msg = $("#documentFormMessage");
-        setMessage(msg, generateType === "pdf" ? "Preparando PDF..." : "Preparando Word...", "");
+        const isPdf = generateType === "pdf";
+        let progressTimer = null;
 
         let data = {};
         try {
@@ -5870,20 +6109,26 @@
             // Inputs desabilitados não entram no FormData e isso estava gerando Word/PDF vazio.
             data = collectFormData(form, doc);
             setFormLoading(form, true);
+            progressTimer = startGenerateProgress(isPdf ? "pdf" : "docx");
 
             ensureDocumentAvailable(doc.id);
+            setGenerateProgress(18, isPdf ? "Validando saldo e bibliotecas..." : "Validando saldo e bibliotecas...");
             await ensureDocxLibs();
 
             const modelPath = getModelPath(doc, data);
-            const fileName = getFileName(doc, data, generateType === "pdf" ? "pdf" : "docx");
-            const docxBlob = await buildDocx(modelPath, data);
+            const fileName = getFileName(doc, data, isPdf ? "pdf" : "docx");
+            setGenerateProgress(38, "Preenchendo o modelo Word...");
+            const docxBlob = await buildDocx(modelPath, data, doc);
 
-            if (generateType === "pdf") {
+            if (isPdf) {
                 if (!API_BASE_URL) {
                     throw new Error("API_BASE_URL não configurada em app-config.js. O PDF precisa do Worker/API para converter DOCX em PDF.");
                 }
 
+                setGenerateProgress(55, "Convertendo para PDF no servidor...");
                 const docxBase64 = await blobToBase64(docxBlob, true);
+                setGenerateProgress(68, "Aguardando conversão do PDF...");
+
                 const response = await apiRequest("/api/documents/preview-pdf", {
                     method: "POST",
                     body: {
@@ -5899,16 +6144,21 @@
 
                 if (response.documentUsage) state.documentUsage = response.documentUsage;
 
-                downloadBase64(
-                    response.pdfBase64,
-                    response.fileName || fileName.replace(/\.docx$/i, ".pdf"),
-                    "application/pdf"
-                );
+                const pdfName = response.fileName || fileName.replace(/\.docx$/i, ".pdf");
+                setGenerateProgress(88, "Montando pré-visualização do PDF...");
+                showDocumentPdfPreview(response.pdfBase64, pdfName);
 
-                setMessage(msg, response.message || "PDF baixado com sucesso.", "success");
+                setGenerateProgress(96, "Iniciando download do PDF...");
+                downloadBase64(response.pdfBase64, pdfName, "application/pdf");
+
+                setGenerateProgress(100, "PDF pronto!");
+                setMessage(msg, response.message || "PDF gerado. Preview abaixo e download iniciado.", "success");
+                window.DocSpaceProduct?.onAfterGenerate?.({
+                    form, doc, formData: data, generateType: "pdf", fileName: pdfName,
+                });
+                setTimeout(() => window.DocSpaceProduct?.injectSignatureUi?.(), 80);
             } else {
-                // Primeiro baixa o Word; depois tenta registrar o uso na API.
-                // Assim uma falha temporária de API não impede o download do DOCX já montado.
+                setGenerateProgress(80, "Preparando download do Word...");
                 saveBlob(docxBlob, fileName);
 
                 apiRequest("/api/documents/usage", {
@@ -5920,14 +6170,149 @@
                     console.warn("Não foi possível registrar o uso do documento agora.", usageError);
                 });
 
+                setGenerateProgress(100, "Word pronto!");
                 setMessage(msg, "Documento Word baixado com sucesso.", "success");
+                window.DocSpaceProduct?.onAfterGenerate?.({
+                    form, doc, formData: data, generateType: "docx", fileName,
+                });
             }
         } catch (error) {
             console.error(error);
+            hideGenerateProgress();
             setMessage(msg, translateError(error), "error");
         } finally {
+            if (progressTimer) clearInterval(progressTimer);
             setFormLoading(form, false);
+            setTimeout(() => hideGenerateProgress(true), 1600);
         }
+    }
+
+    function startGenerateProgress(kind = "pdf") {
+        const box = $("#documentGenerateProgress");
+        const label = $("#documentGenerateProgressLabel");
+        const hint = $("#documentGenerateProgressHint");
+        if (!box) return null;
+
+        box.classList.remove("is-hidden");
+        if (label) {
+            label.textContent = kind === "pdf" ? "Gerando PDF protegido..." : "Gerando documento Word...";
+        }
+        if (hint) {
+            hint.textContent = kind === "pdf"
+                ? "O PDF passa por preenchimento + conversão no servidor. Isso pode levar alguns segundos."
+                : "Montando o arquivo Word com os dados preenchidos...";
+        }
+        setGenerateProgress(8, kind === "pdf" ? "Iniciando geração do PDF..." : "Iniciando geração do Word...");
+
+        // Avanço suave enquanto espera a API (dá sensação de tempo real).
+        let soft = 8;
+        return setInterval(() => {
+            soft = Math.min(soft + (kind === "pdf" ? 1.2 : 2.2), kind === "pdf" ? 86 : 72);
+            const bar = $("#documentGenerateProgressBar");
+            const current = Number(bar?.dataset?.pct || 0);
+            if (current < soft && current < 90) {
+                setGenerateProgress(Math.max(current, soft));
+            }
+        }, 450);
+    }
+
+    function setGenerateProgress(pct, text) {
+        const value = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+        const box = $("#documentGenerateProgress");
+        const bar = $("#documentGenerateProgressBar");
+        const label = $("#documentGenerateProgressLabel");
+        const percent = $("#documentGenerateProgressPct");
+        const track = box?.querySelector?.('[role="progressbar"]');
+
+        if (box) box.classList.remove("is-hidden");
+        if (bar) {
+            bar.style.width = `${value}%`;
+            bar.dataset.pct = String(value);
+        }
+        if (percent) percent.textContent = `${value}%`;
+        if (track) track.setAttribute("aria-valuenow", String(value));
+        if (text && label) label.textContent = text;
+    }
+
+    function hideGenerateProgress(keepVisibleIfComplete = false) {
+        const box = $("#documentGenerateProgress");
+        const bar = $("#documentGenerateProgressBar");
+        const pct = Number(bar?.dataset?.pct || 0);
+        if (!box) return;
+        if (keepVisibleIfComplete && pct >= 100) return;
+        box.classList.add("is-hidden");
+        if (bar) {
+            bar.style.width = "0%";
+            bar.dataset.pct = "0";
+        }
+        const percent = $("#documentGenerateProgressPct");
+        if (percent) percent.textContent = "0%";
+    }
+
+    function base64ToBlob(base64, mime = "application/pdf") {
+        const clean = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
+        const bin = atob(clean);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: mime || "application/pdf" });
+    }
+
+    function clearDocumentPdfPreview() {
+        const panel = $("#documentPdfPreview");
+        const frame = $("#documentPdfPreviewFrame");
+        if (state.pdfPreviewUrl) {
+            try { URL.revokeObjectURL(state.pdfPreviewUrl); } catch (_) {}
+        }
+        state.pdfPreviewUrl = null;
+        state.pdfPreviewFileName = "";
+        state.pdfPreviewBase64 = "";
+        if (frame) frame.removeAttribute("src");
+        if (panel) panel.classList.add("is-hidden");
+        const fallback = $("#documentPdfPreviewFallback");
+        if (fallback) fallback.classList.add("is-hidden");
+    }
+
+    function showDocumentPdfPreview(pdfBase64, fileName = "documento.pdf") {
+        const panel = $("#documentPdfPreview");
+        const frame = $("#documentPdfPreviewFrame");
+        const nameEl = $("#documentPdfPreviewName");
+        const titleEl = $("#documentPdfPreviewTitle");
+        const fallback = $("#documentPdfPreviewFallback");
+
+        if (!panel || !frame) {
+            console.warn("Área de preview de PDF não encontrada no formulário.");
+            return;
+        }
+
+        if (state.pdfPreviewUrl) {
+            try { URL.revokeObjectURL(state.pdfPreviewUrl); } catch (_) {}
+        }
+
+        const blob = base64ToBlob(pdfBase64, "application/pdf");
+        const url = URL.createObjectURL(blob);
+
+        state.pdfPreviewUrl = url;
+        state.pdfPreviewFileName = fileName || "documento.pdf";
+        state.pdfPreviewBase64 = String(pdfBase64 || "").replace(/^data:[^;]+;base64,/, "");
+
+        if (titleEl) titleEl.textContent = "PDF gerado com sucesso";
+        if (nameEl) nameEl.textContent = state.pdfPreviewFileName;
+        if (fallback) fallback.classList.add("is-hidden");
+
+        panel.classList.remove("is-hidden");
+        frame.src = url;
+
+        // Alguns navegadores/mobile não embutem PDF; mostra fallback se falhar.
+        frame.onload = () => {
+            if (fallback) fallback.classList.add("is-hidden");
+        };
+        frame.onerror = () => {
+            if (fallback) fallback.classList.remove("is-hidden");
+        };
+
+        setTimeout(() => {
+            panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
     }
 
     function collectFormData(form, doc) {
@@ -6085,11 +6470,20 @@
         return base.replace(/\.docx$/i, `.${ext}`);
     }
 
-    async function buildDocx(path, data) {
-        const response = await fetch(path, { cache: "no-cache" });
-        if (!response.ok) throw new Error(`Modelo não encontrado: ${path}`);
-
-        const buffer = await response.arrayBuffer();
+    async function buildDocx(path, data, doc = null) {
+        let buffer;
+        if (doc?.modelBase64) {
+            const clean = String(doc.modelBase64).replace(/^data:[^;]+;base64,/, "");
+            const binary = atob(clean);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+            buffer = bytes.buffer;
+        } else {
+            if (!path) throw new Error("Modelo Word não configurado para este documento.");
+            const response = await fetch(path, { cache: "no-cache" });
+            if (!response.ok) throw new Error(`Modelo não encontrado: ${path}`);
+            buffer = await response.arrayBuffer();
+        }
         const originalData = normalizeTemplateData(data || {});
 
         try {
@@ -6294,128 +6688,656 @@
     }
 
     function renderPdfTools() {
-        const active = PDF_TOOLS[state.activePdfTool];
+        const activeId = state.activePdfTool in PDF_TOOLS ? state.activePdfTool : "compress";
+        state.activePdfTool = activeId;
+        const active = PDF_TOOLS[activeId];
+        const remaining = getTotalRemainingPdf();
+        const allowed = state.pdfToolUsage?.allowed !== false || state.pdfToolUsage?.unlimited || isAdmin();
+
         refs.content.innerHTML = `
-            <article class="glass-card">
-                <h2>Ferramentas PDF</h2>
-                <p>As ferramentas locais rodam no navegador. Compressão e OCR usam a rota original <code>/api/pdf-tools/process</code>.</p>
-                <div class="chip-row">${Object.entries(PDF_TOOLS).map(([id, tool]) => `<button data-pdf-tool="${id}" class="${state.activePdfTool === id ? "is-active" : ""}">${escapeHtml(tool.title)}</button>`).join("")}</div>
+            <article class="panel pdf-hub">
+                <div class="library-header">
+                    <div>
+                        <p class="eyebrow">Ferramentas PDF</p>
+                        <h2>Área PDF completa</h2>
+                        <p>Comprimir, juntar, dividir, girar, OCR e mais. Compressão usa o servidor com fallback local automático.</p>
+                    </div>
+                    <div class="stat" style="min-width:160px">
+                        <small>Saldo PDF</small>
+                        <strong>${state.pdfToolUsage?.unlimited || isAdmin() ? "∞" : remaining}</strong>
+                    </div>
+                </div>
+                ${!allowed && !isAdmin() ? `<p class="message error" style="margin-top:12px">Ferramentas PDF não liberadas para este login. Peça ao administrador.</p>` : ""}
+                <div class="pdf-tool-grid" style="margin-top:16px">
+                    ${Object.entries(PDF_TOOLS).map(([id, tool]) => `
+                        <button type="button" class="pdf-tool-card ${id === activeId ? "is-active" : ""}" data-pdf-tool="${escapeAttr(id)}">
+                            <span class="pdf-tool-icon">${tool.icon || "📄"}</span>
+                            <strong>${escapeHtml(tool.title)}</strong>
+                            <small>${tool.server ? "Servidor" : "Navegador"}</small>
+                        </button>
+                    `).join("")}
+                </div>
             </article>
-            <article class="glass-card">
-                <span class="form-kicker">${active.server ? "API" : "Local"}</span>
-                <h2>${escapeHtml(active.title)}</h2>
-                <p>${escapeHtml(active.description)}</p>
-                <form id="pdfToolForm" class="form-grid">
-                    <label class="field wide"><span>Arquivos</span><input id="pdfFiles" type="file" accept="${escapeAttr(active.accept)}" ${active.multiple ? "multiple" : ""} required></label>
-                    ${active.pages ? `<label class="field"><span>${escapeHtml(active.pages)}</span><input id="pdfPages" type="text" ${active.requiredPages ? "required" : ""}></label>` : ""}
+
+            <article class="panel pdf-workbench">
+                <div class="pdf-workbench-head">
+                    <div>
+                        <span class="badge ${active.server ? "" : "warn"}">${active.server ? "Servidor + fallback" : "Processamento local"}</span>
+                        <h2 style="margin-top:8px">${escapeHtml(active.title)}</h2>
+                        <p>${escapeHtml(active.description)}</p>
+                        ${active.hint ? `<p class="pdf-tool-hint">${escapeHtml(active.hint)}</p>` : ""}
+                    </div>
+                </div>
+
+                <form id="pdfToolForm" class="form-grid pdf-tool-form">
+                    <div class="field wide">
+                        <div id="pdfDropZone" class="pdf-dropzone" tabindex="0" role="button" aria-label="Selecionar arquivos PDF">
+                            <strong>Arraste o arquivo aqui</strong>
+                            <span>ou clique para escolher · ${active.multiple ? "vários arquivos" : "1 arquivo"}</span>
+                            <span class="pdf-dropzone-accept">${escapeHtml(active.accept)}</span>
+                            <input id="pdfFiles" type="file" accept="${escapeAttr(active.accept)}" ${active.multiple ? "multiple" : ""} hidden>
+                        </div>
+                        <div id="pdfFileList" class="pdf-file-list"></div>
+                    </div>
+
+                    ${active.pages ? `<label class="field wide"><span>${escapeHtml(active.pages)}</span><input id="pdfPages" type="text" placeholder="Ex.: 1,3-5" ${active.requiredPages ? "required" : ""} autocomplete="off"></label>` : ""}
                     ${active.rotation ? `<label class="field"><span>Rotação</span><select id="pdfRotation"><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>` : ""}
-                    ${active.compression ? `<label class="field"><span>Nível</span><select id="pdfCompression"><option value="screen">Máxima</option><option value="balanced" selected>Equilibrada</option><option value="printer">Alta qualidade</option></select></label>` : ""}
-                    ${active.ocr ? `<label class="field"><span>Idioma OCR</span><select id="pdfLanguage"><option value="por" selected>Português</option><option value="eng">Inglês</option><option value="spa">Espanhol</option></select></label>` : ""}
-                    <div class="field wide"><p id="pdfMessage" class="message"></p></div>
-                    <div class="field wide"><button class="primary-button" type="submit">Processar</button></div>
+                    ${active.compression ? `
+                        <label class="field"><span>Nível de compressão</span>
+                            <select id="pdfCompression">
+                                <option value="screen">Máxima (menor arquivo)</option>
+                                <option value="balanced" selected>Equilibrada (recomendado)</option>
+                                <option value="printer">Alta qualidade</option>
+                            </select>
+                        </label>
+                        <label class="field"><span>Modo</span>
+                            <select id="pdfCompressMode">
+                                <option value="auto" selected>Automático (servidor → fallback)</option>
+                                <option value="server">Somente servidor</option>
+                                <option value="local">Somente local (rápido)</option>
+                            </select>
+                        </label>
+                    ` : ""}
+                    ${active.ocr ? `<label class="field"><span>Idioma OCR</span><select id="pdfLanguage"><option value="por" selected>Português</option><option value="eng">Inglês</option><option value="spa">Espanhol</option><option value="por+eng">Português + Inglês</option></select></label>` : ""}
+
+                    <div class="field wide">
+                        <div id="pdfToolProgress" class="generate-progress is-hidden" aria-live="polite">
+                            <div class="generate-progress-head">
+                                <strong id="pdfToolProgressLabel">Processando...</strong>
+                                <span id="pdfToolProgressPct">0%</span>
+                            </div>
+                            <div class="generate-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div id="pdfToolProgressBar" class="generate-progress-bar"></div>
+                            </div>
+                            <p id="pdfToolProgressHint" class="generate-progress-hint">Aguarde o processamento.</p>
+                        </div>
+                        <p id="pdfMessage" class="message"></p>
+                        <div id="pdfToolStats" class="pdf-tool-stats is-hidden"></div>
+                    </div>
+
+                    <div class="field wide action-row">
+                        <button class="primary-button" type="submit" id="pdfProcessButton">${escapeHtml(activeId === "compress" ? "Comprimir PDF" : "Processar")}</button>
+                        <button class="ghost-button" type="button" data-pdf-clear-files>Limpar arquivos</button>
+                    </div>
                 </form>
             </article>
+
+            <section id="pdfToolResult" class="pdf-preview-panel is-hidden" aria-live="polite">
+                <div class="pdf-preview-head">
+                    <div>
+                        <p class="eyebrow">Resultado</p>
+                        <h3 id="pdfToolResultTitle">PDF processado</h3>
+                        <p id="pdfToolResultName" class="pdf-preview-name"></p>
+                    </div>
+                    <div class="pdf-preview-actions">
+                        <button type="button" class="secondary-button" data-pdf-tool-download>Baixar</button>
+                        <button type="button" class="secondary-button" data-pdf-tool-open>Abrir em nova aba</button>
+                        <button type="button" class="ghost-button" data-pdf-tool-close-result>Ocultar</button>
+                    </div>
+                </div>
+                <div class="pdf-preview-frame-wrap">
+                    <iframe id="pdfToolResultFrame" class="pdf-preview-frame" title="Pré-visualização do PDF processado"></iframe>
+                </div>
+            </section>
         `;
+
+        bindPdfToolUi();
+    }
+
+    function bindPdfToolUi() {
+        const input = $("#pdfFiles");
+        const zone = $("#pdfDropZone");
+        if (!input || !zone) return;
+
+        const openPicker = () => input.click();
+        zone.addEventListener("click", openPicker);
+        zone.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openPicker();
+            }
+        });
+
+        ["dragenter", "dragover"].forEach((type) => {
+            zone.addEventListener(type, (event) => {
+                event.preventDefault();
+                zone.classList.add("is-dragover");
+            });
+        });
+        ["dragleave", "drop"].forEach((type) => {
+            zone.addEventListener(type, (event) => {
+                event.preventDefault();
+                zone.classList.remove("is-dragover");
+            });
+        });
+        zone.addEventListener("drop", (event) => {
+            const files = Array.from(event.dataTransfer?.files || []);
+            if (!files.length) return;
+            assignPdfFiles(files);
+        });
+
+        input.addEventListener("change", () => {
+            assignPdfFiles(Array.from(input.files || []));
+        });
+
+        renderPdfFileList();
+    }
+
+    function assignPdfFiles(files) {
+        const tool = PDF_TOOLS[state.activePdfTool];
+        const list = tool?.multiple ? files : files.slice(0, 1);
+        state.pdfToolSelectedFiles = list;
+        const input = $("#pdfFiles");
+        if (input) {
+            try {
+                const dt = new DataTransfer();
+                list.forEach((file) => dt.items.add(file));
+                input.files = dt.files;
+            } catch (_) {
+                // Alguns browsers não permitem setar files; a lista em state cobre o fluxo.
+            }
+        }
+        renderPdfFileList();
+        setMessage($("#pdfMessage"), "", "");
+    }
+
+    function renderPdfFileList() {
+        const box = $("#pdfFileList");
+        if (!box) return;
+        const files = state.pdfToolSelectedFiles || [];
+        if (!files.length) {
+            box.innerHTML = `<p class="message">Nenhum arquivo selecionado.</p>`;
+            return;
+        }
+        box.innerHTML = files.map((file, index) => `
+            <div class="pdf-file-item">
+                <div>
+                    <strong>${escapeHtml(file.name)}</strong>
+                    <small>${formatBytes(file.size)} · ${escapeHtml(file.type || "arquivo")}</small>
+                </div>
+                <button type="button" class="ghost-button" data-pdf-remove-file="${index}">Remover</button>
+            </div>
+        `).join("");
     }
 
     async function processPdfTool(event) {
         const form = event.target;
         const msg = $("#pdfMessage");
-        const files = Array.from($("#pdfFiles").files || []);
         const pages = $("#pdfPages")?.value.trim() || "";
-        const tool = PDF_TOOLS[state.activePdfTool];
+        const toolId = state.activePdfTool;
+        const tool = PDF_TOOLS[toolId];
+        const files = (state.pdfToolSelectedFiles?.length ? state.pdfToolSelectedFiles : Array.from($("#pdfFiles")?.files || []));
+
+        if (!tool) return setMessage(msg, "Ferramenta inválida.", "error");
         if (!files.length) return setMessage(msg, "Escolha ao menos um arquivo.", "error");
+        if (tool.multiple && toolId === "merge" && files.length < 2) {
+            return setMessage(msg, "Para juntar, selecione pelo menos 2 PDFs.", "error");
+        }
+        if (tool.requiredPages && !pages) {
+            return setMessage(msg, "Informe as páginas necessárias.", "error");
+        }
+
+        for (const file of files) {
+            const max = tool.server ? PDF_MAX_SERVER_BYTES : PDF_MAX_LOCAL_BYTES;
+            if (file.size > max) {
+                return setMessage(msg, `Arquivo "${file.name}" excede o limite de ${formatBytes(max)}.`, "error");
+            }
+        }
+
+        clearPdfToolResult();
         setFormLoading(form, true);
-        setMessage(msg, "Processando arquivo...", "");
+        showPdfToolProgress(8, toolId === "compress" ? "Iniciando compressão..." : "Iniciando processamento...");
+        setMessage(msg, "", "");
+        hidePdfToolStats();
+
         try {
-            if (tool.server) {
+            if (toolId === "compress") {
+                await processCompressPdf(files[0], pages);
+            } else if (tool.server) {
                 for (const [index, file] of files.entries()) {
-                    setMessage(msg, `Enviando ${index + 1}/${files.length} para a API...`, "");
+                    showPdfToolProgress(15 + Math.round((index / files.length) * 70), `Enviando ${index + 1}/${files.length} para o servidor...`);
                     const data = await apiRequest("/api/pdf-tools/process", {
                         method: "POST",
                         body: {
-                            toolType: state.activePdfTool,
+                            toolType: toolId,
                             fileName: file.name,
                             fileBase64: await blobToBase64(file, true),
-                            options: { level: $("#pdfCompression")?.value || "balanced", language: $("#pdfLanguage")?.value || "por", pages },
+                            options: {
+                                level: $("#pdfCompression")?.value || "balanced",
+                                language: $("#pdfLanguage")?.value || "por",
+                                pages,
+                            },
                         },
                     });
                     if (data.pdfToolUsage) state.pdfToolUsage = data.pdfToolUsage;
-                    downloadBase64(data.pdfBase64, data.fileName || `${state.activePdfTool}.pdf`, "application/pdf");
+                    const outName = data.fileName || `${toolId}-${file.name}`.replace(/\.[^.]+$/, ".pdf");
+                    showPdfToolResult(data.pdfBase64, outName, {
+                        originalBytes: data.originalBytes || file.size,
+                        outputBytes: data.outputBytes || null,
+                        message: data.message,
+                        strategy: data.strategy,
+                    });
+                    downloadBase64(data.pdfBase64, outName, "application/pdf");
                 }
-                setMessage(msg, "Processamento concluído pela API.", "success");
+                showPdfToolProgress(100, "Concluído!");
+                setMessage(msg, "Processamento concluído. Preview abaixo e download iniciado.", "success");
             } else {
-                await processPdfLocal(state.activePdfTool, files, pages);
-                await apiRequest("/api/pdf-tools/usage", { method: "POST", body: { toolType: state.activePdfTool } }).then((r) => { if (r.pdfToolUsage) state.pdfToolUsage = r.pdfToolUsage; }).catch(() => {});
-                setMessage(msg, "Arquivo preparado. Download iniciado.", "success");
+                showPdfToolProgress(30, "Processando no navegador...");
+                const result = await processPdfLocal(toolId, files, pages);
+                showPdfToolProgress(85, "Registrando uso...");
+                await apiRequest("/api/pdf-tools/usage", { method: "POST", body: { toolType: toolId } })
+                    .then((r) => { if (r.pdfToolUsage) state.pdfToolUsage = r.pdfToolUsage; })
+                    .catch(() => {});
+                showPdfToolProgress(100, "Concluído!");
+                if (result?.blob) {
+                    await presentPdfToolBlob(result.blob, result.fileName || `${toolId}.pdf`, {
+                        originalBytes: result.originalBytes,
+                        message: result.message,
+                    });
+                }
+                setMessage(msg, result?.message || "Arquivo preparado. Download iniciado.", "success");
             }
         } catch (error) {
             console.error(error);
+            hidePdfToolProgress();
             setMessage(msg, translateError(error), "error");
         } finally {
             setFormLoading(form, false);
+            setTimeout(() => hidePdfToolProgress(true), 1800);
         }
+    }
+
+    async function processCompressPdf(file, pagesText = "") {
+        const mode = $("#pdfCompressMode")?.value || "auto";
+        const level = $("#pdfCompression")?.value || "balanced";
+        const originalBytes = file.size;
+        let workingFile = file;
+
+        // Se o usuário escolheu páginas, extrai localmente antes de comprimir.
+        if (pagesText) {
+            showPdfToolProgress(18, "Extraindo páginas selecionadas...");
+            const extracted = await extractPdfPagesToBlob(file, pagesText);
+            workingFile = new File([extracted], file.name.replace(/\.pdf$/i, "-paginas.pdf"), { type: "application/pdf" });
+        }
+
+        let result = null;
+        let usedLocal = false;
+
+        if (mode === "local") {
+            showPdfToolProgress(40, "Comprimindo localmente...");
+            result = await compressPdfLocal(workingFile, level);
+            usedLocal = true;
+        } else {
+            try {
+                showPdfToolProgress(35, "Enviando para compressão no servidor...");
+                const data = await apiRequest("/api/pdf-tools/process", {
+                    method: "POST",
+                    body: {
+                        toolType: "compress",
+                        fileName: workingFile.name,
+                        fileBase64: await blobToBase64(workingFile, true),
+                        options: { level, pages: pagesText },
+                    },
+                });
+                if (data.pdfToolUsage) state.pdfToolUsage = data.pdfToolUsage;
+                result = {
+                    base64: data.pdfBase64,
+                    fileName: data.fileName || workingFile.name.replace(/\.pdf$/i, "-compactado.pdf"),
+                    originalBytes: data.originalBytes || originalBytes,
+                    outputBytes: data.outputBytes,
+                    message: data.message || "PDF comprimido no servidor.",
+                    strategy: data.strategy || "server",
+                };
+                showPdfToolProgress(90, "Montando resultado...");
+            } catch (serverError) {
+                if (mode === "server") throw serverError;
+                console.warn("Compressão no servidor falhou; usando fallback local.", serverError);
+                showPdfToolProgress(55, "Servidor indisponível — compactando localmente...");
+                result = await compressPdfLocal(workingFile, level);
+                usedLocal = true;
+                // Tenta registrar uso mesmo no fallback
+                await apiRequest("/api/pdf-tools/usage", { method: "POST", body: { toolType: "compress" } })
+                    .then((r) => { if (r.pdfToolUsage) state.pdfToolUsage = r.pdfToolUsage; })
+                    .catch(() => {});
+            }
+        }
+
+        if (!result?.base64 && !result?.blob) {
+            throw new Error("Não foi possível comprimir o PDF.");
+        }
+
+        if (result.blob && !result.base64) {
+            result.base64 = await blobToBase64(result.blob, true);
+        }
+
+        const outName = result.fileName || file.name.replace(/\.pdf$/i, "-compactado.pdf");
+        const outputBytes = result.outputBytes || estimateBase64Bytes(result.base64);
+        showPdfToolResult(result.base64, outName, {
+            originalBytes: result.originalBytes || originalBytes,
+            outputBytes,
+            message: result.message,
+            strategy: result.strategy || (usedLocal ? "local-fallback" : "server"),
+        });
+        downloadBase64(result.base64, outName, "application/pdf");
+        showPdfToolProgress(100, "Compressão concluída!");
+        setMessage(
+            $("#pdfMessage"),
+            result.message || (usedLocal
+                ? "PDF comprimido no navegador (fallback). Preview abaixo."
+                : "PDF comprimido com sucesso. Preview abaixo."),
+            "success"
+        );
+    }
+
+    async function compressPdfLocal(file, level = "balanced") {
+        if (!window.PDFLib) throw new Error("Biblioteca PDF não carregada.");
+        const { PDFDocument } = window.PDFLib;
+        const originalBytes = file.size;
+        const src = await loadPdfDocument(await file.arrayBuffer());
+
+        // Regravação limpa: remove objetos mortos e recompacta streams via save.
+        // Nível influencia useObjectStreams / objectsPerTick (mais agressivo = menor).
+        const out = await PDFDocument.create();
+        const pages = await out.copyPages(src, src.getPageIndices());
+        pages.forEach((page) => out.addPage(page));
+
+        const saveOptions = {
+            useObjectStreams: true,
+            addDefaultPage: false,
+            objectsPerTick: level === "screen" ? 20 : level === "printer" ? 100 : 50,
+        };
+
+        let bytes = await out.save(saveOptions);
+        // Se não reduziu, tenta sem object streams (às vezes menor em PDFs simples).
+        if (bytes.byteLength >= originalBytes) {
+            const alt = await out.save({ useObjectStreams: false, addDefaultPage: false });
+            if (alt.byteLength < bytes.byteLength) bytes = alt;
+        }
+
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const ratio = originalBytes > 0 ? Math.round((1 - blob.size / originalBytes) * 100) : 0;
+        const message = blob.size < originalBytes
+            ? `Compactação local: ${formatBytes(originalBytes)} → ${formatBytes(blob.size)} (${ratio}% menor).`
+            : `Compactação local aplicada (${formatBytes(blob.size)}). O arquivo já estava otimizado ou tem pouco ganho local — tente o modo servidor.`;
+
+        return {
+            blob,
+            base64: await blobToBase64(blob, true),
+            fileName: file.name.replace(/\.pdf$/i, "-compactado-local.pdf"),
+            originalBytes,
+            outputBytes: blob.size,
+            message,
+            strategy: "local",
+        };
+    }
+
+    async function extractPdfPagesToBlob(file, pagesText) {
+        if (!window.PDFLib) throw new Error("Biblioteca PDF não carregada.");
+        const { PDFDocument } = window.PDFLib;
+        const src = await loadPdfDocument(await file.arrayBuffer());
+        const total = src.getPageCount();
+        const indexes = parsePages(pagesText, total);
+        if (!indexes.length) throw new Error("Nenhuma página válida informada para extrair.");
+        const out = await PDFDocument.create();
+        const copied = await out.copyPages(src, indexes);
+        copied.forEach((page) => out.addPage(page));
+        const bytes = await out.save({ useObjectStreams: true });
+        return new Blob([bytes], { type: "application/pdf" });
     }
 
     async function processPdfLocal(tool, files, pagesText) {
         if (!window.PDFLib) throw new Error("Biblioteca PDF não carregada.");
         const { PDFDocument, degrees, rgb, StandardFonts } = window.PDFLib;
+
         if (tool === "merge") {
             const out = await PDFDocument.create();
+            let originalBytes = 0;
             for (const file of files) {
-                const pdf = await PDFDocument.load(await file.arrayBuffer());
+                originalBytes += file.size;
+                const pdf = await loadPdfDocument(await file.arrayBuffer());
                 const copied = await out.copyPages(pdf, pdf.getPageIndices());
                 copied.forEach((p) => out.addPage(p));
             }
-            return savePdf(out, "pdf-juntado.pdf");
+            const blob = await pdfDocToBlob(out);
+            saveBlob(blob, "pdf-juntado.pdf");
+            return { blob, fileName: "pdf-juntado.pdf", originalBytes, message: `Juntados ${files.length} PDFs.` };
         }
+
         if (["extract", "organize", "remove", "rotate", "split"].includes(tool)) {
-            const src = await PDFDocument.load(await files[0].arrayBuffer());
+            const src = await loadPdfDocument(await files[0].arrayBuffer());
             const total = src.getPageCount();
             let indexes = pagesText ? parsePages(pagesText, total) : src.getPageIndices();
-            if (tool === "remove") indexes = src.getPageIndices().filter((i) => !indexes.includes(i));
+            if (!indexes.length) throw new Error(`Informe páginas válidas (1 até ${total}).`);
+
+            if (tool === "remove") {
+                const removeSet = new Set(indexes);
+                indexes = src.getPageIndices().filter((i) => !removeSet.has(i));
+                if (!indexes.length) throw new Error("Não é possível remover todas as páginas.");
+            }
+
             if (tool === "split") {
                 for (const i of indexes) {
                     const out = await PDFDocument.create();
                     const [page] = await out.copyPages(src, [i]);
                     out.addPage(page);
-                    await savePdf(out, `pagina-${i + 1}.pdf`);
+                    const blob = await pdfDocToBlob(out);
+                    saveBlob(blob, `pagina-${i + 1}.pdf`);
                 }
-                return;
+                return { message: `${indexes.length} arquivo(s) gerado(s) no download.`, fileName: "paginas.zip" };
             }
+
             const out = await PDFDocument.create();
             const copied = await out.copyPages(src, indexes);
             copied.forEach((page) => {
-                if (tool === "rotate") page.setRotation(degrees(Number($("#pdfRotation")?.value || 90)));
+                if (tool === "rotate") {
+                    const current = page.getRotation().angle || 0;
+                    page.setRotation(degrees((current + Number($("#pdfRotation")?.value || 90)) % 360));
+                }
                 out.addPage(page);
             });
-            return savePdf(out, `${tool}.pdf`);
+            const names = { extract: "paginas-extraidas.pdf", organize: "pdf-reorganizado.pdf", remove: "pdf-sem-paginas.pdf", rotate: "pdf-girado.pdf" };
+            const fileName = names[tool] || `${tool}.pdf`;
+            const blob = await pdfDocToBlob(out);
+            saveBlob(blob, fileName);
+            return { blob, fileName, originalBytes: files[0].size, message: `PDF gerado com ${indexes.length} página(s).` };
         }
+
         if (tool === "images") {
             const out = await PDFDocument.create();
             for (const file of files) {
                 const bytes = await file.arrayBuffer();
-                const img = file.type.includes("png") ? await out.embedPng(bytes) : await out.embedJpg(bytes);
+                const isPng = /png$/i.test(file.type) || /\.png$/i.test(file.name);
+                let img;
+                try {
+                    img = isPng ? await out.embedPng(bytes) : await out.embedJpg(bytes);
+                } catch (_) {
+                    throw new Error(`Não foi possível ler a imagem: ${file.name}. Use JPG ou PNG.`);
+                }
                 const page = out.addPage([img.width, img.height]);
                 page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
             }
-            return savePdf(out, "imagens.pdf");
+            const blob = await pdfDocToBlob(out);
+            saveBlob(blob, "imagens.pdf");
+            return { blob, fileName: "imagens.pdf", message: `${files.length} imagem(ns) convertida(s).` };
         }
+
         if (tool === "wordPdf") {
             if (!window.mammoth) throw new Error("Biblioteca Word não carregada.");
             const text = (await window.mammoth.extractRawText({ arrayBuffer: await files[0].arrayBuffer() })).value || "Documento sem texto extraível.";
             const out = await PDFDocument.create();
             const font = await out.embedFont(StandardFonts.Helvetica);
-            const lines = wrapText(text.replace(/\s+\n/g, "\n"), 92);
+            const lines = wrapText(toPdfSafeText(text.replace(/\s+\n/g, "\n")), 92);
             let page = out.addPage([595, 842]);
             let y = 790;
             for (const line of lines) {
                 if (y < 50) { page = out.addPage([595, 842]); y = 790; }
-                page.drawText(line, { x: 42, y, size: 11, font, color: rgb(0.08, 0.12, 0.2) });
+                page.drawText(line || " ", { x: 42, y, size: 11, font, color: rgb(0.08, 0.12, 0.2) });
                 y -= 16;
             }
-            return savePdf(out, "word-convertido.pdf");
+            const blob = await pdfDocToBlob(out);
+            saveBlob(blob, "word-convertido.pdf");
+            return { blob, fileName: "word-convertido.pdf", message: "Word convertido para PDF (texto simples)." };
         }
+
+        throw new Error(`Ferramenta PDF local não implementada: ${tool}`);
+    }
+
+    async function loadPdfDocument(arrayBuffer) {
+        const { PDFDocument } = window.PDFLib;
+        try {
+            return await PDFDocument.load(arrayBuffer, { ignoreEncryption: true, updateMetadata: false });
+        } catch (error) {
+            throw new Error("PDF inválido, corrompido ou protegido de forma incompatível.");
+        }
+    }
+
+    async function pdfDocToBlob(pdfDoc) {
+        const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+        return new Blob([bytes], { type: "application/pdf" });
+    }
+
+    function showPdfToolProgress(pct, text) {
+        const box = $("#pdfToolProgress");
+        const bar = $("#pdfToolProgressBar");
+        const label = $("#pdfToolProgressLabel");
+        const percent = $("#pdfToolProgressPct");
+        const track = box?.querySelector?.('[role="progressbar"]');
+        const value = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+        if (box) box.classList.remove("is-hidden");
+        if (bar) {
+            bar.style.width = `${value}%`;
+            bar.dataset.pct = String(value);
+        }
+        if (percent) percent.textContent = `${value}%`;
+        if (track) track.setAttribute("aria-valuenow", String(value));
+        if (text && label) label.textContent = text;
+    }
+
+    function hidePdfToolProgress(keepIfComplete = false) {
+        const box = $("#pdfToolProgress");
+        const bar = $("#pdfToolProgressBar");
+        const pct = Number(bar?.dataset?.pct || 0);
+        if (!box) return;
+        if (keepIfComplete && pct >= 100) return;
+        box.classList.add("is-hidden");
+    }
+
+    function showPdfToolStats({ originalBytes, outputBytes, strategy, message }) {
+        const box = $("#pdfToolStats");
+        if (!box) return;
+        const parts = [];
+        if (originalBytes != null) parts.push(`<span><b>Original:</b> ${formatBytes(originalBytes)}</span>`);
+        if (outputBytes != null) parts.push(`<span><b>Resultado:</b> ${formatBytes(outputBytes)}</span>`);
+        if (originalBytes && outputBytes) {
+            const saved = originalBytes - outputBytes;
+            const ratio = Math.round((saved / originalBytes) * 100);
+            parts.push(`<span><b>Economia:</b> ${formatBytes(Math.max(0, saved))} (${ratio}%)</span>`);
+        }
+        if (strategy) parts.push(`<span><b>Modo:</b> ${escapeHtml(String(strategy))}</span>`);
+        if (message) parts.push(`<span class="wide">${escapeHtml(message)}</span>`);
+        box.innerHTML = parts.join("");
+        box.classList.toggle("is-hidden", !parts.length);
+    }
+
+    function hidePdfToolStats() {
+        const box = $("#pdfToolStats");
+        if (box) {
+            box.classList.add("is-hidden");
+            box.innerHTML = "";
+        }
+    }
+
+    function clearPdfToolResult() {
+        const panel = $("#pdfToolResult");
+        const frame = $("#pdfToolResultFrame");
+        if (state.pdfToolResultUrl) {
+            try { URL.revokeObjectURL(state.pdfToolResultUrl); } catch (_) {}
+        }
+        state.pdfToolResultUrl = null;
+        state.pdfToolResultBase64 = "";
+        state.pdfToolResultFileName = "";
+        if (frame) frame.removeAttribute("src");
+        if (panel) panel.classList.add("is-hidden");
+    }
+
+    function showPdfToolResult(base64, fileName, meta = {}) {
+        const panel = $("#pdfToolResult");
+        const frame = $("#pdfToolResultFrame");
+        const title = $("#pdfToolResultTitle");
+        const nameEl = $("#pdfToolResultName");
+        if (!panel || !frame) return;
+
+        if (state.pdfToolResultUrl) {
+            try { URL.revokeObjectURL(state.pdfToolResultUrl); } catch (_) {}
+        }
+
+        const blob = base64ToBlob(base64, "application/pdf");
+        const url = URL.createObjectURL(blob);
+        state.pdfToolResultUrl = url;
+        state.pdfToolResultBase64 = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
+        state.pdfToolResultFileName = fileName || "resultado.pdf";
+
+        if (title) title.textContent = "PDF processado com sucesso";
+        if (nameEl) nameEl.textContent = state.pdfToolResultFileName;
+        frame.src = url;
+        panel.classList.remove("is-hidden");
+        showPdfToolStats({
+            originalBytes: meta.originalBytes,
+            outputBytes: meta.outputBytes || blob.size,
+            strategy: meta.strategy,
+            message: meta.message,
+        });
+        setTimeout(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }
+
+    async function presentPdfToolBlob(blob, fileName, meta = {}) {
+        const base64 = await blobToBase64(blob, true);
+        showPdfToolResult(base64, fileName, {
+            originalBytes: meta.originalBytes,
+            outputBytes: blob.size,
+            message: meta.message,
+            strategy: "local",
+        });
+    }
+
+    function formatBytes(bytes) {
+        const n = Number(bytes) || 0;
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function estimateBase64Bytes(base64) {
+        const clean = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
+        const padding = (clean.match(/=+$/) || [""])[0].length;
+        return Math.max(0, Math.floor((clean.length * 3) / 4) - padding);
+    }
+
+    function toPdfSafeText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "?");
     }
 
     function renderSupport() {
@@ -6489,7 +7411,10 @@
         setFormLoading(form, true);
         setMessage(msg, "Consultando IA...", "");
         try {
-            const data = await apiRequest("/api/ai/chat", { method: "POST", body: { message, conversationId: state.aiConversationId } });
+            const data = await apiRequest("/api/ai/chat", {
+                method: "POST",
+                body: { message, conversationId: state.aiConversationId, mode: "chat" },
+            });
             state.aiConversationId = data.conversationId || data.conversation?.id || state.aiConversationId;
             box.insertAdjacentHTML("beforeend", `<p><strong>Você:</strong> ${escapeHtml(message)}</p><p><strong>IA:</strong> ${escapeHtml(data.answer || data.message || "Resposta recebida.")}</p>`);
             form.reset();
@@ -6554,6 +7479,7 @@
             </div>
         `;
         if (!state.adminUsers.length) loadAdminUsers().then(() => { if (state.view === "admin") renderAdmin(); }).catch(() => {});
+        setTimeout(() => window.DocSpaceProduct?.onAdminRendered?.(refs.content), 0);
     }
 
     function renderAdminUsers() {
@@ -6613,18 +7539,32 @@
         const user = state.adminUsers.find((u) => u.id === uid);
         if (!user) return;
         const form = $("#adminUserForm");
-        form.uid.value = user.id || "";
-        form.name.value = user.name || "";
-        form.email.value = user.email || "";
-        form.plan.value = user.plan || "basic30";
-        form.status.value = user.status || "active";
-        form.dailyDocumentLimit.value = user.dailyDocumentLimit ?? user.daily_document_limit ?? 5;
-        form.allowPdfTools.value = (user.allowPdfTools ?? user.allow_pdf_tools) ? "yes" : "no";
-        form.pdfToolDailyLimit.value = user.pdfToolDailyLimit ?? user.pdf_tool_daily_limit ?? 5;
-        form.isVerified.value = (user.isVerified ?? user.is_verified) ? "yes" : "no";
-        form.allowLiquidGlass.value = (user.allowLiquidGlass ?? user.allow_liquid_glass) ? "yes" : "no";
-        form.notes.value = user.notes || "";
+        if (!form) return;
+
+        // HTMLFormElement.name conflita com o input name="name" — usar elements.
+        setNamedFormValue(form, "uid", user.id || "");
+        setNamedFormValue(form, "name", user.name || "");
+        setNamedFormValue(form, "email", user.email || "");
+        setNamedFormValue(form, "password", "");
+        setNamedFormValue(form, "plan", user.plan || "basic30");
+        setNamedFormValue(form, "status", user.status || "active");
+        setNamedFormValue(form, "dailyDocumentLimit", user.dailyDocumentLimit ?? user.daily_document_limit ?? 5);
+        setNamedFormValue(form, "allowPdfTools", (user.allowPdfTools ?? user.allow_pdf_tools) ? "yes" : "no");
+        setNamedFormValue(form, "pdfToolDailyLimit", user.pdfToolDailyLimit ?? user.pdf_tool_daily_limit ?? 5);
+        setNamedFormValue(form, "isVerified", (user.isVerified ?? user.is_verified) ? "yes" : "no");
+        setNamedFormValue(form, "allowLiquidGlass", (user.allowLiquidGlass ?? user.allow_liquid_glass) ? "yes" : "no");
+        setNamedFormValue(form, "notes", user.notes || "");
         form.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function setNamedFormValue(form, name, value) {
+        const field = form?.elements?.namedItem?.(name);
+        if (!field) return;
+        if (field instanceof RadioNodeList) {
+            field.value = String(value ?? "");
+            return;
+        }
+        if ("value" in field) field.value = String(value ?? "");
     }
 
     async function loadAdminSupport() {
@@ -6647,6 +7587,16 @@
     }
 
     function handleContentClick(event) {
+        const stepIndicator = event.target.closest("[data-step-indicator]");
+        if (stepIndicator) {
+            const form = stepIndicator.closest("form") || $("#documentGenerateForm");
+            if (!form) return;
+            const target = Number(stepIndicator.dataset.stepIndicator);
+            if (!Number.isInteger(target)) return;
+            form.dataset.currentStep = String(Math.max(0, target));
+            updateDocumentWizard(form);
+            return;
+        }
         const nextStep = event.target.closest("[data-doc-step-next]");
         if (nextStep) { moveDocumentStep(nextStep.closest("form"), 1); return; }
         const prevStep = event.target.closest("[data-doc-step-prev]");
@@ -6654,13 +7604,107 @@
         const goto = event.target.closest("[data-goto]");
         if (goto) return navigate(goto.dataset.goto);
         const docOpen = event.target.closest("[data-doc-open]");
-        if (docOpen) { state.activeDocId = docOpen.dataset.docOpen; renderDocuments(); setTimeout(() => $("#documentFormCard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
+        if (docOpen) {
+            clearDocumentPdfPreview();
+            state.activeDocId = docOpen.dataset.docOpen;
+            renderDocuments();
+            setTimeout(() => $("#documentFormCard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+            return;
+        }
         const closeDoc = event.target.closest("[data-close-doc]");
-        if (closeDoc) { state.activeDocId = null; renderDocuments(); return; }
+        if (closeDoc) {
+            clearDocumentPdfPreview();
+            state.activeDocId = null;
+            renderDocuments();
+            return;
+        }
+        const pdfDownload = event.target.closest("[data-pdf-preview-download]");
+        if (pdfDownload) {
+            if (state.pdfPreviewBase64) {
+                downloadBase64(state.pdfPreviewBase64, state.pdfPreviewFileName || "documento.pdf", "application/pdf");
+            } else if (state.pdfPreviewUrl) {
+                const a = document.createElement("a");
+                a.href = state.pdfPreviewUrl;
+                a.download = state.pdfPreviewFileName || "documento.pdf";
+                a.rel = "noopener";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                toast("Gere o PDF primeiro para baixar.", "error");
+            }
+            return;
+        }
+        const pdfOpen = event.target.closest("[data-pdf-preview-open]");
+        if (pdfOpen) {
+            if (state.pdfPreviewUrl) {
+                window.open(state.pdfPreviewUrl, "_blank", "noopener,noreferrer");
+            } else {
+                toast("Gere o PDF primeiro para abrir a pré-visualização.", "error");
+            }
+            return;
+        }
+        const pdfClose = event.target.closest("[data-pdf-preview-close]");
+        if (pdfClose) {
+            clearDocumentPdfPreview();
+            return;
+        }
         const cat = event.target.closest("[data-category]");
-        if (cat) { state.category = cat.dataset.category; renderDocuments(); return; }
+        if (cat) {
+            state.category = cat.dataset.category;
+            // Atualiza chips + grade sem destruir o formulário aberto.
+            $$("[data-category]", refs.content).forEach((btn) => {
+                btn.classList.toggle("is-active", btn.dataset.category === state.category);
+            });
+            refreshDocumentLibraryGrid();
+            return;
+        }
         const pdfTool = event.target.closest("[data-pdf-tool]");
-        if (pdfTool) { state.activePdfTool = pdfTool.dataset.pdfTool; renderPdfTools(); return; }
+        if (pdfTool) {
+            clearPdfToolResult();
+            state.pdfToolSelectedFiles = [];
+            state.activePdfTool = pdfTool.dataset.pdfTool;
+            renderPdfTools();
+            return;
+        }
+        const pdfClearFiles = event.target.closest("[data-pdf-clear-files]");
+        if (pdfClearFiles) {
+            state.pdfToolSelectedFiles = [];
+            const input = $("#pdfFiles");
+            if (input) input.value = "";
+            renderPdfFileList();
+            setMessage($("#pdfMessage"), "", "");
+            return;
+        }
+        const pdfRemoveFile = event.target.closest("[data-pdf-remove-file]");
+        if (pdfRemoveFile) {
+            const index = Number(pdfRemoveFile.dataset.pdfRemoveFile);
+            if (Number.isInteger(index)) {
+                state.pdfToolSelectedFiles = (state.pdfToolSelectedFiles || []).filter((_, i) => i !== index);
+                assignPdfFiles(state.pdfToolSelectedFiles);
+            }
+            return;
+        }
+        const pdfToolDownload = event.target.closest("[data-pdf-tool-download]");
+        if (pdfToolDownload) {
+            if (state.pdfToolResultBase64) {
+                downloadBase64(state.pdfToolResultBase64, state.pdfToolResultFileName || "resultado.pdf", "application/pdf");
+            } else {
+                toast("Processe um PDF primeiro.", "error");
+            }
+            return;
+        }
+        const pdfToolOpen = event.target.closest("[data-pdf-tool-open]");
+        if (pdfToolOpen) {
+            if (state.pdfToolResultUrl) window.open(state.pdfToolResultUrl, "_blank", "noopener,noreferrer");
+            else toast("Processe um PDF primeiro.", "error");
+            return;
+        }
+        const pdfToolCloseResult = event.target.closest("[data-pdf-tool-close-result]");
+        if (pdfToolCloseResult) {
+            clearPdfToolResult();
+            return;
+        }
         const loadSupport = event.target.closest("[data-load-support]");
         if (loadSupport) { loadSupportMessages().then(renderSupport).catch((e) => toast(translateError(e), "error")); return; }
         const createPixBtn = event.target.closest("[data-create-pix]");
@@ -6702,101 +7746,437 @@
 
     function handleContentInput(event) {
         if (event.target.id === "documentSearchZero") {
-            state.query = event.target.value;
-            const grid = event.target.closest(".content-area");
-            renderDocuments();
-            $("#documentSearchZero")?.focus();
+            const input = event.target;
+            const caret = input.selectionStart;
+            state.query = input.value;
+            // Atualiza só a grade de cards — re-render completo apagava o formulário aberto.
+            refreshDocumentLibraryGrid();
+            const nextInput = $("#documentSearchZero");
+            if (nextInput) {
+                nextInput.focus();
+                try {
+                    const pos = typeof caret === "number" ? caret : nextInput.value.length;
+                    nextInput.setSelectionRange(pos, pos);
+                } catch (_) {}
+            }
         }
+    }
+
+    function refreshDocumentLibraryGrid() {
+        const filtered = getFilteredDocs();
+        const cardsHtml = filtered.map(docCard).join("");
+        const grids = $$(":scope > .grid", refs.content);
+        if (grids[0]) {
+            grids[0].innerHTML = cardsHtml;
+            return;
+        }
+        renderDocuments();
     }
 
     function handleContentChange(event) {
         const form = event.target?.closest?.("#documentGenerateForm");
-        if (form) updateConditionalDocumentFields(form);
+        if (form) {
+            updateConditionalDocumentFields(form);
+            // Atualiza rail (esconde etapas de cônjuge/óbito quando não se aplicam).
+            updateDocumentWizard(form);
+        }
     }
 
 
     function moveDocumentStep(form, delta) {
         if (!form) return;
-        const panels = $$('[data-step-panel]', form);
+        const panels = $$("[data-step-panel]", form);
         if (!panels.length) return;
+        updateConditionalDocumentFields(form);
+
         const current = Number(form.dataset.currentStep || 0);
-        const next = Math.max(0, Math.min(panels.length - 1, current + delta));
+        let next = current + delta;
+        while (next >= 0 && next < panels.length) {
+            // Pula etapas só com campos condicionais ocultos (ex.: cônjuge/óbito = Não).
+            if (!isWizardStepEmpty(panels[next])) break;
+            next += delta;
+        }
+        next = Math.max(0, Math.min(panels.length - 1, next));
         if (next === current) return;
         form.dataset.currentStep = String(next);
         updateDocumentWizard(form);
-        form.closest('#documentFormCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        form.closest("#documentFormCard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function isWizardStepEmpty(panel) {
+        if (!panel) return true;
+        // Etapa de revisão (sem campos) nunca é considerada vazia.
+        if (panel.querySelector("[data-generate-type]")) return false;
+        const fields = $$("[data-field-name]", panel);
+        if (!fields.length) return false;
+        return fields.every((field) => {
+            const wrapper = field.closest(".field");
+            return Boolean(
+                field.disabled ||
+                wrapper?.hidden ||
+                wrapper?.classList.contains("is-conditional-hidden")
+            );
+        });
     }
 
     function updateDocumentWizard(form) {
-        const current = Number(form.dataset.currentStep || 0);
-        $$('[data-step-panel]', form).forEach((panel, index) => panel.classList.toggle('is-active', index === current));
-        $$('[data-step-indicator]', form).forEach((item, index) => {
-            item.classList.toggle('is-active', index === current);
-            item.classList.toggle('is-done', index < current);
-        });
         updateConditionalDocumentFields(form);
+        const panels = $$("[data-step-panel]", form);
+        let current = Number(form.dataset.currentStep || 0);
+
+        // Se a etapa atual ficou vazia após mudar cônjuge/óbito, avança para a próxima útil.
+        if (panels[current] && isWizardStepEmpty(panels[current])) {
+            let next = current;
+            while (next < panels.length && isWizardStepEmpty(panels[next])) next += 1;
+            if (next >= panels.length) {
+                next = current;
+                while (next > 0 && isWizardStepEmpty(panels[next])) next -= 1;
+            }
+            current = Math.max(0, Math.min(panels.length - 1, next));
+            form.dataset.currentStep = String(current);
+        }
+
+        panels.forEach((panel, index) => panel.classList.toggle("is-active", index === current));
+        $$("[data-step-indicator]", form).forEach((item, index) => {
+            const empty = isWizardStepEmpty(panels[index]);
+            item.classList.toggle("is-active", index === current);
+            item.classList.toggle("is-done", index < current && !empty);
+            item.classList.toggle("is-skipped", empty && index !== current);
+            item.hidden = empty && index !== current;
+        });
     }
 
     function countDocumentFields(doc) {
         return Number(doc.fields?.length || 0) + Number(doc.choices?.length || 0);
     }
 
+    // Ordem fixa das partes no assistente (o usuário preenche uma e clica em Próximo).
+    const DOCUMENT_STEP_ORDER = [
+        "configuracao",
+        "parte_comodante",
+        "parte_falecido",
+        "parte_comodatario",
+        "parte_arrendador",
+        "parte_arrendatario",
+        "parte_outorgante",
+        "parte_outorgado",
+        "parte_vendedor",
+        "parte_comprador",
+        "parte_posseiro",
+        "parte_produtor",
+        "parte_segurado",
+        "parte_declarante",
+        "parte_pessoa",
+        "parte_convivente_1",
+        "parte_convivente_2",
+        "parte_dependente",
+        "parte_representante",
+        "parte_conjuge",
+        "parte_obito_representacao",
+        "parte_familia",
+        "parte_periodos_trabalho",
+        "parte_terras_autodeclaracao",
+        "parte_atividades_listadas",
+        "parte_imovel",
+        "parte_confrontantes",
+        "parte_bens",
+        "parte_producao",
+        "parte_condicoes",
+        "parte_extras_autodeclaracao",
+        "parte_testemunhas",
+        "parte_dados_principais",
+        "parte_fechamento",
+        "revisao",
+    ];
+
     function buildDocumentSteps(doc) {
         const buckets = new Map();
-        const order = [];
         const addStep = (key, title, description) => {
             if (!buckets.has(key)) {
                 buckets.set(key, { key, title, description, items: [] });
-                order.push(key);
             }
             return buckets.get(key);
         };
 
         if (doc.choices?.length) {
-            const step = addStep('configuracao', 'Configuração do modelo', 'Escolha as opções que mudam o tipo de modelo antes de preencher os dados.');
-            doc.choices.forEach((choice) => step.items.push({ kind: 'choice', choice }));
+            const step = addStep(
+                "configuracao",
+                "Configuração",
+                "Escolha as opções do modelo (cônjuge, óbito, representação etc.) antes de digitar os dados."
+            );
+            doc.choices.forEach((choice) => step.items.push({ kind: "choice", choice }));
         }
 
         (doc.fields || []).forEach((field) => {
-            const section = classifyDocumentField(field);
+            const section = classifyDocumentField(field, doc);
             const step = addStep(section.key, section.title, section.description);
-            step.items.push({ kind: 'field', field });
+            step.items.push({ kind: "field", field });
         });
 
-        addStep('revisao', 'Revisão e geração', 'Confira os dados preenchidos. Se estiver tudo certo, gere o Word ou o PDF protegido.');
-        return order.map((key) => buckets.get(key)).filter(Boolean);
+        addStep(
+            "revisao",
+            "Revisão e geração",
+            "Confira as partes preenchidas. Se estiver tudo certo, gere o Word ou o PDF protegido."
+        );
+
+        const known = DOCUMENT_STEP_ORDER
+            .map((key) => buckets.get(key))
+            .filter((step) => step && (step.key === "revisao" || step.items.length > 0));
+
+        // Qualquer etapa nova não listada entra antes da revisão.
+        const extras = [...buckets.values()].filter(
+            (step) => step.key !== "revisao" && !DOCUMENT_STEP_ORDER.includes(step.key) && step.items.length
+        );
+        const review = buckets.get("revisao");
+        return [...known.filter((s) => s.key !== "revisao"), ...extras, review].filter(Boolean);
     }
 
-    function classifyDocumentField(field) {
-        const name = normalize(`${field.name || ''} ${field.label || ''}`);
+    /**
+     * Separa os campos em PARTES do documento (uma etapa por parte).
+     * Ex.: Comodante → Comodatário → Imóvel → Cônjuge → Fechamento → Revisão.
+     * Cada papel (vendedor, comprador, arrendador...) vira etapa própria.
+     */
+    function classifyDocumentField(field, doc = null) {
+        const rawName = String(field?.name || "");
+        const rawLabel = String(field?.label || "");
+        const key = normalizeFieldKey(rawName);
+        const text = normalize(`${rawName} ${rawLabel}`);
+        const docId = String(doc?.id || "");
 
-        // Ordem importante: primeiro identifica pessoas específicas para não jogar localidade/endereço no grupo errado.
-        if (hasAny(name, ['possui conjuge', 'possui obito', 'representacao'])) {
-            return { key: 'configuracao', title: 'Configuração do modelo', description: 'Escolha as opções que mudam o modelo antes de preencher.' };
+        // ── Papéis de pessoa (ordem importa: mais específico primeiro) ──
+        const partyRules = [
+            { match: (k, t) => includesParty(k, t, ["comandante_falecido", "comodante_falecido"]) || (includesParty(k, t, ["falecido"]) && includesParty(k, t, ["comandante", "comodante"])),
+              key: "parte_falecido", title: "Comodante falecido", description: "Dados do comodante falecido, quando o modelo for com óbito." },
+            { match: (k, t) => includesParty(k, t, ["comandante", "comodante"]) && !includesParty(k, t, ["comandatario", "comodatario", "falecido"]),
+              key: "parte_comodante", title: "Comodante", description: "Digite os dados do comodante (quem cede o bem ou a terra). Depois clique em Próximo." },
+            { match: (k, t) => includesParty(k, t, ["comandatario", "comodatario", "comandatrio"]),
+              key: "parte_comodatario", title: "Comodatário", description: "Digite os dados do comodatário (quem recebe o bem ou usa a terra). Depois clique em Próximo." },
+            { match: (k, t) => includesParty(k, t, ["arrendador"]),
+              key: "parte_arrendador", title: "Arrendador", description: "Dados de quem arrenda (cede) o imóvel." },
+            { match: (k, t) => includesParty(k, t, ["arrendatario"]),
+              key: "parte_arrendatario", title: "Arrendatário", description: "Dados de quem toma o imóvel em arrendamento." },
+            { match: (k, t) => includesParty(k, t, ["outorgante"]),
+              key: "parte_outorgante", title: "Outorgante", description: "Dados do outorgante da parceria ou procuração." },
+            { match: (k, t) => includesParty(k, t, ["outorgado"]),
+              key: "parte_outorgado", title: "Outorgado", description: "Dados do outorgado da parceria ou procuração." },
+            { match: (k, t) => includesParty(k, t, ["vendedor"]),
+              key: "parte_vendedor", title: "Vendedor", description: "Dados completos do vendedor. Depois clique em Próximo." },
+            { match: (k, t) => includesParty(k, t, ["comprador"]),
+              key: "parte_comprador", title: "Comprador", description: "Dados completos do comprador. Depois clique em Próximo." },
+            { match: (k, t) => includesParty(k, t, ["convivente_1", "convivente1"]) || (k.includes("convivente") && (k.includes("_1") || t.includes("convivente 1"))),
+              key: "parte_convivente_1", title: "Convivente 1", description: "Dados do primeiro convivente da união estável." },
+            { match: (k, t) => includesParty(k, t, ["convivente_2", "convivente2"]) || (k.includes("convivente") && (k.includes("_2") || t.includes("convivente 2"))),
+              key: "parte_convivente_2", title: "Convivente 2", description: "Dados do segundo convivente da união estável." },
+            { match: (k, t) => includesParty(k, t, ["dependente"]) && !includesParty(k, t, ["renda_dependente"]),
+              key: "parte_dependente", title: "Dependente", description: "Dados da pessoa dependente economicamente." },
+            { match: (k, t) => includesParty(k, t, ["posseiro"]),
+              key: "parte_posseiro", title: "Posseiro", description: "Dados de quem exerce a posse." },
+            { match: (k, t) => includesParty(k, t, ["produtor"]),
+              key: "parte_produtor", title: "Produtor", description: "Dados do produtor rural responsável." },
+            { match: (k, t) => includesParty(k, t, ["segurado"]),
+              key: "parte_segurado", title: "Segurado", description: "Dados pessoais do segurado da autodeclaração." },
+            { match: (k, t) => includesParty(k, t, ["declarante"]),
+              key: "parte_declarante", title: "Declarante", description: "Dados de quem faz a declaração." },
+            // nome_representante (UFBA etc.) = pessoa principal; rg_representante do comodato vai para óbito.
+            { match: (k, t) => (k === "nome_representante" || k.startsWith("nome_representante_")) && !hasAny(t, ["falecido"]),
+              key: "parte_representante", title: "Representante", description: "Dados do representante responsável pelo documento." },
+            { match: (k, t) => includesParty(k, t, ["pessoa", "cliente", "requerente"]) && !includesParty(k, t, ["familiar"]),
+              key: "parte_pessoa", title: "Pessoa / cliente", description: "Dados principais da pessoa do documento." },
+        ];
+
+        for (const rule of partyRules) {
+            if (rule.match(key, text)) {
+                return { key: rule.key, title: rule.title, description: rule.description };
+            }
         }
-        if (hasAny(name, ['comandante', 'contratante', 'declarante', 'pessoa', 'cliente']) && !hasAny(name, ['comandatario'])) {
-            return { key: 'principal', title: 'Dados da pessoa principal', description: 'Preencha identificação, profissão, documentos e endereço da pessoa principal.' };
+
+        // Cônjuge (não misturar com comodante/comodatário)
+        if (hasAny(text, ["conjuge", "companheiro"]) || key.includes("conjuge")) {
+            return {
+                key: "parte_conjuge",
+                title: "Cônjuge / companheiro(a)",
+                description: "Preencha os dados do cônjuge ou companheiro(a). Esta etapa só aparece quando a configuração pedir.",
+            };
         }
-        if (hasAny(name, ['comodatario', 'comandatario', 'arrendatario', 'comprador', 'vendedor', 'dependente', 'convivente', 'titular', 'beneficiario', 'responsavel'])) {
-            return { key: 'segunda_parte', title: 'Outra parte do documento', description: 'Preencha os dados da outra pessoa envolvida no documento.' };
+
+        // Óbito / representante do falecido (comodato e similares)
+        if (
+            hasAny(text, ["obito", "falecimento", "falecido", "parentesco_representante", "representante_do_falecido"])
+            || key.includes("obito")
+            || key.includes("falecido")
+            || key.includes("falecimento")
+            || (key.includes("representante") && key !== "nome_representante")
+        ) {
+            return {
+                key: "parte_obito_representacao",
+                title: "Óbito e representação",
+                description: "Informe dados do óbito e do representante do falecido, se o modelo exigir.",
+            };
         }
-        if (hasAny(name, ['conjuge', 'companheiro', 'falecimento', 'obito', 'falecido', 'representante'])) {
-            return { key: 'familia_representacao', title: 'Cônjuge e representação', description: 'Preencha cônjuge, falecido, representante ou dados familiares quando o modelo pedir.' };
+
+        // Confrontantes (Norte/Sul/Leste/Oeste) — etapa própria
+        if (hasAny(text, ["confrontante", "confrontado", "confrontacao", "ao_norte", "ao_sul", "ao_leste", "ao_oeste", "cpf_norte", "cpf_sul", "cpf_leste", "cpf_oeste"])
+            || /_(norte|sul|leste|oeste)$/.test(key) || key.includes("confrontante")) {
+            return {
+                key: "parte_confrontantes",
+                title: "Confrontantes",
+                description: "Informe os confrontantes (norte, sul, leste e oeste) e documentos.",
+            };
         }
-        if (hasAny(name, ['imovel', 'propriedade', 'posse', 'terra', 'area', 'nirf', 'incra', 'matricula', 'gleba', 'perimetro', 'confrontante', 'confrontado', 'confrontacao', 'confrontacoes', 'norte', 'sul', 'leste', 'oeste', 'limite', 'divisa'])) {
-            return { key: 'imovel', title: 'Imóvel, posse ou confrontantes', description: 'Informe localização, área, identificação do imóvel e confrontações.' };
+
+        // Família / membros
+        if (hasAny(text, ["familiar", "membro", "mebro", "componente", "titular"]) || key.includes("familiar") || key.includes("membro")) {
+            return {
+                key: "parte_familia",
+                title: "Família / membros",
+                description: "Dados dos membros da família ou do grupo familiar.",
+            };
         }
-        if (hasAny(name, ['valor', 'pagamento', 'renda', 'produto', 'producao', 'rebanho', 'atividade', 'equipamento', 'veiculo', 'bem', 'marca', 'modelo', 'placa', 'prazo', 'duracao'])) {
-            return { key: 'objeto_valores', title: 'Objeto, valores e condições', description: 'Informe bem, atividade, produção, valores, prazos ou condições econômicas.' };
+
+        // Empregados / IPI / outras rendas (autodeclaração)
+        if (hasAny(text, ["empregado", "ipi_", "outra_atividade", "outra_renda", "cooperativa", "sim_ipi", "nao_ipi", "sim_empregados", "nao_empregados", "sim_outra", "nao_outra", "sim_cooperativa", "nao_cooperativa"])) {
+            return {
+                key: "parte_extras_autodeclaracao",
+                title: "Rendas e vínculos extras",
+                description: "IPI, empregados, outras atividades, outras rendas e cooperativa.",
+            };
         }
-        if (hasAny(name, ['data', 'dia', 'mes', 'ano', 'cidade', 'uf', 'orgao', 'destino', 'finalidade', 'comarca', 'assinatura'])) {
-            return { key: 'fechamento', title: 'Local, data e fechamento', description: 'Preencha datas, cidade, órgão de destino, finalidade e dados finais.' };
+
+        // Períodos de trabalho rural (autodeclaração)
+        if (hasAny(text, ["periodo_inicial", "periodo_final", "condicao_", "situacao_individual", "situacao_regime"])) {
+            return {
+                key: "parte_periodos_trabalho",
+                title: "Períodos de trabalho",
+                description: "Informe os períodos, condições e situações de trabalho rural.",
+            };
         }
-        return { key: 'principal', title: 'Dados principais', description: 'Preencha os dados básicos exigidos pelo modelo.' };
+
+        // Propriedades / terras da autodeclaração
+        if (hasAny(text, ["itr_terra", "nome_propiedade", "area_total_", "area_explorada", "nome_proprietario", "cpf_proprietario", "municipio_uf_"])) {
+            return {
+                key: "parte_terras_autodeclaracao",
+                title: "Terras e propriedades",
+                description: "Cadastro das terras e proprietários da autodeclaração rural.",
+            };
+        }
+
+        // Atividades rurais listadas
+        if (hasAny(text, ["atividade_rural_", "subsistencia_venda"])) {
+            return {
+                key: "parte_atividades_listadas",
+                title: "Atividades rurais",
+                description: "Liste as atividades rurais e se são para subsistência ou venda.",
+            };
+        }
+
+        // Imóvel / propriedade / área
+        if (hasAny(text, [
+            "imovel", "propriedade", "posse", "terra", "area", "nirf", "incra", "matricula",
+            "gleba", "perimetro", "car_imovel", "ccir", "denominacao", "localizacao",
+            "nome_imovel", "endereco_imovel", "municipio_imovel", "registro_imovel",
+            "registro_rural", "registro_propriedade", "area_imovel", "area_total",
+            "tamanho_trerra", "tamanho_terra", "tamanho_utilizado", "oque_produz",
+        ]) || key.includes("imovel") || key.includes("propriedade") || key.includes("nirf")) {
+            return {
+                key: "parte_imovel",
+                title: "Imóvel / propriedade",
+                description: "Identificação, localização, área e registros do imóvel ou da posse.",
+            };
+        }
+
+        // Equipamentos / veículos / bens
+        if (hasAny(text, [
+            "equipamento", "marca_modelo", "serie_chassi", "estado_conservacao", "acessorios_",
+            "veiculo", "placa", "renavam", "chassi", "quilometragem", "tipo_bem", "marca_bem",
+            "modelo_bem", "ano_modelo", "cor_bem", "descricao_complementar",
+        ]) || key.includes("equipamento") || key.includes("veiculo") || key.includes("_bem")) {
+            return {
+                key: "parte_bens",
+                title: "Bens / equipamentos / veículo",
+                description: "Descreva os bens, equipamentos ou o veículo do contrato.",
+            };
+        }
+
+        // Produção / rebanho / inventário
+        if (hasAny(text, [
+            "atividade_", "quantidade_", "unidade_", "estoque_", "especie_", "categoria_",
+            "entradas_", "saidas_", "produto_", "receita_", "despesas_", "saldo_",
+            "vacinacao", "controle_sanitario", "forma_identificacao", "total_nascimentos",
+            "total_compras", "total_vendas", "total_mortes", "local_armazenamento",
+            "destino_producao", "ano_referencia", "ano_safra", "ano_controle",
+            "produto1", "produto2", "produto3", "valor1", "valor2", "valor3",
+            "valor_total", "tipo_renda", "valor_anual",
+        ])) {
+            return {
+                key: "parte_producao",
+                title: "Produção / valores / rebanho",
+                description: "Informe produção, rebanho, produtos, quantidades e valores.",
+            };
+        }
+
+        // Condições contratuais (prazos, pagamento, foro)
+        if (hasAny(text, [
+            "prazo", "duracao", "duração", "data_inicio", "data_fim", "valor_arrendamento",
+            "valor_venda", "forma_pagamento", "periodicidade", "indice_reajuste",
+            "inadimplencia", "rescisao", "foro", "numero_vias", "percentual_",
+            "finalidade", "divisao_despesas", "responsavel_despesas", "regra_manutencao",
+            "regime_bens", "renda_", "ajuda", "manutencao", "orgao_destino",
+            "lista_documentos", "beneficio", "nome_beneficio",
+        ])) {
+            return {
+                key: "parte_condicoes",
+                title: "Condições e valores",
+                description: "Prazos, valores, forma de pagamento, finalidade e condições do documento.",
+            };
+        }
+
+        // Testemunhas
+        if (hasAny(text, ["testemunha"])) {
+            return {
+                key: "parte_testemunhas",
+                title: "Testemunhas",
+                description: "CPF ou dados das testemunhas, se o modelo pedir.",
+            };
+        }
+
+        // Fechamento: data, cidade, assinatura
+        if (
+            hasAny(text, ["data_assinatura", "cidade_assinatura", "uf_assinatura", "data_assinatura_extenso"])
+            || ["dia", "mes", "mês", "ano", "cidade", "uf", "data", "municipio"].includes(key)
+            || key.endsWith("_dia") || key.endsWith("_mes") || key.endsWith("_ano")
+        ) {
+            return {
+                key: "parte_fechamento",
+                title: "Local, data e assinatura",
+                description: "Cidade, data e demais dados de fechamento do documento.",
+            };
+        }
+
+        // Fallback por tipo de documento
+        if (docId.includes("declaracao") || docId.includes("procuracao") || docId.includes("honorarios") || docId.includes("prev-")) {
+            return {
+                key: "parte_dados_principais",
+                title: "Dados principais",
+                description: "Preencha os dados principais desta etapa e avance com Próximo.",
+            };
+        }
+
+        return {
+            key: "parte_dados_principais",
+            title: "Dados principais",
+            description: "Preencha os campos desta parte e clique em Próximo.",
+        };
+    }
+
+    function includesParty(normalizedKey, normalizedText, tokens) {
+        return tokens.some((token) => {
+            const t = normalize(token);
+            return normalizedKey.includes(t) || normalizedText.includes(t);
+        });
     }
 
     function hasAny(text, terms) {
-        return terms.some((term) => text.includes(term));
+        return terms.some((term) => text.includes(normalize(term)) || text.includes(term));
     }
 
     async function apiRequest(path, options = {}) {
@@ -6828,17 +8208,108 @@
     function getFilteredDocs() {
         const query = normalize(state.query);
         return DOCS.filter((doc) => {
+            if (state.disabledTemplateIds?.has?.(doc.id)) return false;
+            if (doc.isActive === false) return false;
             const matchesCategory = state.category === "todos" || doc.category === state.category;
             const haystack = normalize(`${doc.title} ${doc.description} ${doc.id}`);
             return matchesCategory && (!query || haystack.includes(query));
         });
     }
 
+    function mergeTemplates(customTemplates = [], settings = {}) {
+        state.templateSettings = settings || {};
+        state.disabledTemplateIds = new Set(
+            Object.entries(settings || {})
+                .filter(([, value]) => value && value.isActive === false)
+                .map(([id]) => id)
+        );
+
+        // Remove custom docs previously injected, then re-add active ones.
+        for (let i = DOCS.length - 1; i >= 0; i -= 1) {
+            if (DOCS[i]?.custom) {
+                DOC_MAP.delete(DOCS[i].id);
+                DOCS.splice(i, 1);
+            }
+        }
+
+        (customTemplates || []).forEach((template) => {
+            if (!template?.slug && !template?.id) return;
+            if (template.isActive === false) return;
+            const id = template.slug || template.id;
+            if (state.disabledTemplateIds.has(id)) return;
+            const doc = {
+                id,
+                title: template.title || id,
+                description: template.description || "Modelo customizado",
+                category: template.category || "outros",
+                fields: Array.isArray(template.fields) ? template.fields.map(normalizeTemplateFieldForUi) : [],
+                modelPath: template.modelPath || "",
+                modelBase64: template.modelBase64 || "",
+                fileName: `${id}.docx`,
+                custom: true,
+                isActive: template.isActive !== false,
+            };
+            DOCS.push(doc);
+            DOC_MAP.set(id, doc);
+        });
+
+        if (!CATEGORIES.some((c) => c.id === "outros")) {
+            CATEGORIES.push({ id: "outros", label: "Outros" });
+        }
+    }
+
+    function openDocumentWithData(documentType, formData = {}, options = {}) {
+        const doc = DOC_MAP.get(documentType);
+        if (!doc) {
+            toast(`Modelo "${documentType}" não encontrado ou desativado.`, "error");
+            return;
+        }
+        state.pendingFormData = formData || {};
+        state.pendingFormStep = Number.isInteger(options.step) ? options.step : 0;
+        state.activeDocId = documentType;
+        navigate("documents");
+    }
+
+    function getDoc(documentType) {
+        return DOC_MAP.get(documentType);
+    }
+
+    function listDocs() {
+        return DOCS.slice();
+    }
+
+    function downloadBase64(base64, fileName, mime) {
+        const blob = base64ToBlob(base64, mime || "application/octet-stream");
+        saveBlob(blob, fileName);
+    }
+
+    function exposeDocSpaceCore() {
+        window.DocSpaceCore = {
+            apiRequest,
+            toast,
+            escapeHtml,
+            getState: () => state,
+            getDoc,
+            listDocs,
+            collectFormData,
+            openDocumentWithData,
+            mergeTemplates,
+            navigate,
+            showDocumentPdfPreview,
+            downloadBase64,
+            DOC_MAP,
+            DOCS,
+        };
+    }
+    exposeDocSpaceCore();
+
     function getDocQuota(id) {
         if (!state.documentUsage || state.documentUsage.unlimited) return { remaining: "∞", blocked: false };
         const q = state.documentUsage.documents?.[id];
-        const remaining = Number(q?.remaining ?? state.documentUsage.limit ?? 0);
-        return { remaining, blocked: remaining <= 0 };
+        // Se o tipo ainda não veio no mapa, considera bloqueado (evita liberar com fallback errado).
+        if (!q) return { remaining: 0, blocked: true };
+        const remaining = Number(q.remaining ?? 0);
+        return { remaining, blocked: remaining <= 0 || Boolean(q.blocked) };
     }
     function getTotalRemainingDocuments() {
         if (!state.documentUsage || state.documentUsage.unlimited) return "∞";
@@ -6892,7 +8363,13 @@
     }
 
     function setFormLoading(form, loading) {
-        $$('button, input, textarea, select', form).forEach((el) => { if (el.type !== "hidden") el.disabled = loading; });
+        if (!form) return;
+        $$("button, input, textarea, select", form).forEach((el) => {
+            if (el.type === "hidden") return;
+            el.disabled = loading;
+        });
+        // Ao reabilitar, reaplica regras condicionais (cônjuge/óbito etc.).
+        if (!loading) updateConditionalDocumentFields(form);
     }
     function setMessage(el, text, type) { if (el) { el.textContent = text || ""; el.className = `message ${type || ""}`.trim(); } }
     function saveBlob(blob, fileName) {

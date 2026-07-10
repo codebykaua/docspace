@@ -5,6 +5,7 @@ dist/
 .env.*
 .env.local
 .env.production
+!.env.example
 logs/
 *.log
 *.tmp
@@ -21,3 +22,10 @@ tmp/
 *.swo
 .DS_Store
 Thumbs.db
+*.backup
+*.backup-*
+style.css.backup*
+render-server/node_modules/
+.dev.vars
+.dev.vars.*
+*.setup.tmp

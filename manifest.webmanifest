@@ -1,25 +1,32 @@
 {
+    "id": "./",
     "name": "DocSpace",
     "short_name": "DocSpace",
     "description": "Plataforma DocSpace para documentos rurais e ferramentas PDF.",
     "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
-    "background_color": "#f4f7fb",
-    "theme_color": "#1f6feb",
-    "orientation": "portrait-primary",
+    "background_color": "#f4f1ea",
+    "theme_color": "#f4f1ea",
+    "orientation": "any",
     "icons": [
         {
-            "src": "assets/LOGO1.png",
+            "src": "assets/icons/icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
-            "src": "assets/LOGO1.png",
+            "src": "assets/icons/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "assets/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ]
 }
