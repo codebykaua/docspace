@@ -1,12 +1,19 @@
 /**
- * DocSpace product features (v6.1)
- * Pessoas, biblioteca (rascunhos/histórico), validação BR, assinatura, share, catálogo.
+ * DocSpace product features
+ * PRIVACIDADE: pessoas, rascunhos e histórico ficam SOMENTE no localStorage do navegador.
+ * Nada de dados pessoais ou documentos é enviado ao banco/API para essas áreas.
  * Depende de window.DocSpaceCore exposto por script.js.
  */
 (() => {
     "use strict";
 
-    const PRODUCT_VERSION = "6.1.1-history-storage";
+    const PRODUCT_VERSION = "6.2.0-local-only";
+    const LS_PEOPLE = "docspace_local_people_v1";
+    const LS_DRAFTS = "docspace_local_drafts_v1";
+    const LS_HISTORY = "docspace_local_history_v1";
+    const MAX_HISTORY_ITEMS = 80;
+    const MAX_DRAFTS = 40;
+
     const state = {
         people: [],
         drafts: [],
@@ -41,6 +48,42 @@
 
     function toast(msg, type) {
         core()?.toast?.(msg, type);
+    }
+
+    function currentUserKey() {
+        const user = core()?.getState?.()?.user;
+        return String(user?.id || user?.email || "guest").toLowerCase();
+    }
+
+    function storageKey(base) {
+        return `${base}::${currentUserKey()}`;
+    }
+
+    function readLocal(base, fallback = []) {
+        try {
+            const raw = localStorage.getItem(storageKey(base));
+            if (!raw) return Array.isArray(fallback) ? [...fallback] : fallback;
+            const parsed = JSON.parse(raw);
+            return parsed ?? fallback;
+        } catch (_) {
+            return Array.isArray(fallback) ? [...fallback] : fallback;
+        }
+    }
+
+    function writeLocal(base, value) {
+        try {
+            localStorage.setItem(storageKey(base), JSON.stringify(value));
+            return true;
+        } catch (error) {
+            console.warn("localStorage cheio ou indisponível:", error);
+            toast("Não foi possível salvar no navegador (armazenamento cheio ou bloqueado).", "error");
+            return false;
+        }
+    }
+
+    function newLocalId() {
+        if (crypto?.randomUUID) return crypto.randomUUID();
+        return `local_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     }
 
     // ── Brazilian validation / masks ───────────────────────────────────────
@@ -257,23 +300,136 @@
         enhanceAllFields(form);
     }
 
-    // ── Views ──────────────────────────────────────────────────────────────
+    // ── Local-only storage (pessoas / rascunhos / histórico) ───────────────
 
     async function loadPeople(q = "") {
-        const data = await api(`/api/people${q ? `?q=${encodeURIComponent(q)}` : ""}`);
-        state.people = data.people || [];
+        const all = readLocal(LS_PEOPLE, []);
+        const query = String(q || "").trim().toLowerCase();
+        state.people = query
+            ? all.filter((p) => {
+                const hay = `${p.name || ""} ${p.cpf || ""} ${p.cnpj || ""} ${p.email || ""} ${p.phone || ""}`.toLowerCase();
+                return hay.includes(query);
+            })
+            : all;
         return state.people;
     }
 
+    function savePersonLocal(body, id = "") {
+        const all = readLocal(LS_PEOPLE, []);
+        const now = new Date().toISOString();
+        const person = {
+            id: id || newLocalId(),
+            name: String(body.name || "").trim(),
+            cpf: String(body.cpf || "").replace(/\D/g, ""),
+            cnpj: String(body.cnpj || "").replace(/\D/g, ""),
+            email: String(body.email || "").trim(),
+            phone: String(body.phone || "").trim(),
+            rg: String(body.rg || "").trim(),
+            birthDate: String(body.birthDate || "").trim(),
+            nationality: String(body.nationality || "").trim(),
+            maritalStatus: String(body.maritalStatus || "").trim(),
+            profession: String(body.profession || "").trim(),
+            addressStreet: String(body.addressStreet || "").trim(),
+            addressNumber: String(body.addressNumber || "").trim(),
+            addressDistrict: String(body.addressDistrict || "").trim(),
+            addressCity: String(body.addressCity || "").trim(),
+            addressUf: String(body.addressUf || "").trim().toUpperCase(),
+            addressCep: String(body.addressCep || "").replace(/\D/g, ""),
+            notes: String(body.notes || "").trim(),
+            updatedAt: now,
+            createdAt: now,
+        };
+        if (!person.name) throw new Error("Informe o nome da pessoa.");
+        const idx = all.findIndex((p) => p.id === person.id);
+        if (idx >= 0) {
+            person.createdAt = all[idx].createdAt || now;
+            all[idx] = person;
+        } else {
+            all.unshift(person);
+        }
+        if (!writeLocal(LS_PEOPLE, all)) throw new Error("Falha ao salvar no navegador.");
+        return person;
+    }
+
+    function deletePersonLocal(id) {
+        const all = readLocal(LS_PEOPLE, []).filter((p) => p.id !== id);
+        writeLocal(LS_PEOPLE, all);
+    }
+
     async function loadLibrary() {
-        const [drafts, history, links] = await Promise.all([
-            api("/api/drafts"),
-            api("/api/history?limit=50"),
-            api("/api/share/links"),
-        ]);
-        state.drafts = drafts.drafts || [];
-        state.history = history.history || [];
-        state.shareLinks = links.links || [];
+        state.drafts = readLocal(LS_DRAFTS, []);
+        state.history = readLocal(LS_HISTORY, []);
+        // Links públicos (sem dados pessoais no create) — opcional; falha silenciosa
+        state.shareLinks = [];
+        try {
+            const links = await api("/api/share/links");
+            state.shareLinks = (links.links || []).map((l) => ({
+                ...l,
+                // não exibimos formData na UI
+                formData: {},
+            }));
+        } catch (_) {
+            state.shareLinks = [];
+        }
+    }
+
+    function upsertDraftLocal(draft) {
+        const all = readLocal(LS_DRAFTS, []);
+        const now = new Date().toISOString();
+        const item = {
+            id: draft.id || newLocalId(),
+            documentType: draft.documentType,
+            title: draft.title || draft.documentType,
+            formData: draft.formData || {},
+            currentStep: Number(draft.currentStep || 0),
+            status: draft.status || "draft",
+            createdAt: draft.createdAt || now,
+            updatedAt: now,
+        };
+        const idx = all.findIndex((d) => d.id === item.id);
+        if (idx >= 0) {
+            item.createdAt = all[idx].createdAt || now;
+            all[idx] = item;
+        } else {
+            all.unshift(item);
+        }
+        writeLocal(LS_DRAFTS, all.slice(0, MAX_DRAFTS));
+        return item;
+    }
+
+    function deleteDraftLocal(id) {
+        writeLocal(LS_DRAFTS, readLocal(LS_DRAFTS, []).filter((d) => d.id !== id));
+    }
+
+    function addHistoryLocal(entry) {
+        const all = readLocal(LS_HISTORY, []);
+        const item = {
+            id: newLocalId(),
+            documentType: entry.documentType,
+            title: entry.title || entry.documentType,
+            formData: entry.formData || {},
+            outputFormat: entry.outputFormat || "docx",
+            fileName: entry.fileName || "",
+            draftId: entry.draftId || "",
+            hasFile: false,
+            storageProvider: "local",
+            createdAt: new Date().toISOString(),
+        };
+        all.unshift(item);
+        writeLocal(LS_HISTORY, all.slice(0, MAX_HISTORY_ITEMS));
+        return item;
+    }
+
+    function deleteHistoryLocal(id) {
+        writeLocal(LS_HISTORY, readLocal(LS_HISTORY, []).filter((h) => h.id !== id));
+    }
+
+    function getDraftLocal(id) {
+        return readLocal(LS_DRAFTS, []).find((d) => d.id === id) || null;
+    }
+
+    function getHistoryLocal(id) {
+        return readLocal(LS_HISTORY, []).find((h) => h.id === id) || null;
     }
 
     async function loadTemplatesCatalog() {
@@ -294,7 +450,7 @@
                     <div>
                         <p class="eyebrow">Cadastro</p>
                         <h2>Pessoas e clientes</h2>
-                        <p>Salve dados reutilizáveis e aplique no preenchimento dos documentos.</p>
+                        <p>Dados ficam <strong>somente neste navegador</strong> (localStorage). Nada de pessoas ou documentos é enviado ao servidor.</p>
                     </div>
                     <input id="peopleSearch" class="search-input" type="search" placeholder="Buscar nome, CPF, e-mail..." value="${attr(state.peopleQuery)}">
                 </div>
@@ -361,10 +517,9 @@
             delete body.id;
             const msg = container.querySelector("#personFormMessage");
             try {
-                if (id) await api(`/api/people/${encodeURIComponent(id)}`, { method: "PUT", body });
-                else await api("/api/people", { method: "POST", body });
+                savePersonLocal(body, id);
                 if (msg) {
-                    msg.textContent = "Pessoa salva.";
+                    msg.textContent = "Pessoa salva neste navegador (não vai para o servidor).";
                     msg.className = "message success field wide";
                 }
                 form.reset();
@@ -422,15 +577,11 @@
         });
         container.querySelectorAll("[data-person-delete]").forEach((btn) => {
             btn.addEventListener("click", async () => {
-                if (!confirm("Remover esta pessoa?")) return;
-                try {
-                    await api(`/api/people/${encodeURIComponent(btn.dataset.personDelete)}`, { method: "DELETE" });
-                    await loadPeople(state.peopleQuery);
-                    renderPeopleView(container);
-                    toast("Pessoa removida.", "success");
-                } catch (error) {
-                    toast(error.message, "error");
-                }
+                if (!confirm("Remover esta pessoa deste navegador?")) return;
+                deletePersonLocal(btn.dataset.personDelete);
+                await loadPeople(state.peopleQuery);
+                renderPeopleView(container);
+                toast("Pessoa removida do navegador.", "success");
             });
         });
     }
@@ -440,8 +591,8 @@
         container.innerHTML = `
             <article class="panel">
                 <p class="eyebrow">Biblioteca</p>
-                <h2>Rascunhos, histórico e links</h2>
-                <p>Continue preenchimentos e reabra gerações. Os <strong>arquivos PDF/Word</strong> ficam no storage externo (Appwrite/R2) — o banco Cloudflare (D1) só guarda dados leves, sem estourar o limite de 5&nbsp;GB.</p>
+                <h2>Rascunhos e histórico local</h2>
+                <p><strong>Privacidade:</strong> rascunhos e histórico ficam só no <strong>localStorage deste navegador</strong>. Não salvamos pessoas nem documentos no banco do servidor. PDF/Word gerados são baixados no seu dispositivo — use “Reabrir dados” para preencher de novo.</p>
             </article>
             <div class="split">
                 <article class="panel">
@@ -474,19 +625,16 @@
                                         <td>
                                             <strong>${esc(h.title || h.documentType)}</strong><br>
                                             <small>${esc(h.fileName || "")}</small>
-                                            ${h.hasFile
-                                                ? `<br><span class="badge">Arquivo no storage (${esc(h.storageProvider || "externo")})${h.fileSize ? ` · ${formatBytes(h.fileSize)}` : ""}</span>`
-                                                : `<br><span class="badge warn">Só dados (sem arquivo)</span>`}
+                                            <br><span class="badge">Só neste navegador</span>
                                         </td>
                                         <td>${esc((h.outputFormat || "").toUpperCase())}</td>
                                         <td>${esc(formatDate(h.createdAt))}</td>
                                         <td class="actions-cell">
                                             <button type="button" data-reopen-history="${attr(h.id)}">Reabrir dados</button>
-                                            ${h.hasFile ? `<button type="button" data-download-history="${attr(h.id)}" data-history-name="${attr(h.fileName || "documento")}">Baixar arquivo</button>` : ""}
                                             <button type="button" data-delete-history="${attr(h.id)}">Excluir</button>
                                         </td>
                                     </tr>
-                                `).join("") : `<tr><td colspan="4"><p class="message">Nenhuma geração registrada.</p></td></tr>`}
+                                `).join("") : `<tr><td colspan="4"><p class="message">Nenhuma geração registrada neste navegador.</p></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -522,8 +670,8 @@
         });
         container.querySelectorAll("[data-delete-draft]").forEach((btn) => {
             btn.addEventListener("click", async () => {
-                if (!confirm("Excluir rascunho?")) return;
-                await api(`/api/drafts/${encodeURIComponent(btn.dataset.deleteDraft)}`, { method: "DELETE" });
+                if (!confirm("Excluir rascunho deste navegador?")) return;
+                deleteDraftLocal(btn.dataset.deleteDraft);
                 await loadLibrary();
                 renderLibraryView(container);
             });
@@ -531,20 +679,13 @@
         container.querySelectorAll("[data-reopen-history]").forEach((btn) => {
             btn.addEventListener("click", () => reopenHistory(btn.dataset.reopenHistory));
         });
-        container.querySelectorAll("[data-download-history]").forEach((btn) => {
-            btn.addEventListener("click", () => downloadHistoryFile(btn.dataset.downloadHistory, btn.dataset.historyName));
-        });
         container.querySelectorAll("[data-delete-history]").forEach((btn) => {
             btn.addEventListener("click", async () => {
-                if (!confirm("Excluir este item do histórico e o arquivo no storage?")) return;
-                try {
-                    await api(`/api/history/${encodeURIComponent(btn.dataset.deleteHistory)}`, { method: "DELETE" });
-                    await loadLibrary();
-                    renderLibraryView(container);
-                    toast("Histórico removido.", "success");
-                } catch (error) {
-                    toast(error.message || "Erro ao excluir.", "error");
-                }
+                if (!confirm("Excluir este item do histórico local?")) return;
+                deleteHistoryLocal(btn.dataset.deleteHistory);
+                await loadLibrary();
+                renderLibraryView(container);
+                toast("Histórico removido deste navegador.", "success");
             });
         });
         container.querySelectorAll("[data-copy-share]").forEach((btn) => {
@@ -582,58 +723,25 @@
         }
     }
 
-    function formatBytes(bytes) {
-        const n = Number(bytes) || 0;
-        if (n < 1024) return `${n} B`;
-        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-        return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-    }
-
-    async function downloadHistoryFile(id, fileName = "documento") {
-        const c = core();
-        if (!c?.apiRequest) return;
-        try {
-            toast("Baixando arquivo do storage...", "");
-            const token = localStorage.getItem("documentos_rurais_session_token") || "";
-            const base = String(window.DOCSPACE_CONFIG?.API_BASE_URL || window.API_BASE_URL || "").replace(/\/+$/, "");
-            const response = await fetch(`${base}/api/history/${encodeURIComponent(id)}/file`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                credentials: "include",
-            });
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.message || `Erro HTTP ${response.status}`);
-            }
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName || "documento";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-            toast("Download iniciado.", "success");
-        } catch (error) {
-            toast(error.message || "Falha no download.", "error");
-        }
-    }
-
     async function openDraft(id) {
-        const data = await api(`/api/drafts/${encodeURIComponent(id)}`);
-        const draft = data.draft;
-        if (!draft) return;
+        const draft = getDraftLocal(id);
+        if (!draft) {
+            toast("Rascunho não encontrado neste navegador.", "error");
+            return;
+        }
         state.activeDraftId = draft.id;
         core()?.openDocumentWithData?.(draft.documentType, draft.formData || {}, { draftId: draft.id, step: draft.currentStep || 0 });
-        toast("Rascunho aberto.", "success");
+        toast("Rascunho aberto (local).", "success");
     }
 
     async function reopenHistory(id) {
-        const data = await api(`/api/history/${encodeURIComponent(id)}`);
-        const item = data.item;
-        if (!item) return;
+        const item = getHistoryLocal(id);
+        if (!item) {
+            toast("Histórico não encontrado neste navegador.", "error");
+            return;
+        }
         core()?.openDocumentWithData?.(item.documentType, item.formData || {});
-        toast("Dados do histórico carregados.", "success");
+        toast("Dados locais carregados. Gere o PDF/Word de novo se precisar do arquivo.", "success");
     }
 
     // ── Wizard toolbar (save draft, people, share, sign) ───────────────────
@@ -664,18 +772,17 @@
         const docId = form.dataset.documentId;
         const doc = c.getDoc?.(docId);
         const formData = c.collectFormData?.(form, doc) || {};
-        const body = {
-            id: state.activeDraftId || undefined,
-            documentType: docId,
-            title: doc?.title || docId,
-            formData,
-            currentStep: Number(form.dataset.currentStep || 0),
-            status: "draft",
-        };
         try {
-            const data = await api("/api/drafts", { method: "POST", body });
-            state.activeDraftId = data.draft?.id || state.activeDraftId;
-            toast("Rascunho salvo.", "success");
+            const draft = upsertDraftLocal({
+                id: state.activeDraftId || undefined,
+                documentType: docId,
+                title: doc?.title || docId,
+                formData,
+                currentStep: Number(form.dataset.currentStep || 0),
+                status: "draft",
+            });
+            state.activeDraftId = draft.id;
+            toast("Rascunho salvo neste navegador (não vai ao servidor).", "success");
         } catch (error) {
             toast(error.message || "Erro ao salvar rascunho.", "error");
         }
@@ -706,14 +813,14 @@
         const c = core();
         const docId = form.dataset.documentId;
         const doc = c?.getDoc?.(docId);
-        const formData = c?.collectFormData?.(form, doc) || {};
         try {
+            // Não envia formData/dados pessoais — só o tipo do modelo para o cliente preencher
             const data = await api("/api/share/links", {
                 method: "POST",
                 body: {
                     documentType: docId,
                     title: doc?.title || docId,
-                    formData,
+                    formData: {},
                     expiresInDays: 7,
                 },
             });
@@ -722,7 +829,7 @@
             const url = `${base}${base.endsWith("/") ? "" : "/"}share.html?token=${encodeURIComponent(token)}`;
             try {
                 await navigator.clipboard.writeText(url);
-                toast("Link copiado para a área de transferência.", "success");
+                toast("Link copiado (sem seus dados preenchidos).", "success");
             } catch (_) {
                 prompt("Envie este link ao cliente:", url);
             }
@@ -839,20 +946,10 @@
                 const signatureDataUrl = canvas.toDataURL("image/png");
                 const stamped = await stampSignatureOnPdf(pdfBase64, signatureDataUrl, signerName);
                 const fileName = (c.getState?.()?.pdfPreviewFileName || "documento.pdf").replace(/\.pdf$/i, "") + "-assinado.pdf";
-                await api("/api/signatures", {
-                    method: "POST",
-                    body: {
-                        signerName,
-                        signerEmail,
-                        signatureDataUrl,
-                        pdfBase64: stamped,
-                        fileName,
-                        documentType: c.getState?.()?.activeDocId || "",
-                    },
-                });
+                // Assinatura só no dispositivo — não envia PDF/dados ao servidor
                 c.showDocumentPdfPreview?.(stamped, fileName);
                 c.downloadBase64?.(stamped, fileName, "application/pdf");
-                toast("PDF assinado e baixado.", "success");
+                toast("PDF assinado e baixado (não foi enviado ao servidor).", "success");
                 modal.remove();
             } catch (error) {
                 if (msg) {
@@ -1075,44 +1172,30 @@
         return false;
     }
 
-    async function onAfterGenerate({ form, doc, formData, generateType, fileName, fileBase64, mimeType }) {
+    async function onAfterGenerate({ form, doc, formData, generateType, fileName }) {
         try {
-            const body = {
+            // SOMENTE localStorage — zero envio de dados pessoais/documentos ao DB
+            addHistoryLocal({
                 documentType: doc?.id || form?.dataset?.documentId,
                 title: doc?.title || "",
-                formData,
+                formData: formData || {},
                 outputFormat: generateType,
                 fileName: fileName || "",
                 draftId: state.activeDraftId || "",
-                mimeType: mimeType || (generateType === "pdf"
-                    ? "application/pdf"
-                    : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
-            };
-            // Arquivo vai para Appwrite/R2 via API — NÃO fica no D1 (limite 5GB)
-            if (fileBase64) body.fileBase64 = fileBase64;
-
-            const result = await api("/api/history", { method: "POST", body });
-            if (result?.item?.fileStored) {
-                toast("Documento salvo na Biblioteca (storage externo).", "success");
-            } else if (result?.item?.warning) {
-                console.warn(result.item.warning);
-            }
-
+            });
             if (state.activeDraftId) {
-                await api("/api/drafts", {
-                    method: "POST",
-                    body: {
-                        id: state.activeDraftId,
-                        documentType: doc?.id,
-                        title: doc?.title,
-                        formData,
-                        status: "completed",
-                        currentStep: 0,
-                    },
+                upsertDraftLocal({
+                    id: state.activeDraftId,
+                    documentType: doc?.id,
+                    title: doc?.title,
+                    formData: formData || {},
+                    status: "completed",
+                    currentStep: 0,
                 });
             }
+            toast("Registro local na Biblioteca (não foi ao servidor).", "success");
         } catch (error) {
-            console.warn("Histórico não registrado:", error);
+            console.warn("Histórico local não registrado:", error);
         }
         setTimeout(() => injectSignatureUi(), 50);
     }

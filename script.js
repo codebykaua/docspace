@@ -6153,15 +6153,13 @@
 
                 setGenerateProgress(100, "PDF pronto!");
                 setMessage(msg, response.message || "PDF gerado. Preview abaixo e download iniciado.", "success");
-                // Arquivo do histórico vai para Appwrite/R2 (fora do D1 5GB)
+                // Histórico/pessoas só no localStorage — não envia PDF/dados ao servidor
                 window.DocSpaceProduct?.onAfterGenerate?.({
                     form,
                     doc,
                     formData: data,
                     generateType: "pdf",
                     fileName: pdfName,
-                    fileBase64: response.pdfBase64,
-                    mimeType: "application/pdf",
                 });
                 setTimeout(() => window.DocSpaceProduct?.injectSignatureUi?.(), 80);
             } else {
@@ -6179,20 +6177,12 @@
 
                 setGenerateProgress(100, "Word pronto!");
                 setMessage(msg, "Documento Word baixado com sucesso.", "success");
-                let docxBase64 = "";
-                try {
-                    docxBase64 = await blobToBase64(docxBlob, true);
-                } catch (encodeError) {
-                    console.warn("Não foi possível serializar DOCX para o histórico.", encodeError);
-                }
                 window.DocSpaceProduct?.onAfterGenerate?.({
                     form,
                     doc,
                     formData: data,
                     generateType: "docx",
                     fileName,
-                    fileBase64: docxBase64,
-                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 });
             }
         } catch (error) {

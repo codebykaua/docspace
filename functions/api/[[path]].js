@@ -392,71 +392,23 @@ async function handleRequest(request, env) {
     }
 
     // ── Product features: people, drafts, history, share, signatures, templates ──
-    if (request.method === "GET" && match(path, ["people"])) {
-        const session = await requireSession(request, env);
-        return json({ people: await listPeople(env, session.user.id, url.searchParams.get("q") || "") });
-    }
-    if (request.method === "POST" && match(path, ["people"])) {
-        const session = await requireSession(request, env);
-        const person = await createPerson(env, session.user.id, await readJson(request));
-        return json({ person, message: "Pessoa salva." }, 201);
-    }
-    if (request.method === "PUT" && path.length === 2 && path[0] === "people") {
-        const session = await requireSession(request, env);
-        const person = await updatePerson(env, session.user.id, path[1], await readJson(request));
-        return json({ person, message: "Pessoa atualizada." });
-    }
-    if (request.method === "DELETE" && path.length === 2 && path[0] === "people") {
-        const session = await requireSession(request, env);
-        await deletePerson(env, session.user.id, path[1]);
-        return json({ message: "Pessoa removida." });
-    }
-
-    if (request.method === "GET" && match(path, ["drafts"])) {
-        const session = await requireSession(request, env);
-        return json({ drafts: await listDrafts(env, session.user.id) });
-    }
-    if (request.method === "POST" && match(path, ["drafts"])) {
-        const session = await requireSession(request, env);
-        const draft = await upsertDraft(env, session.user.id, await readJson(request));
-        return json({ draft, message: "Rascunho salvo." }, 201);
-    }
-    if (request.method === "GET" && path.length === 2 && path[0] === "drafts") {
-        const session = await requireSession(request, env);
-        const draft = await getDraft(env, session.user.id, path[1]);
-        if (!draft) throw httpError(404, "Rascunho nao encontrado.");
-        return json({ draft });
-    }
-    if (request.method === "DELETE" && path.length === 2 && path[0] === "drafts") {
-        const session = await requireSession(request, env);
-        await deleteDraft(env, session.user.id, path[1]);
-        return json({ message: "Rascunho removido." });
-    }
-
-    if (request.method === "GET" && match(path, ["history"])) {
-        const session = await requireSession(request, env);
-        const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 40)));
-        return json({ history: await listHistory(env, session.user.id, limit) });
-    }
-    if (request.method === "POST" && match(path, ["history"])) {
-        const session = await requireSession(request, env);
-        const item = await createHistoryItem(env, session.user.id, await readJson(request));
-        return json({ item, message: "Geracao registrada no historico." }, 201);
-    }
-    if (request.method === "GET" && path.length === 2 && path[0] === "history") {
-        const session = await requireSession(request, env);
-        const item = await getHistoryItem(env, session.user.id, path[1]);
-        if (!item) throw httpError(404, "Registro nao encontrado.");
-        return json({ item });
-    }
-    if (request.method === "GET" && path.length === 3 && path[0] === "history" && path[2] === "file") {
-        const session = await requireSession(request, env);
-        return downloadHistoryFile(env, session.user.id, path[1]);
-    }
-    if (request.method === "DELETE" && path.length === 2 && path[0] === "history") {
-        const session = await requireSession(request, env);
-        await deleteHistoryItem(env, session.user.id, path[1]);
-        return json({ message: "Historico e arquivo removidos." });
+    // Pessoas / rascunhos / histórico: desabilitados no servidor (privacidade).
+    // O frontend usa apenas localStorage do navegador.
+    if (
+        (path[0] === "people") ||
+        (path[0] === "drafts") ||
+        (path[0] === "history") ||
+        (path[0] === "signatures" && request.method === "POST")
+    ) {
+        return json({
+            message: "Dados pessoais e documentos nao sao armazenados no servidor. Use o armazenamento local do navegador (DocSpace Biblioteca/Pessoas).",
+            people: [],
+            drafts: [],
+            history: [],
+            signatures: [],
+            disabled: true,
+            storage: "localStorage-only",
+        }, request.method === "GET" ? 200 : 410);
     }
 
     if (request.method === "GET" && match(path, ["share", "links"])) {
@@ -481,13 +433,7 @@ async function handleRequest(request, env) {
     }
 
     if (request.method === "GET" && match(path, ["signatures"])) {
-        const session = await requireSession(request, env);
-        return json({ signatures: await listSignatures(env, session.user.id) });
-    }
-    if (request.method === "POST" && match(path, ["signatures"])) {
-        const session = await requireSession(request, env);
-        const signature = await createSignature(env, session.user.id, await readJson(request), request);
-        return json({ signature, message: "Assinatura registrada." }, 201);
+        return json({ signatures: [], disabled: true, storage: "localStorage-only" });
     }
 
     if (request.method === "GET" && match(path, ["templates"])) {
@@ -5406,28 +5352,18 @@ async function submitPublicShareLink(env, token, body) {
     });
 
     const now = productNow();
+    // Privacidade: NÃO grava form_data / nome / e-mail do cliente no D1.
     await env.DB.prepare(
-        `UPDATE share_fill_links SET form_data=?, status='submitted', submitted_at=?, submitter_name=?, submitter_email=?, updated_at=?
+        `UPDATE share_fill_links SET form_data='{}', status='submitted', submitted_at=?, submitter_name='', submitter_email='', updated_at=?
          WHERE id=?`
-    ).bind(
-        productStringify(merged),
-        now,
-        String(body.submitterName || body.submitter_name || "").trim().slice(0, 160),
-        String(body.submitterEmail || body.submitter_email || "").trim().slice(0, 180),
-        now,
-        row.id
-    ).run();
+    ).bind(now, now, row.id).run();
 
-    // Also create a draft for the owner so they can continue and generate.
-    await upsertDraft(env, row.owner_user_id, {
-        documentType: row.document_type,
-        title: `${row.title || row.document_type} (preenchido pelo cliente)`,
+    return json({
+        message: "Recebido. Por privacidade os dados do formulario NAO sao salvos no servidor. Copie/guarde localmente se precisar.",
+        submitted: true,
+        // Devolve os dados só na resposta HTTP (não persiste) para o cliente copiar se quiser
         formData: merged,
-        currentStep: 0,
-        status: "draft",
     });
-
-    return json({ message: "Dados enviados com sucesso. O responsavel ja pode gerar o documento." });
 }
 
 function mapSignature(row) {
