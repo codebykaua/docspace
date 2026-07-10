@@ -719,7 +719,7 @@ async function ensureDatabaseSchema(env) {
             created_at TEXT NOT NULL
         )`,
         "CREATE INDEX IF NOT EXISTS idx_document_history_user_created ON document_history(user_id, created_at)",
-        "CREATE INDEX IF NOT EXISTS idx_document_history_file_key ON document_history(file_key)",
+        // índice de file_key só depois do ensureTableColumn (tabelas antigas não têm a coluna)
         `CREATE TABLE IF NOT EXISTS share_fill_links (
             id TEXT PRIMARY KEY,
             token TEXT NOT NULL UNIQUE,
@@ -778,7 +778,12 @@ async function ensureDatabaseSchema(env) {
     ];
 
     for (const statement of statements) {
-        await env.DB.prepare(statement).run();
+        try {
+            await env.DB.prepare(statement).run();
+        } catch (error) {
+            // Tabelas antigas / índices opcionais não podem derrubar a API inteira
+            console.warn("ensureDatabaseSchema statement skipped:", String(error.message || error).slice(0, 200));
+        }
     }
 
     await ensureUserColumn(env, "is_verified", "INTEGER NOT NULL DEFAULT 0");
@@ -793,12 +798,23 @@ async function ensureDatabaseSchema(env) {
     await ensureAppReleaseColumn(env, "update_message", "TEXT NOT NULL DEFAULT ''");
     await ensureAppReleaseColumn(env, "download_url", "TEXT NOT NULL DEFAULT ''");
     await ensureAppReleaseColumn(env, "is_active", "INTEGER NOT NULL DEFAULT 1");
+
+    // Colunas novas em tabelas já existentes (CREATE IF NOT EXISTS não altera schema antigo)
     await ensureTableColumn(env, "document_history", "file_key", "TEXT NOT NULL DEFAULT ''");
     await ensureTableColumn(env, "document_history", "file_size", "INTEGER NOT NULL DEFAULT 0");
     await ensureTableColumn(env, "document_history", "mime_type", "TEXT NOT NULL DEFAULT ''");
     await ensureTableColumn(env, "document_history", "storage_provider", "TEXT NOT NULL DEFAULT ''");
     await ensureTableColumn(env, "document_signatures", "file_key", "TEXT NOT NULL DEFAULT ''");
     await ensureTableColumn(env, "document_signatures", "file_size", "INTEGER NOT NULL DEFAULT 0");
+
+    try {
+        await env.DB.prepare(
+            "CREATE INDEX IF NOT EXISTS idx_document_history_file_key ON document_history(file_key)"
+        ).run();
+    } catch (error) {
+        console.warn("idx_document_history_file_key skipped:", error.message);
+    }
+
     schemaReady = true;
 }
 
