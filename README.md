@@ -8,8 +8,8 @@ Sistema web para preenchimento guiado de documentos, geração de Word/PDF, ferr
 - Ferramentas PDF no navegador (juntar, dividir, compactar, OCR…)
 - Planos, cotas e Mercado Pago
 - Suporte, admin e DocSpace IA
-- **Pessoas/clientes** reutilizáveis no preenchimento
-- **Rascunhos e histórico** de gerações
+- **Pessoas/clientes** reutilizáveis no preenchimento, salvos localmente no navegador
+- **Rascunhos e histórico** locais, sem envio dos arquivos ao D1
 - **Validação BR** (CPF, CNPJ, CEP/ViaCEP, máscaras)
 - **Assinatura eletrônica** simples (canvas no PDF)
 - **Link de preenchimento** para o cliente (`share.html`)
@@ -33,10 +33,11 @@ Documentação de backend: `README_BACKEND_CLOUDFLARE.md`
 Cobrança: `README_MERCADO_PAGO.md`  
 Histórico de correções antigas: `docs/archive/`
 
-## Schema D1 (novas tabelas)
+## Schema D1 e migrações
 
 ```bash
-npx wrangler d1 execute gerador_documentos_rurais --remote --file=migrations/0004_product_features.sql --config wrangler-api.toml
+npx wrangler d1 execute gerador_documentos_rurais --remote --file=schema.sql --config wrangler-api.toml
+npx wrangler d1 migrations apply gerador_documentos_rurais --remote --config wrangler-api.toml
 ```
 
 O Worker também aplica o schema automaticamente em `ensureDatabaseSchema` no boot.
@@ -56,6 +57,13 @@ node --check worker-backend-pronto.js
 npx wrangler deploy --config wrangler-api.toml
 ```
 
+## Deploy do site
+
+```bash
+npm run build
+npx wrangler pages deploy .pages-dist --project-name docspace-web
+```
+
 ## Versão
 
-**6.1.0** — pessoas, rascunhos/histórico, validação BR, assinatura, share link, catálogo admin e limpeza do repositório.
+**6.2.1** — atualização Android, segurança de login/webhook, correções administrativas e testes de regressão.

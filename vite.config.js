@@ -4,7 +4,7 @@ export default defineConfig({
   root: '.',
   publicDir: 'public',
   build: {
-    outDir: 'dist',
+    outDir: '.pages-dist',
     emptyOutDir: true,
     rollupOptions: {
       input: {

@@ -65,7 +65,7 @@ npx wrangler deploy --config wrangler-api.toml
 O deploy mantem o endereco usado pelo site:
 
 ```text
-https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev
+https://docspace-api.kaualucas9773.workers.dev
 ```
 
 ## Pre-visualizacao PDF via Render
@@ -168,6 +168,7 @@ Configure o token privado no Worker:
 
 ```bash
 wrangler secret put MERCADO_PAGO_ACCESS_TOKEN --config wrangler-api.toml
+wrangler secret put MERCADO_PAGO_WEBHOOK_SECRET --config wrangler-api.toml
 ```
 
 Opcional:

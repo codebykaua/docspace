@@ -506,3 +506,136 @@ textarea.is-valid {
 .main-nav button {
     white-space: nowrap;
 }
+
+/* Atualização Android */
+.app-release-page {
+    display: grid;
+    gap: 18px;
+}
+.app-release-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+.app-release-header h2,
+.app-release-history h3,
+.app-release-feature h3 {
+    margin: 0;
+    letter-spacing: 0;
+}
+.app-release-header p:not(.eyebrow),
+.app-release-feature p:not(.eyebrow) {
+    color: var(--muted);
+}
+.app-release-platform,
+.app-release-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid #bcd4ee;
+    border-radius: 999px;
+    background: #edf5fd;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.app-release-user-content {
+    display: grid;
+    gap: 16px;
+}
+.app-release-feature {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    padding: clamp(20px, 3vw, 30px);
+    border: 1px solid #c8d8ea;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
+    box-shadow: var(--shadow);
+}
+.app-release-icon,
+.app-release-version-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    color: #fff;
+    background: linear-gradient(135deg, #2463b6, #16a5a3);
+}
+.app-release-feature.is-empty .app-release-icon,
+.app-release-feature.is-loading .app-release-icon {
+    background: linear-gradient(135deg, #64748b, #2563eb);
+}
+.app-release-feature.is-error .app-release-icon {
+    background: linear-gradient(135deg, #c2410c, #dc2626);
+}
+.app-release-feature small,
+.app-release-version small,
+.admin-release-current small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+}
+.app-release-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.app-release-history {
+    display: grid;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+}
+.app-release-version {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+.app-release-version-icon {
+    width: 42px;
+    height: 42px;
+}
+.admin-release-current {
+    margin: 14px 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+.admin-release-current p {
+    margin-bottom: 0;
+}
+@media (max-width: 680px) {
+    .app-release-header {
+        flex-direction: column;
+    }
+    .app-release-feature,
+    .app-release-version {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+    .app-release-download {
+        width: 100%;
+        justify-content: center;
+    }
+}

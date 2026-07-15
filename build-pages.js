@@ -5,10 +5,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = __dirname;
-const distDir = path.join(rootDir, 'dist');
+const distDir = path.join(rootDir, '.pages-dist');
 
 /**
- * Arquivos estáticos que devem ser copiados para dist/ APÓS o vite build.
+ * Arquivos estáticos que devem ser copiados para .pages-dist/ APÓS o vite build.
  * IMPORTANTE: não sobrescreve arquivos já gerados pelo Vite (index.html, contro.html, setup-admin.html).
  * O Vite já processou esses HTMLs com hashes nos assets.
  */
@@ -96,7 +96,24 @@ function copyDir(relativePath) {
         return 0;
     }
 
-    return copyDirRecursive(from, to);
+    // Modelos e imagens de pagamento não contêm assets gerados pelo Vite.
+    // Limpar evita publicar cópias antigas ou nomes corrompidos que ficaram no dist.
+    if (["modelos", "IMG"].includes(relativePath) && fs.existsSync(to)) {
+        fs.rmSync(to, { recursive: true, force: true });
+    }
+
+    const copied = copyDirRecursive(from, to);
+
+    if (["modelos", "IMG"].includes(relativePath)) {
+        pruneTargetDirectory(from, to);
+        const sourceFiles = countFilesRecursive(from);
+        const targetFiles = countFilesRecursive(to);
+        if (sourceFiles !== targetFiles) {
+            throw new Error(`${relativePath}/ inconsistente no dist: fonte=${sourceFiles}, destino=${targetFiles}`);
+        }
+    }
+
+    return copied;
 }
 
 function copyDirRecursive(from, to) {
@@ -117,6 +134,30 @@ function copyDirRecursive(from, to) {
         }
     }
 
+    return count;
+}
+
+function pruneTargetDirectory(sourceDir, targetDir) {
+    if (!fs.existsSync(targetDir)) return;
+
+    for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
+        const sourcePath = path.join(sourceDir, entry.name);
+        const targetPath = path.join(targetDir, entry.name);
+        if (!fs.existsSync(sourcePath)) {
+            fs.rmSync(targetPath, { recursive: true, force: true });
+            continue;
+        }
+        if (entry.isDirectory()) pruneTargetDirectory(sourcePath, targetPath);
+    }
+}
+
+function countFilesRecursive(directory) {
+    if (!fs.existsSync(directory)) return 0;
+    let count = 0;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const entryPath = path.join(directory, entry.name);
+        count += entry.isDirectory() ? countFilesRecursive(entryPath) : 1;
+    }
     return count;
 }
 
@@ -149,11 +190,11 @@ patchHtmlAssets();
 ensureHeadersFile();
 
 console.log(`\n✅ Build complementar concluído: ${copiedFiles} arquivos + ${copiedDirs} assets de diretório`);
-console.log(`📦 dist/ pronto para deploy no Cloudflare Pages`);
+console.log(`📦 .pages-dist/ pronto para deploy no Cloudflare Pages`);
 
 function patchHtmlAssets() {
     const htmlFiles = ['index.html', 'contro.html', 'setup-admin.html'];
-    const assetVersion = '131';
+    const assetVersion = '135';
 
     for (const fileName of htmlFiles) {
         const filePath = path.join(distDir, fileName);

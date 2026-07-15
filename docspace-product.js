@@ -150,10 +150,20 @@
         return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d{1,4})$/, "$1-$2");
     }
 
+    function formatCpfOrCnpj(value) {
+        const digits = onlyDigits(value).slice(0, 14);
+        // Campos rurais costumam aceitar CPF ou CNPJ no mesmo input.
+        if (digits.length > 11) return formatCnpj(digits);
+        return formatCpf(digits);
+    }
+
     function fieldKind(name = "") {
         const key = String(name || "").toLowerCase();
+        // cpf_cnpj_* / cpf-cnpj → aceita os dois (antes caía só em CNPJ e bloqueava o formulário)
+        if (key.includes("cpf") && key.includes("cnpj")) return "cpf_cnpj";
         if (/(^|_)cnpj($|_)/.test(key) || key.includes("cnpj")) return "cnpj";
-        if (/(^|_)cpf($|_)/.test(key) || key.endsWith("_cpf") || key === "cpf") return "cpf";
+        // Muitos rótulos são "CPF/CNPJ" com name cpf_* — aceita os dois
+        if (/(^|_)cpf($|_)/.test(key) || key.endsWith("_cpf") || key === "cpf" || key.includes("cpf")) return "cpf_cnpj";
         if (/(^|_)cep($|_)/.test(key) || key.includes("cep") || key.includes("postal")) return "cep";
         if (key.includes("telefone") || key.includes("celular") || key.includes("whatsapp") || key.includes("fone")) return "phone";
         return "";
@@ -167,11 +177,14 @@
         field.dataset.brEnhanced = "1";
         field.dataset.brKind = kind;
         field.setAttribute("inputmode", kind === "phone" ? "tel" : "numeric");
+        // Nunca deixe customValidity residual de versões antigas bloquear o submit do wizard
+        try { field.setCustomValidity(""); } catch (_) { /* ignore */ }
         field.addEventListener("input", () => {
             const start = field.selectionStart;
             const before = field.value;
             if (kind === "cpf") field.value = formatCpf(field.value);
             if (kind === "cnpj") field.value = formatCnpj(field.value);
+            if (kind === "cpf_cnpj") field.value = formatCpfOrCnpj(field.value);
             if (kind === "cep") field.value = formatCep(field.value);
             if (kind === "phone") field.value = formatPhone(field.value);
             try {
@@ -192,17 +205,48 @@
         const kind = field.dataset.brKind;
         const digits = onlyDigits(field.value);
         let ok = true;
+
+        // Sempre limpa customValidity: setCustomValidity bloqueava o submit do formulário.
+        // No wizard multi-etapas o campo inválido fica em etapa oculta e parece que
+        // "não gera Word nem PDF" — o browser engole o clique sem chamar o handler.
+        try { field.setCustomValidity(""); } catch (_) { /* ignore */ }
+
         if (!digits) {
             field.classList.remove("is-invalid", "is-valid");
             return;
         }
-        if (kind === "cpf") ok = isValidCpf(digits);
+
+        // Enquanto digita (valor incompleto), só feedback visual neutro — não marca erro.
+        if (kind === "cpf" && digits.length < 11) {
+            field.classList.remove("is-invalid", "is-valid");
+            return;
+        }
+        if (kind === "cnpj" && digits.length < 14) {
+            field.classList.remove("is-invalid", "is-valid");
+            return;
+        }
+        if (kind === "cpf_cnpj" && digits.length < 11) {
+            field.classList.remove("is-invalid", "is-valid");
+            return;
+        }
+        if (kind === "cep" && digits.length < 8) {
+            field.classList.remove("is-invalid", "is-valid");
+            return;
+        }
+        if (kind === "phone" && digits.length < 10) {
+            field.classList.remove("is-invalid", "is-valid");
+            return;
+        }
+
+        if (kind === "cpf") ok = isValidCpf(digits) || isValidCnpj(digits);
         if (kind === "cnpj") ok = isValidCnpj(digits);
+        if (kind === "cpf_cnpj") ok = isValidCpf(digits) || isValidCnpj(digits);
         if (kind === "cep") ok = digits.length === 8;
         if (kind === "phone") ok = digits.length >= 10 && digits.length <= 11;
+
         field.classList.toggle("is-invalid", !ok);
         field.classList.toggle("is-valid", ok);
-        field.setCustomValidity(ok ? "" : `Valor de ${kind.toUpperCase()} inválido`);
+        // Feedback visual apenas — NÃO usa setCustomValidity (bloqueava Gerar Word/PDF).
     }
 
     async function fillAddressFromCep(cepField) {

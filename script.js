@@ -5478,6 +5478,9 @@
         supportMessages: [],
         adminSupportMessages: [],
         appRelease: null,
+        appReleaseLoaded: false,
+        appReleaseLoading: false,
+        appReleaseError: "",
         aiConversationId: null,
         pdfPreviewUrl: null,
         pdfPreviewFileName: "",
@@ -5729,6 +5732,7 @@
             admin: ["Administração", "Admin"],
             billing: ["Assinatura", "Planos"],
             ai: ["Assistente", "IA"],
+            "app-update": ["Aplicativo Android", "Atualização APK"],
         };
         const [kicker, title] = titles[state.view] || titles.dashboard;
         refs.pageKicker.textContent = kicker;
@@ -5750,6 +5754,7 @@
         if (state.view === "support") renderSupport();
         if (state.view === "billing") renderBilling();
         if (state.view === "ai") renderAI();
+        if (state.view === "app-update") renderAppUpdate();
         if (state.view === "admin") renderAdmin();
         initIcons();
     }
@@ -5769,6 +5774,7 @@
                         <button class="secondary-button" data-goto="library">Biblioteca</button>
                         <button class="secondary-button" data-goto="people">Pessoas</button>
                         <button class="secondary-button" data-goto="pdf">Ferramentas de PDF</button>
+                        <button class="secondary-button" data-goto="app-update">Atualização APK</button>
                         ${isAdmin() ? '<button class="secondary-button" data-goto="admin">Administração</button>' : ''}
                     </div>
                 </article>
@@ -5791,6 +5797,70 @@
                 <div class="grid">${DOCS.slice(0, 6).map(docCard).join("")}</div>
             </article>
         `;
+    }
+
+    async function renderAppUpdate() {
+        refs.content.innerHTML = `
+            <section class="app-release-page" aria-labelledby="appReleaseTitle">
+                <header class="app-release-header">
+                    <div>
+                        <p class="eyebrow">Aplicativo Android</p>
+                        <h2 id="appReleaseTitle">Atualização APK</h2>
+                        <p>Consulte e baixe a versão mais recente do DocSpace para Android.</p>
+                    </div>
+                    <span class="app-release-platform"><i data-lucide="smartphone"></i> Android</span>
+                </header>
+                <div id="appReleaseUserContent" class="app-release-user-content">
+                    <article class="app-release-feature is-loading">
+                        <span class="app-release-icon"><i data-lucide="loader-circle"></i></span>
+                        <div><p class="eyebrow">Versão atual</p><h3>Consultando atualização...</h3><p>Aguarde um instante.</p></div>
+                    </article>
+                </div>
+            </section>`;
+        initIcons();
+
+        try {
+            const data = await apiRequest("/api/app-release");
+            state.appRelease = data.release || null;
+            state.appReleaseLoaded = true;
+            state.appReleaseError = "";
+        } catch (error) {
+            state.appRelease = null;
+            state.appReleaseLoaded = true;
+            state.appReleaseError = translateError(error);
+        }
+
+        if (state.view !== "app-update") return;
+        const host = $("#appReleaseUserContent");
+        if (host) host.innerHTML = renderAppReleaseUserContent();
+        initIcons();
+    }
+
+    function renderAppReleaseUserContent() {
+        if (state.appReleaseError) {
+            return `<article class="app-release-feature is-error"><span class="app-release-icon"><i data-lucide="triangle-alert"></i></span><div><p class="eyebrow">Indisponível</p><h3>Não foi possível consultar</h3><p>${escapeHtml(state.appReleaseError)}</p></div></article>`;
+        }
+
+        const release = state.appRelease;
+        if (!release) {
+            return `<article class="app-release-feature is-empty"><span class="app-release-icon"><i data-lucide="clock-3"></i></span><div><p class="eyebrow">Versões do aplicativo</p><h3>Primeira versão em breve</h3><p>Nenhuma atualização foi publicada pelo administrador ainda.</p></div><span class="app-release-status">Aguardando</span></article>`;
+        }
+
+        const version = release.versionName ? `Versão ${release.versionName}` : "Nova versão";
+        const date = release.createdAt ? formatDate(release.createdAt) : "Disponível agora";
+        const download = release.downloadUrl
+            ? `<a class="primary-button app-release-download" href="${escapeAttr(release.downloadUrl)}" target="_blank" rel="noopener noreferrer"><i data-lucide="download"></i> Baixar APK</a>`
+            : "";
+        return `
+            <article class="app-release-feature">
+                <span class="app-release-icon"><i data-lucide="badge-check"></i></span>
+                <div><p class="eyebrow">Versão atual</p><h3>${escapeHtml(version)}</h3><p>${escapeHtml(release.message || "Nova atualização disponível.")}</p><small>Publicada em ${escapeHtml(date)}</small></div>
+                ${download}
+            </article>
+            <section class="app-release-history" aria-labelledby="appReleaseHistoryTitle">
+                <div><p class="eyebrow">Histórico Android</p><h3 id="appReleaseHistoryTitle">Versões do aplicativo</h3></div>
+                <article class="app-release-version"><span class="app-release-version-icon"><i data-lucide="smartphone"></i></span><div><strong>${escapeHtml(version)}</strong><small>${escapeHtml(release.message || "Atualização disponível.")}</small></div><span class="app-release-status">Atual</span></article>
+            </section>`;
     }
 
 
@@ -5889,7 +5959,7 @@
             <p class="eyebrow">Preenchimento guiado</p>
             <h2>${escapeHtml(doc.title)}</h2>
             <p>${escapeHtml(doc.description || "Preencha os campos abaixo.")}</p>
-            <form id="documentGenerateForm" data-document-id="${escapeAttr(doc.id)}" data-current-step="0">
+            <form id="documentGenerateForm" data-document-id="${escapeAttr(doc.id)}" data-current-step="0" novalidate>
                 <div class="wizard-shell">
                     <aside class="wizard-rail">
                         <h3>Partes do documento</h3>
@@ -6089,21 +6159,36 @@
         return `<label class="field${wide}"><span>${escapeHtml(label)}</span>${control}</label>`;
     }
 
+    let generateDocumentInFlight = false;
+
     async function generateDocument(event) {
         if (event?.preventDefault) event.preventDefault();
+        if (event?.stopPropagation) event.stopPropagation();
 
-        const form = event.target?.closest?.("#documentGenerateForm") || event.target;
-        const submitter = event.submitter || document.activeElement?.closest?.("[data-generate-type]");
+        if (generateDocumentInFlight) return;
+
+        const form = event.target?.closest?.("#documentGenerateForm")
+            || event.currentTarget?.closest?.("#documentGenerateForm")
+            || event.target?.closest?.("form")
+            || $("#documentGenerateForm")
+            || event.target;
+        const submitter = event.submitter
+            || event.target?.closest?.("[data-generate-type]")
+            || document.activeElement?.closest?.("[data-generate-type]");
         const generateType = submitter?.dataset?.generateType || "docx";
-        const doc = DOC_MAP.get(form.dataset.documentId);
+        const doc = DOC_MAP.get(form?.dataset?.documentId);
 
-        if (!doc) return;
+        if (!form || !doc) {
+            toast("Abra um documento e tente gerar novamente.", "error");
+            return;
+        }
 
         const msg = $("#documentFormMessage");
         const isPdf = generateType === "pdf";
         let progressTimer = null;
 
         let data = {};
+        generateDocumentInFlight = true;
         try {
             // IMPORTANTE: coleta antes de desabilitar o formulário.
             // Inputs desabilitados não entram no FormData e isso estava gerando Word/PDF vazio.
@@ -6116,9 +6201,15 @@
             await ensureDocxLibs();
 
             const modelPath = getModelPath(doc, data);
+            if (!modelPath && !doc.modelBase64) {
+                throw new Error("Modelo Word não configurado para este documento.");
+            }
             const fileName = getFileName(doc, data, isPdf ? "pdf" : "docx");
             setGenerateProgress(38, "Preenchendo o modelo Word...");
             const docxBlob = await buildDocx(modelPath, data, doc);
+            if (!(docxBlob instanceof Blob) || docxBlob.size < 64) {
+                throw new Error("O arquivo Word gerado está vazio ou inválido. Tente novamente.");
+            }
 
             if (isPdf) {
                 if (!API_BASE_URL) {
@@ -6189,7 +6280,9 @@
             console.error(error);
             hideGenerateProgress();
             setMessage(msg, translateError(error), "error");
+            toast(translateError(error), "error");
         } finally {
+            generateDocumentInFlight = false;
             if (progressTimer) clearInterval(progressTimer);
             setFormLoading(form, false);
             setTimeout(() => hideGenerateProgress(true), 1600);
@@ -6521,7 +6614,7 @@
         const rawZip = new window.PizZip(buffer);
         const allXml = rawZip.file(/word\/.*\.xml$/).map((file) => file.asText()).join("\n");
         const hasDoubleTags = /\{\{\s*[^{}]+?\s*\}\}/.test(allXml);
-        const hasSingleTags = /(^|[^\{])\{\s*[a-zA-ZÀ-ÿ0-9_.-]+\s*\}([^\}]|$)/.test(allXml);
+        const hasSingleTags = /(^|[^{])\{\s*[a-zA-ZÀ-ÿ0-9_.-]+\s*\}([^}]|$)/.test(allXml);
 
         const passes = [];
         if (hasDoubleTags) passes.push({ delimiters: { start: "{{", end: "}}" } });
@@ -7483,12 +7576,38 @@
                 </article>
             </div>
             <div class="split">
-                <article class="admin-card"><h2>Aviso de atualização</h2><form id="releaseForm" class="form-grid"><label class="field"><span>Versão</span><input name="versionName" placeholder="v1.0"></label><label class="field"><span>URL download</span><input name="downloadUrl" placeholder="https://..."></label><label class="field wide"><span>Mensagem</span><textarea name="message"></textarea></label><div class="field wide action-row"><button class="primary-button" type="submit">Publicar aviso</button><button class="secondary-button" type="button" data-delete-release>Remover aviso</button></div><p id="releaseMessage" class="message"></p></form></article>
+                <article class="admin-card"><h2>Aviso de atualização</h2><p>Publique somente versão, mensagem e link HTTPS. Nenhum APK é salvo no D1.</p><div id="releaseCurrent">${renderAdminReleaseCurrent()}</div><form id="releaseForm" class="form-grid"><label class="field"><span>Versão</span><input name="versionName" placeholder="Ex.: 1.1.0" required></label><label class="field"><span>Link HTTPS de download</span><input name="downloadUrl" type="url" placeholder="https://..." required></label><label class="field wide"><span>Mensagem para usuários e Flutter</span><textarea name="message" required></textarea></label><div class="field wide action-row"><button class="primary-button" type="submit">Publicar aviso</button><button class="secondary-button" type="button" data-delete-release ${state.appRelease ? "" : "disabled"}>Remover aviso</button></div><p id="releaseMessage" class="message"></p></form></article>
                 <article class="admin-card"><h2>Atendimentos</h2><div id="adminSupportArea">${renderMessageList(state.adminSupportMessages, true)}</div></article>
             </div>
         `;
         if (!state.adminUsers.length) loadAdminUsers().then(() => { if (state.view === "admin") renderAdmin(); }).catch(() => {});
+        if (!state.appReleaseLoaded && !state.appReleaseLoading) loadAdminRelease();
         setTimeout(() => window.DocSpaceProduct?.onAdminRendered?.(refs.content), 0);
+    }
+
+    function renderAdminReleaseCurrent() {
+        if (state.appReleaseLoading) return '<p class="message">Consultando aviso publicado...</p>';
+        if (state.appReleaseError) return `<p class="message error">${escapeHtml(state.appReleaseError)}</p>`;
+        if (!state.appRelease) return '<p class="message">Nenhum aviso de atualização publicado.</p>';
+        return `<article class="admin-release-current"><strong>${escapeHtml(state.appRelease.versionName ? `Versão ${state.appRelease.versionName}` : "Versão publicada")}</strong><small>${escapeHtml(state.appRelease.downloadUrl || "")}</small><p>${escapeHtml(state.appRelease.message || "")}</p></article>`;
+    }
+
+    async function loadAdminRelease() {
+        state.appReleaseLoading = true;
+        state.appReleaseError = "";
+        const host = $("#releaseCurrent");
+        if (host) host.innerHTML = renderAdminReleaseCurrent();
+        try {
+            const data = await apiRequest("/api/admin/app-release");
+            state.appRelease = data.release || null;
+            state.appReleaseLoaded = true;
+        } catch (error) {
+            state.appReleaseError = translateError(error);
+            state.appReleaseLoaded = true;
+        } finally {
+            state.appReleaseLoading = false;
+            if (state.view === "admin") renderAdmin();
+        }
     }
 
     function renderAdminUsers() {
@@ -7506,6 +7625,7 @@
         const msg = $("#adminMessage");
         const fd = new FormData(form);
         const uid = fd.get("uid");
+        const existingUser = uid ? state.adminUsers.find((user) => user.id === uid) : null;
         const body = {
             name: String(fd.get("name") || "").trim(),
             email: String(fd.get("email") || "").trim(),
@@ -7521,7 +7641,7 @@
             allowLiquidGlass: fd.get("allowLiquidGlass") === "yes",
             allowedDocumentTypes: [],
             notes: String(fd.get("notes") || "").trim(),
-            isAdmin: false,
+            isAdmin: Boolean(existingUser?.isAdmin ?? existingUser?.is_admin ?? false),
         };
         if (uid && !body.password) delete body.password;
         setFormLoading(form, true);
@@ -7585,17 +7705,57 @@
     async function publishRelease(event) {
         const msg = $("#releaseMessage");
         const fd = new FormData(event.target);
+        const payload = {
+            versionName: String(fd.get("versionName") || "").trim(),
+            downloadUrl: String(fd.get("downloadUrl") || "").trim(),
+            message: String(fd.get("message") || "").trim(),
+        };
+        if (!payload.versionName || !payload.downloadUrl || !payload.message) {
+            setMessage(msg, "Informe versão, link HTTPS e mensagem.", "error");
+            return;
+        }
         try {
-            const data = await apiRequest("/api/admin/app-release", { method: "POST", body: { versionName: fd.get("versionName"), downloadUrl: fd.get("downloadUrl"), message: fd.get("message") } });
+            const data = await apiRequest("/api/admin/app-release", { method: "POST", body: payload });
+            state.appRelease = data.release || null;
+            state.appReleaseLoaded = true;
+            state.appReleaseError = "";
+            const current = $("#releaseCurrent");
+            if (current) current.innerHTML = renderAdminReleaseCurrent();
+            const deleteButton = $("[data-delete-release]");
+            if (deleteButton) deleteButton.disabled = !state.appRelease;
             setMessage(msg, data.message || "Aviso publicado.", "success");
         } catch (error) { setMessage(msg, translateError(error), "error"); }
     }
 
     async function deleteRelease() {
-        try { const data = await apiRequest("/api/admin/app-release", { method: "DELETE" }); toast(data.message || "Aviso removido.", "success"); } catch (error) { toast(translateError(error), "error"); }
+        if (!state.appRelease) return;
+        if (!window.confirm("Remover o aviso de atualização publicado?")) return;
+        try {
+            const data = await apiRequest("/api/admin/app-release", { method: "DELETE" });
+            state.appRelease = null;
+            state.appReleaseLoaded = true;
+            const current = $("#releaseCurrent");
+            if (current) current.innerHTML = renderAdminReleaseCurrent();
+            const deleteButton = $("[data-delete-release]");
+            if (deleteButton) deleteButton.disabled = true;
+            toast(data.message || "Aviso removido.", "success");
+        } catch (error) { toast(translateError(error), "error"); }
     }
 
     function handleContentClick(event) {
+        // Backup: clique direto em Gerar Word/PDF (caso o submit HTML5 seja engolido).
+        const generateBtn = event.target.closest("#documentGenerateForm [data-generate-type]");
+        if (generateBtn) {
+            event.preventDefault();
+            generateDocument({
+                preventDefault() {},
+                stopPropagation() {},
+                target: generateBtn,
+                submitter: generateBtn,
+                currentTarget: generateBtn.closest("#documentGenerateForm"),
+            });
+            return;
+        }
         const stepIndicator = event.target.closest("[data-step-indicator]");
         if (stepIndicator) {
             const form = stepIndicator.closest("form") || $("#documentGenerateForm");
@@ -8414,13 +8574,6 @@
         });
         return stripPrefix ? String(dataUrl).replace(/^data:[^;]+;base64,/, "") : dataUrl;
     }
-    function downloadBase64(base64, fileName, mime) {
-        const clean = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
-        const bin = atob(clean);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        saveBlob(new Blob([bytes], { type: mime }), fileName);
-    }
     function formatLabel(name) { return String(name || "").replace(/[_-]+/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()).replace(/Cpf/g, "CPF").replace(/Cnpj/g, "CNPJ").replace(/Rg/g, "RG").replace(/Uf/g, "UF"); }
     function placeholderFor(name) {
         const n = normalize(name);
@@ -8444,7 +8597,21 @@
     function escapeAttr(value) { return escapeHtml(value).replace(/`/g, "&#96;"); }
     function translateError(error) {
         const text = error?.data?.message || error?.message || "Erro inesperado.";
-        if (/Failed to fetch|NetworkError/i.test(text)) return "Não foi possível conectar na API. Confira app-config.js e o Worker.";
+        if (/Failed to fetch|NetworkError|Load failed/i.test(text)) {
+            return "Não foi possível conectar na API. Confira internet, app-config.js e o Worker.";
+        }
+        if (/Sem saldo|saldo disponível/i.test(text)) {
+            return "Sem saldo disponível para este documento. Aguarde a renovação diária ou faça upgrade do plano.";
+        }
+        if (/Bibliotecas DOCX|PizZip|docxtemplater/i.test(text)) {
+            return "Bibliotecas de geração Word não carregaram. Recarregue a página (Ctrl+F5) e verifique a conexão.";
+        }
+        if (/Modelo não encontrado|Modelo Word não configurado/i.test(text)) {
+            return text;
+        }
+        if (/convers[aã]o|Render|preview-pdf|502|503/i.test(text)) {
+            return "Falha na conversão para PDF no servidor. O Word ainda pode ser gerado; tente o PDF em instantes.";
+        }
         return text;
     }
     function toast(text, type = "") {

@@ -12,6 +12,7 @@ const SESSION_COOKIE = "dr_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const BILLING_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 const MAX_SUPPORT_ATTACHMENT_BYTES = 1500 * 1024;
+const MAX_SUPPORT_REQUEST_BODY_BYTES = 2200 * 1024;
 const MAX_PREVIEW_DOCX_BASE64_LENGTH = 14 * 1024 * 1024;
 const MAX_PDF_TOOL_BASE64_LENGTH = 70 * 1024 * 1024;
 const SERVER_PDF_TOOL_TYPES = new Set(["compress", "ocr"]);
@@ -40,6 +41,10 @@ const CORS_ALLOWED_ORIGINS = new Set([
     "https://docspace-web.pages.dev",
     "https://docspace-api.kaualucas9773.workers.dev",
     "https://tiny-bread-b482gerador-documentos-rurais-api.kauatech-dev.workers.dev",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
 ]);
 const BILLING_PROVIDER = "mercado_pago";
 const BILLING_PLAN_PRICES = {
@@ -60,6 +65,12 @@ const BILLING_PLAN_PRICES = {
     },
 };
 let schemaReady = false;
+let lastExpirySweepAt = 0;
+const EXPIRY_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_BLOCK_DURATION_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILED_ATTEMPTS = 5;
+const SUPPORT_MESSAGE_HOURLY_LIMIT = 10;
 
 const PLANS = {
     test3min: {
@@ -165,7 +176,7 @@ async function onRequest(context) {
     } catch (error) {
         console.error(error);
         const status = error.status || 500;
-        const message = status === 500 ? `Erro interno da API: ${error.message}` : error.message;
+        const message = status === 500 ? "Erro interno da API." : error.message;
         return withCors(request, json({ message }, status, error.headers));
     }
 }
@@ -183,7 +194,7 @@ async function handleRequest(request, env) {
     }
 
     await ensureDatabaseSchema(env);
-    await expireOverdueUsers(env);
+    await expireOverdueUsersIfDue(env);
 
     if (request.method === "POST" && match(path, ["setup"])) {
         return setupFirstAdmin(request, env);
@@ -555,6 +566,14 @@ async function ensureDatabaseSchema(env) {
         )`,
         "CREATE INDEX IF NOT EXISTS idx_support_messages_email ON support_messages(customer_email)",
         "CREATE INDEX IF NOT EXISTS idx_support_messages_created_at ON support_messages(created_at)",
+        `CREATE TABLE IF NOT EXISTS auth_login_attempts (
+            attempt_key TEXT PRIMARY KEY,
+            failed_count INTEGER NOT NULL DEFAULT 0,
+            window_started_at TEXT NOT NULL,
+            blocked_until TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL
+        )`,
+        "CREATE INDEX IF NOT EXISTS idx_auth_login_attempts_updated_at ON auth_login_attempts(updated_at)",
         `CREATE TABLE IF NOT EXISTS app_releases (
             id TEXT PRIMARY KEY,
             platform TEXT NOT NULL DEFAULT 'android',
@@ -876,11 +895,17 @@ async function login(request, env) {
         throw httpError(400, "Informe e-mail e senha.");
     }
 
+    const attemptKey = await createLoginAttemptKey(request, email);
+    await assertLoginAttemptAllowed(env, attemptKey);
+
     const user = await getUserByEmail(env, email);
 
     if (!user || !(await verifyPassword(password, user.password_hash))) {
+        await recordFailedLoginAttempt(env, attemptKey);
         throw httpError(401, "E-mail ou senha incorretos.");
     }
+
+    await clearLoginAttempts(env, attemptKey);
 
     const access = evaluateAccess(user);
 
@@ -1669,11 +1694,13 @@ async function getOptionalSupportIdentity(request, env) {
 }
 
 async function createSupportMessage(request, env) {
-    const identity = await getOptionalSupportIdentity(request, env);
+    assertRequestBodyLimit(request, MAX_SUPPORT_REQUEST_BODY_BYTES);
+    const identity = await requireSupportIdentity(request, env);
     const body = await readJson(request);
-    const user = identity?.user || null;
-    const customerName = String(user?.name || body.name || "").trim();
-    const customerEmail = normalizeEmail(user?.email || body.email);
+    const user = identity.user;
+    await assertSupportMessageRateLimit(env, user.id);
+    const customerName = String(user.name || "").trim();
+    const customerEmail = normalizeEmail(user.email);
     const message = String(body.message || "").trim();
     const attachment = normalizeSupportAttachment(body.attachment);
 
@@ -1686,7 +1713,7 @@ async function createSupportMessage(request, env) {
     }
 
     const saved = await insertSupportMessage(env, {
-        userId: user?.id || null,
+        userId: user.id,
         customerName,
         customerEmail,
         senderType: "customer",
@@ -1704,6 +1731,7 @@ async function createPaymentProof(request, env) {
     const identity = await requireSupportIdentity(request, env);
     const body = await readJson(request);
     const user = identity.user;
+    await assertSupportMessageRateLimit(env, user.id);
     const attachment = normalizeSupportAttachment(body.attachment, { required: true });
     const planId = normalizePlanId(body.plan || user.plan);
 
@@ -2144,6 +2172,15 @@ async function handleMercadoPagoWebhook(request, env) {
             ignored: true,
             message: "Webhook recebido sem ID de pagamento.",
         });
+    }
+
+    const webhookSecret = String(env.MERCADO_PAGO_WEBHOOK_SECRET || "").trim();
+    if (!webhookSecret) {
+        throw httpError(503, "Webhook do Mercado Pago ainda nao configurado.");
+    }
+
+    if (!(await verifyMercadoPagoWebhookSignature(request, String(paymentId), webhookSecret))) {
+        throw httpError(401, "Assinatura do webhook invalida.");
     }
 
     try {
@@ -2799,6 +2836,18 @@ async function downloadSupportAttachment(request, env, id) {
     return new Response(base64Decode(row.attachment_data), { status: 200, headers });
 }
 
+async function assertSupportMessageRateLimit(env, userId) {
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const row = await env.DB.prepare(`
+        SELECT COUNT(*) AS total
+        FROM support_messages
+        WHERE user_id = ? AND created_at >= ?
+    `).bind(userId, cutoff).first();
+    if (Number(row?.total || 0) >= SUPPORT_MESSAGE_HOURLY_LIMIT) {
+        throw httpError(429, "Limite de mensagens atingido. Tente novamente em uma hora.");
+    }
+}
+
 function normalizeSupportAttachment(rawAttachment, options = {}) {
     if (!rawAttachment) {
         if (options.required) {
@@ -2832,9 +2881,16 @@ async function createAppRelease(env, body, actor) {
     const updateMessage = String(body.message || body.updateMessage || "").trim().slice(0, 900);
     const downloadUrl = normalizeAppDownloadUrl(body.downloadUrl);
 
-    await env.DB.prepare("DELETE FROM app_releases WHERE platform = 'android'").run();
+    if (!versionName) {
+        throw httpError(400, "Informe a versao da atualizacao.");
+    }
 
-    await env.DB.prepare(`
+    if (!updateMessage) {
+        throw httpError(400, "Informe a mensagem da atualizacao.");
+    }
+
+    const deleteStatement = env.DB.prepare("DELETE FROM app_releases WHERE platform = 'android'");
+    const insertStatement = env.DB.prepare(`
         INSERT INTO app_releases (
             id, platform, version_name, update_message, download_url, notes,
             file_name, file_type, file_extension, file_size, file_data,
@@ -2849,7 +2905,8 @@ async function createAppRelease(env, body, actor) {
         updateMessage,
         actor?.id || null,
         createdAt
-    ).run();
+    );
+    await env.DB.batch([deleteStatement, insertStatement]);
 
     await logAction(env, actor?.id || null, "publish_app_release", null, {
         downloadUrl,
@@ -3696,7 +3753,17 @@ async function updateManagedUser(env, id, body, actor) {
         throw httpError(404, "Usuario nao encontrado.");
     }
 
-    const clean = cleanUserInput(body, { requirePassword: false });
+    const normalizedBody = Object.prototype.hasOwnProperty.call(body, "isAdmin")
+        ? body
+        : { ...body, isAdmin: Boolean(existing.is_admin) };
+    const clean = cleanUserInput(normalizedBody, { requirePassword: false });
+
+    if (existing.is_admin && !clean.isAdmin) {
+        const adminCount = await env.DB.prepare("SELECT COUNT(*) AS total FROM users WHERE is_admin = 1").first();
+        if (Number(adminCount?.total || 0) <= 1) {
+            throw httpError(409, "Nao e possivel remover o ultimo administrador.");
+        }
+    }
     const plan = getPlan(clean.plan);
     const now = new Date().toISOString();
     const existingPlanId = normalizePlanId(existing.plan);
@@ -4066,6 +4133,63 @@ async function expireOverdueUsers(env) {
           AND is_admin = 0
           AND expires_at <= ?
     `).bind(now, now).run();
+    const staleAttempts = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    await env.DB.prepare("DELETE FROM auth_login_attempts WHERE updated_at < ?").bind(staleAttempts).run();
+}
+
+async function createLoginAttemptKey(request, email) {
+    const ip = String(request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "unknown")
+        .split(",")[0]
+        .trim();
+    const bytes = new TextEncoder().encode(`${String(email).toLowerCase()}|${ip}`);
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return bytesToHex(new Uint8Array(digest));
+}
+
+async function assertLoginAttemptAllowed(env, attemptKey) {
+    const row = await env.DB.prepare("SELECT blocked_until FROM auth_login_attempts WHERE attempt_key = ?")
+        .bind(attemptKey)
+        .first();
+    if (row?.blocked_until && new Date(row.blocked_until).getTime() > Date.now()) {
+        throw httpError(429, "Muitas tentativas de login. Aguarde 15 minutos e tente novamente.", {
+            "Retry-After": String(Math.ceil((new Date(row.blocked_until).getTime() - Date.now()) / 1000)),
+        });
+    }
+}
+
+async function recordFailedLoginAttempt(env, attemptKey) {
+    const nowMs = Date.now();
+    const now = new Date(nowMs).toISOString();
+    const row = await env.DB.prepare("SELECT failed_count, window_started_at FROM auth_login_attempts WHERE attempt_key = ?")
+        .bind(attemptKey)
+        .first();
+    const windowExpired = !row?.window_started_at || nowMs - new Date(row.window_started_at).getTime() > LOGIN_ATTEMPT_WINDOW_MS;
+    const failedCount = windowExpired ? 1 : Number(row.failed_count || 0) + 1;
+    const windowStartedAt = windowExpired ? now : row.window_started_at;
+    const blockedUntil = failedCount >= LOGIN_MAX_FAILED_ATTEMPTS
+        ? new Date(nowMs + LOGIN_BLOCK_DURATION_MS).toISOString()
+        : "";
+
+    await env.DB.prepare(`
+        INSERT INTO auth_login_attempts (attempt_key, failed_count, window_started_at, blocked_until, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(attempt_key) DO UPDATE SET
+            failed_count = excluded.failed_count,
+            window_started_at = excluded.window_started_at,
+            blocked_until = excluded.blocked_until,
+            updated_at = excluded.updated_at
+    `).bind(attemptKey, failedCount, windowStartedAt, blockedUntil, now).run();
+}
+
+async function clearLoginAttempts(env, attemptKey) {
+    await env.DB.prepare("DELETE FROM auth_login_attempts WHERE attempt_key = ?").bind(attemptKey).run();
+}
+
+async function expireOverdueUsersIfDue(env) {
+    const now = Date.now();
+    if (now - lastExpirySweepAt < EXPIRY_SWEEP_INTERVAL_MS) return;
+    lastExpirySweepAt = now;
+    await expireOverdueUsers(env);
 }
 
 function buildAccessMessage(user) {
