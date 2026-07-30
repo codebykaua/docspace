@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 color 0A
@@ -8,7 +8,7 @@ set "ROOT=%~dp0"
 set "WORKER_DIR=%ROOT%backend-worker"
 set "FRONTEND_DIR=%ROOT%frontend"
 set "BUILD_VERSION=150"
-set "DEFAULT_REPO=docspace-web"
+set "DEFAULT_REPO=docspace"
 
 cls
 echo ============================================================
@@ -261,3 +261,4 @@ echo.
 echo A publicacao foi interrompida. Leia a mensagem acima.
 pause
 exit /b 1
+
