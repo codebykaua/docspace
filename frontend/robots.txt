@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /modelos/
+Disallow: /contro.html
+Disallow: /setup-admin.html

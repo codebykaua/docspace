@@ -1,0 +1,35 @@
+﻿name = "docspace-api"
+main = "src/worker.js"
+compatibility_date = "2026-07-29"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+account_id = "3f72c0cbfa4a3afde1c87e411a4a20da"
+
+[vars]
+AI_ENABLED = "true"
+AI_PROVIDER = "openrouter"
+AI_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+AI_MODEL = "openai/gpt-4.1-mini"
+AI_TIMEOUT_MS = "90000"
+AI_APP_NAME = "DocSpace"
+
+# Aceita o domÃ­nio principal e previews do Cloudflare Pages.
+CORS_ALLOWED_ORIGINS = "https://codebykaua.github.io,https://docspace-web.pages.dev,https://*.pages.dev"
+PUBLIC_APP_URL = "https://codebykaua.github.io/docspace-web/"
+
+# ConfiguraÃ§Ãµes existentes do projeto.
+EMAIL_FROM_NAME = "DocSpace"
+EMAILJS_SERVICE_ID = "service_2x0hqq6"
+EMAILJS_TEMPLATE_ID = "template_7an08gf"
+EMAILJS_PUBLIC_KEY = "LmAZ7VQauBCPlPoFi"
+SUPPORT_ADMIN_EMAIL = "kaua.dev@outlook.com.br"
+MERCADO_PAGO_PUBLIC_KEY = "APP_USR-b73bcfd2-e773-4819-a006-08239308e311"
+MERCADO_PAGO_WEBHOOK_URL = "https://docspace-api.kaualucas9773.workers.dev/api/billing/mercadopago/webhook"
+RENDER_API_URL = "https://gerador-de-documentos-1.onrender.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gerador_documentos_rurais"
+database_id = "2f8261c2-0c2f-49c4-8080-6c78320367c1"
+
+

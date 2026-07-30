@@ -1,0 +1,8 @@
+DocSpace v1.47
+
+- Lista de usuários carrega automaticamente e mostra erro real da API.
+- Worker lista usuários mesmo em D1 com esquema antigo.
+- Seletor de modelos corrigido: radios e checkboxes em tamanho normal.
+- Catálogo de modelos aparece somente em Administração > Sistema.
+- Tabelas administrativas com rolagem horizontal e layout responsivo.
+- Cache e arquivos versionados no build 146.

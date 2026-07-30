@@ -1,0 +1,13 @@
+DOCSPACE v1.49 — PUBLICAÇÃO AUTOMÁTICA
+
+1. Extraia o ZIP inteiro para uma pasta.
+2. Dê dois cliques em PUBLICAR_TUDO_GITHUB_E_WORKER.bat.
+3. Autorize GitHub e Cloudflare no navegador, quando solicitado.
+4. Pressione Enter para usar o repositório padrão docspace-web.
+5. Aguarde a mensagem PUBLICAÇÃO CONCLUÍDA COM SUCESSO.
+
+O endereço será:
+https://SEU-USUARIO.github.io/docspace-web/
+
+O frontend fica no GitHub Pages.
+IA, login, D1, Mercado Pago, auditoria e conversões continuam no Cloudflare Worker.

@@ -1,0 +1,4 @@
+DOCSPACE v1.49 — PUBLICAÇÃO COM UM CLIQUE
+
+Use PUBLICAR_TUDO_GITHUB_E_WORKER.bat.
+O frontend será publicado no GitHub Pages e o Worker continuará no Cloudflare.

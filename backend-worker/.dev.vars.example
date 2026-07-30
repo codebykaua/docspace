@@ -1,0 +1,4 @@
+# Use uma das opções abaixo. Nunca publique o valor real no Git.
+AI_API_KEY=cole_a_chave_apenas_no_backend
+# OPENROUTER_API_KEY=chave_antiga_tambem_aceita
+# OPENAI_API_KEY=chave_openai_direta_tambem_aceita

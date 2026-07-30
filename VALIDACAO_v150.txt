@@ -1,0 +1,9 @@
+DocSpace v1.50 - validações
+
+- JavaScript: sintaxe aprovada com node --check.
+- Aba Usuários contém somente lista e ações.
+- Cadastro abre em modal guiado de 5 etapas.
+- Edição reutiliza o modal guiado.
+- Dados do formulário permanecem ao avançar e voltar.
+- Abas administrativas usam evento único com preventDefault/stopPropagation.
+- Layout responsivo para desktop, tablet e celular.

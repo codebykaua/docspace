@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#111827">
+    <title>DocSpace</title>
+    <meta name="docspace-version" content="1.49">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DocSpace">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=150">
+    <link rel="stylesheet" href="lovable-original.css?v=150">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://sdk.mercadopago.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://docspace-api.kaualucas9773.workers.dev https://*.workers.dev https://api.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://api.emailjs.com https://viacep.com.br; frame-src 'self' blob: https://*.mercadopago.com https://*.mercadopago.com.br; object-src 'self' blob:; worker-src 'self' blob:;">
+</head>
+<body data-view="landing" data-area="hub">
+    <a class="skip-link" href="#content">Ir para o conteúdo</a>
+
+    <!-- APRESENTAÇÃO PÚBLICA: versão estática da landing page original -->
+    <div id="landingView" class="landing-view">
+        <header class="landing-header">
+            <div class="landing-container landing-header-inner">
+                <a class="landing-brand" href="#inicio" aria-label="DocSpace — início">
+                    <span class="brand-symbol brand-symbol-primary"><i data-lucide="file-text"></i></span>
+                    <strong>DocSpace</strong>
+                </a>
+                <nav class="landing-nav" aria-label="Navegação da apresentação">
+                    <a href="#areas">Áreas</a>
+                    <a href="#recursos">Recursos</a>
+                    <a href="#planos">Planos</a>
+                </nav>
+                <button type="button" class="landing-login-button" data-public-login>Entrar</button>
+            </div>
+        </header>
+
+        <main id="inicio">
+            <section class="landing-hero">
+                <div class="landing-container landing-hero-inner">
+                    <span class="landing-badge"><i data-lucide="sparkles"></i> 3 áreas · 1 plataforma</span>
+                    <h1>Documentos, PDF e Office, <em>tudo num só lugar</em>.</h1>
+                    <p>Modelos jurídicos integrados, ferramentas PDF, editores Word e Excel e um assistente de IA que lê documentos e prepara arquivos para download.</p>
+                    <div class="landing-hero-actions">
+                        <button type="button" class="landing-primary-button" data-public-login>Acessar o sistema <i data-lucide="arrow-right"></i></button>
+                        <a class="landing-secondary-button" href="#areas">Conhecer as áreas</a>
+                    </div>
+                    <div class="landing-trust-row">
+                        <span><i data-lucide="check-circle-2"></i> IA integrada</span>
+                        <span><i data-lucide="check-circle-2"></i> Modelos profissionais</span>
+                        <span><i data-lucide="check-circle-2"></i> 100% em português</span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="areas" class="landing-section">
+                <div class="landing-container">
+                    <div class="landing-section-heading">
+                        <span>Conheça a plataforma</span>
+                        <h2>Escolha sua área e comece</h2>
+                        <p>Depois do login, o hub leva você diretamente para o recurso necessário.</p>
+                    </div>
+                    <div class="landing-area-grid">
+                        <article class="landing-area-card">
+                            <span class="landing-card-icon"><i data-lucide="file-signature"></i></span>
+                            <small>Área 1</small>
+                            <h3>Gerar Documentos</h3>
+                            <p>Contratos, procurações, declarações, documentos rurais, previdenciários, requerimentos, recibos e termos.</p>
+                            <ul><li>Mais de 100 modelos</li><li>Preenchimento guiado</li><li>IA com leitura de RG e CPF</li><li>Download em Word e PDF</li></ul>
+                        </article>
+                        <article class="landing-area-card">
+                            <span class="landing-card-icon"><i data-lucide="file-text"></i></span>
+                            <small>Área 2</small>
+                            <h3>Ferramentas PDF</h3>
+                            <p>Organize documentos PDF diretamente no navegador, com ferramentas rápidas e objetivas.</p>
+                            <ul><li>Juntar e dividir</li><li>Extrair páginas</li><li>Girar e organizar</li><li>Comprimir arquivos</li></ul>
+                        </article>
+                        <article class="landing-area-card">
+                            <span class="landing-card-icon"><i data-lucide="briefcase-business"></i></span>
+                            <small>Área 3</small>
+                            <h3>Ferramentas Office</h3>
+                            <p>Crie e edite documentos e planilhas, importe arquivos existentes e exporte nos formatos mais usados.</p>
+                            <ul><li>Editor Word</li><li>Editor Excel</li><li>Conversões integradas</li><li>Assistente IA</li></ul>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section id="recursos" class="landing-section landing-section-muted">
+                <div class="landing-container">
+                    <div class="landing-section-heading">
+                        <span>Recursos</span>
+                        <h2>Feito para trabalhar rápido</h2>
+                        <p>Uma experiência completa para gerar, revisar, converter e organizar documentos.</p>
+                    </div>
+                    <div class="landing-feature-grid">
+                        <article><i data-lucide="sparkles"></i><h3>IA que lê documentos</h3><p>Envie fotos ou scans de RG, CPF e comprovantes para extrair os dados e gerar a minuta solicitada.</p></article>
+                        <article><i data-lucide="file-type-2"></i><h3>Word e PDF</h3><p>Baixe o conteúdo criado pela IA nos formatos DOCX e PDF.</p></article>
+                        <article><i data-lucide="shield-check"></i><h3>Chave protegida</h3><p>A integração com a IA acontece no Worker do Cloudflare; a chave não fica exposta no navegador.</p></article>
+                        <article><i data-lucide="zap"></i><h3>Fluxo rápido</h3><p>Escolha um modelo, informe os dados e gere o documento em poucos passos.</p></article>
+                        <article><i data-lucide="files"></i><h3>Biblioteca integrada</h3><p>Modelos de contratos, declarações, procurações e outros documentos no mesmo sistema.</p></article>
+                        <article><i data-lucide="layout-dashboard"></i><h3>Três áreas organizadas</h3><p>Documentos, PDF e Office separados em uma interface simples.</p></article>
+                    </div>
+                </div>
+            </section>
+
+            <section id="planos" class="landing-section">
+                <div class="landing-container">
+                    <div class="landing-section-heading">
+                        <span>Planos</span>
+                        <h2>Escolha o acesso ideal</h2>
+                        <p>Os planos e permissões são administrados dentro do DocSpace.</p>
+                    </div>
+                    <div class="landing-plan-grid">
+                        <article class="landing-plan-card">
+                            <small>Mensal</small><h3>R$ 79,90 <span>/30 dias</span></h3>
+                            <p>Acesso completo às áreas liberadas para o seu plano.</p>
+                            <ul><li>Modelos de documentos</li><li>Ferramentas PDF</li><li>Word e Excel</li><li>Assistente IA</li></ul>
+                            <button type="button" data-buy-plan="basic30">Comprar agora</button>
+                        </article>
+                        <article class="landing-plan-card landing-plan-highlight">
+                            <span class="landing-plan-tag">Melhor custo-benefício</span>
+                            <small>Anual</small><h3>R$ 590,99 <span>/365 dias</span></h3>
+                            <p>Acesso anual com economia em relação ao plano mensal.</p>
+                            <ul><li>Todos os recursos do mensal</li><li>Suporte prioritário</li><li>Novos recursos</li><li>Gerenciamento do plano</li></ul>
+                            <button type="button" data-buy-plan="proMax365">Comprar agora</button>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="landing-cta">
+                <div class="landing-container landing-cta-inner">
+                    <div><span>Pronto para começar?</span><h2>Entre no DocSpace e acesse suas ferramentas.</h2></div>
+                    <button type="button" data-public-login>Entrar no sistema <i data-lucide="arrow-right"></i></button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="landing-footer">
+            <div class="landing-container"><strong>DocSpace</strong><span>Desenvolvido por Kauã Lucas Santos França · © 2026</span></div>
+        </footer>
+    </div>
+
+    <!-- CHECKOUT PÚBLICO: layout em duas colunas inspirado em checkouts SaaS modernos -->
+    <div id="checkoutView" class="checkout-view is-hidden">
+        <header class="checkout-header">
+            <a class="checkout-brand" href="#inicio" data-checkout-close aria-label="Voltar ao DocSpace">
+                <span class="brand-symbol brand-symbol-primary"><i data-lucide="file-text"></i></span>
+                <strong>DocSpace</strong>
+            </a>
+            <span class="checkout-secure"><i data-lucide="lock-keyhole"></i> Ambiente seguro</span>
+        </header>
+
+        <main class="checkout-page">
+            <div class="checkout-title-row">
+                <button type="button" class="checkout-back" data-checkout-close aria-label="Voltar"><i data-lucide="chevron-left"></i></button>
+                <div>
+                    <p>Assinatura DocSpace</p>
+                    <h1>Configure o seu plano</h1>
+                </div>
+            </div>
+
+            <div class="checkout-shell">
+                <section class="checkout-payment-panel" aria-label="Dados e forma de pagamento">
+                    <div id="checkoutFormStage">
+                        <form id="publicCheckoutForm" class="checkout-form" novalidate>
+                            <input id="checkoutPlan" name="plan" type="hidden" value="basic30">
+
+                            <section class="checkout-form-section checkout-method-section">
+                                <div class="checkout-section-heading">
+                                    <div><span>Pagamento</span><h2>Pagar com</h2></div>
+                                    <span id="checkoutIntegrationBadge" class="checkout-integration-badge"><i data-lucide="shield-check"></i> Mercado Pago</span>
+                                </div>
+                                <div class="checkout-methods" role="radiogroup" aria-label="Forma de pagamento">
+                                    <label class="checkout-method is-selected">
+                                        <input type="radio" name="paymentMethod" value="card" checked>
+                                        <span><i data-lucide="credit-card"></i><strong>Cartão</strong><small>Crédito ou débito</small></span>
+                                    </label>
+                                    <label class="checkout-method">
+                                        <input type="radio" name="paymentMethod" value="pix">
+                                        <span><i data-lucide="qr-code"></i><strong>Pix</strong><small>QR Code imediato</small></span>
+                                    </label>
+                                    <label class="checkout-method">
+                                        <input type="radio" name="paymentMethod" value="boleto">
+                                        <span><i data-lucide="barcode"></i><strong>Boleto</strong><small>Compensação bancária</small></span>
+                                    </label>
+                                </div>
+                                <div id="checkoutMethodHint" class="checkout-method-hint"><i data-lucide="info"></i><span>Os dados do cartão são protegidos e tokenizados pelo Mercado Pago.</span></div>
+                            </section>
+
+                            <div class="checkout-divider"><span>Dados da assinatura</span></div>
+
+                            <section class="checkout-form-section checkout-customer-section">
+                                <div class="checkout-section-heading">
+                                    <div><span>Identificação</span><h2>Seus dados</h2></div>
+                                </div>
+                                <div class="checkout-fields-grid">
+                                    <label class="field field-full"><span>Nome completo</span><input name="name" autocomplete="name" required placeholder="Digite seu nome completo"></label>
+                                    <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="email" required placeholder="voce@email.com"></label>
+                                    <label class="field"><span>CPF</span><input name="cpf" inputmode="numeric" autocomplete="off" required maxlength="14" placeholder="000.000.000-00"></label>
+                                </div>
+                            </section>
+
+                            <label class="checkout-terms"><input type="checkbox" name="terms" required><span>Confirmo que os dados estão corretos e aceito os termos de uso e a ativação do plano após a confirmação do pagamento.</span></label>
+                            <p id="checkoutMessage" class="message" aria-live="polite"></p>
+                        </form>
+                    </div>
+                    <div id="checkoutResultStage" class="checkout-result-stage is-hidden"></div>
+                </section>
+
+                <aside class="checkout-order-card" aria-label="Resumo do plano">
+                    <div class="checkout-order-head">
+                        <span class="checkout-plan-icon"><i data-lucide="sparkles"></i></span>
+                        <div><p>Plano escolhido</p><h2 id="checkoutPlanTitle">Plano mensal</h2></div>
+                    </div>
+                    <p id="checkoutPlanDescription" class="checkout-plan-description">Acesso às ferramentas liberadas no plano.</p>
+
+                    <div class="checkout-feature-title">Principais recursos</div>
+                    <ul class="checkout-features">
+                        <li><i data-lucide="badge-check"></i><span>Modelos de documentos integrados</span></li>
+                        <li><i data-lucide="file-output"></i><span>Geração em Word e PDF</span></li>
+                        <li><i data-lucide="files"></i><span>Ferramentas PDF, Word e Excel</span></li>
+                        <li><i data-lucide="sparkles"></i><span>Assistente IA com leitura de anexos</span></li>
+                    </ul>
+
+                    <div class="checkout-order-lines">
+                        <div><span>Valor do plano</span><strong id="checkoutSubtotalPrice">R$ 79,90</strong></div>
+                        <div><span>Taxas</span><strong>R$ 0,00</strong></div>
+                        <div class="checkout-order-total"><span>A pagar hoje</span><strong id="checkoutPlanPrice">R$ 79,90</strong></div>
+                    </div>
+
+                    <div id="checkoutPurchaseBox" class="checkout-purchase-box">
+                        <button id="checkoutSubmit" class="checkout-submit" type="submit" form="publicCheckoutForm"><span>Continuar</span><i data-lucide="arrow-right"></i></button>
+                        <small><i data-lucide="lock"></i> Pagamento processado pelo Mercado Pago</small>
+                    </div>
+                    <p class="checkout-legal">O acesso é liberado após a confirmação. <span id="checkoutPlanCycle">Vigência de 30 dias</span>. Ao continuar, você concorda com os termos e a política de privacidade do DocSpace.</p>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- LOGIN: reprodução estática da interface React original -->
+    <div id="authView" class="auth-view is-hidden">
+        <main class="login-shell" aria-labelledby="loginTitle">
+            <section class="login-context">
+                <a class="login-brand" href="#inicio" data-public-home aria-label="Voltar à apresentação do DocSpace">
+                    <span class="brand-symbol"><i data-lucide="file-text"></i></span>
+                    <strong>DocSpace</strong>
+                </a>
+                <div class="login-message-block">
+                    <h1>Documentos jurídicos e PDF profissionais, com IA integrada.</h1>
+                    <p>Modelos de contratos, declarações, procurações e documentos prontos. Ferramentas PDF completas. Assistente de IA disponível no sistema.</p>
+                </div>
+                <span class="login-restricted">© 2026 DocSpace</span>
+            </section>
+
+            <section class="login-access">
+                <div class="login-access-inner">
+                    <a class="mobile-login-brand" href="#inicio" data-public-home>
+                        <span class="brand-symbol brand-symbol-primary"><i data-lucide="file-text"></i></span>
+                        <strong>DocSpace</strong>
+                    </a>
+                    <header class="login-access-header">
+                        <h2 id="loginTitle">Entrar na sua conta</h2>
+                        <p>Acesse seus documentos e ferramentas.</p>
+                    </header>
+                    <form id="loginForm" class="login-form" novalidate>
+                        <label class="field field-auth">
+                            <span>E-mail</span>
+                            <input id="loginEmail" type="email" autocomplete="username" required placeholder="voce@email.com" spellcheck="false">
+                        </label>
+                        <label class="field field-auth">
+                            <span>Senha</span>
+                            <div class="password-field-wrap">
+                                <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Mínimo 6 caracteres" minlength="1">
+                                <button id="togglePassword" type="button" class="input-action" aria-label="Mostrar senha"><i data-lucide="eye"></i></button>
+                            </div>
+                        </label>
+                        <p id="loginMessage" class="message" aria-live="polite"></p>
+                        <button id="loginButton" class="primary-button login-submit" type="submit"><span>Entrar</span></button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- APLICAÇÃO: mesma arquitetura visual da antiga interface React -->
+    <div id="appView" class="app-view is-hidden">
+        <div class="mobile-topbar">
+            <a class="topbar-brand" href="#" data-view="dashboard" aria-label="Ir para o início">
+                <span class="brand-symbol brand-symbol-primary"><i data-lucide="file-text"></i></span>
+                <strong>DocSpace</strong>
+            </a>
+            <button id="navToggle" class="nav-toggle" type="button" aria-label="Abrir menu" aria-expanded="false"><i data-lucide="menu"></i></button>
+        </div>
+        <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop is-hidden"></div>
+
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-mobile-close-row">
+                <button id="sidebarClose" type="button" class="sidebar-close" aria-label="Fechar menu"><i data-lucide="x"></i></button>
+            </div>
+            <a class="sidebar-brand topbar-brand" href="#" data-view="dashboard">
+                <span class="brand-symbol"><i data-lucide="file-text"></i></span>
+                <span><strong>DocSpace</strong><small id="sidebarAreaSubtitle">Documentos · PDF · Office</small></span>
+            </a>
+
+            <nav id="mainNav" class="main-nav" aria-label="Navegação principal">
+                <div class="sidebar-group sidebar-group-hub">
+                    <span class="sidebar-label">Áreas</span>
+                    <button data-view="documents"><i data-lucide="files"></i><span>Gerar Documentos</span></button>
+                    <button data-view="pdf"><i data-lucide="file-text"></i><span>Ferramentas PDF</span></button>
+                    <button data-view="word"><i data-lucide="briefcase-business"></i><span>Ferramentas Office</span></button>
+                </div>
+                <div class="sidebar-group sidebar-group-documents">
+                    <div class="sidebar-label-row"><span class="sidebar-label">Documentos</span><button type="button" class="sidebar-change" data-view="dashboard"><i data-lucide="repeat-2"></i> Alterar</button></div>
+                    <button data-view="documents"><i data-lucide="files"></i><span>Modelos</span></button>
+                    <button data-view="ai" data-ai-area="documents"><i data-lucide="sparkles"></i><span>Assistente IA</span></button>
+                </div>
+                <div class="sidebar-group sidebar-group-pdf">
+                    <div class="sidebar-label-row"><span class="sidebar-label">Ferramentas PDF</span><button type="button" class="sidebar-change" data-view="dashboard"><i data-lucide="repeat-2"></i> Alterar</button></div>
+                    <button data-view="pdf"><i data-lucide="file-text"></i><span>Ferramentas PDF</span></button>
+                </div>
+                <div class="sidebar-group sidebar-group-office">
+                    <div class="sidebar-label-row"><span class="sidebar-label">Ferramentas Office</span><button type="button" class="sidebar-change" data-view="dashboard"><i data-lucide="repeat-2"></i> Alterar</button></div>
+                    <button data-view="word"><i data-lucide="file-edit"></i><span>Editor Word</span></button>
+                    <button data-view="excel"><i data-lucide="file-spreadsheet"></i><span>Editor Excel</span></button>
+                    <button data-view="ai" data-ai-area="office"><i data-lucide="sparkles"></i><span>Assistente IA</span></button>
+                </div>
+                <div class="sidebar-group sidebar-group-account">
+                    <span class="sidebar-label">Conta e atendimento</span>
+                    <button data-view="profile"><i data-lucide="user"></i><span>Perfil</span></button>
+                    <button data-view="support"><i data-lucide="circle-help"></i><span>Atendimento</span></button>
+                    <button data-view="admin" id="adminNavButton" class="is-hidden"><i data-lucide="shield-check"></i><span>Administração</span><small class="nav-admin-only">Administrador</small></button>
+                </div>
+            </nav>
+
+            <div class="sidebar-user">
+                <span id="userInitials" class="user-avatar">DS</span>
+                <span class="sidebar-user-copy"><strong id="userName">Usuário</strong><small id="userEmail"></small><em id="headerPlanText"></em></span>
+                <button id="logoutButton" type="button" class="sidebar-logout" title="Sair"><i data-lucide="log-out"></i></button>
+            </div>
+        </aside>
+
+        <main class="app-main">
+            <div id="areaTopbar" class="area-topbar">
+                <div class="area-topbar-inner">
+                    <div class="active-area-copy">
+                        <span id="activeAreaIcon" class="active-area-icon"><i data-lucide="files"></i></span>
+                        <span><small>Área ativa</small><strong id="activeAreaLabel">Documentos</strong></span>
+                    </div>
+                    <div id="areaSwitcher" class="area-switcher">
+                        <button type="button" data-view="documents" data-area-target="documents"><i data-lucide="files"></i> Docs</button>
+                        <button type="button" data-view="pdf" data-area-target="pdf"><i data-lucide="file-text"></i> PDF</button>
+                        <button type="button" data-view="word" data-area-target="office"><i data-lucide="briefcase-business"></i> Office</button>
+                        <button type="button" data-view="dashboard" class="area-change"><i data-lucide="repeat-2"></i> Trocar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workspace">
+                <header class="page-header">
+                    <div class="page-heading">
+                        <span id="pageKicker" class="page-kicker">Painel</span>
+                        <h1 id="pageTitle">Início</h1>
+                        <p id="pageDescription">Acesse os principais recursos do sistema.</p>
+                    </div>
+                    <div id="pageActions" class="page-actions"></div>
+                </header>
+                <section id="content" class="content-area" aria-live="polite"></section>
+            </div>
+
+            <footer class="app-footer">
+                Desenvolvido por <strong>Kauã Lucas Santos França</strong><span>·</span> © 2026 DocSpace
+            </footer>
+        </main>
+
+        <button id="commandButton" class="command-button-floating" type="button" aria-label="Pesquisar no DocSpace"><i data-lucide="search"></i></button>
+        <span id="headerStatusText" class="sr-only">Sistema pronto</span>
+        <button id="profileButton" class="sr-only" type="button" aria-hidden="true"></button>
+        <div id="profileMenu" class="is-hidden"><span id="profileMenuInitials"></span><span id="profileMenuName"></span><span id="profileMenuEmail"></span></div>
+    </div>
+
+    <div id="commandPalette" class="command-palette is-hidden" role="dialog" aria-modal="true" aria-labelledby="commandTitle">
+        <div class="command-backdrop" data-command-close></div>
+        <section class="command-dialog">
+            <header><i data-lucide="search"></i><input id="commandSearch" type="search" placeholder="Buscar documento, ferramenta ou área..." autocomplete="off"><button type="button" data-command-close aria-label="Fechar">Esc</button></header>
+            <div class="command-section-title"><span id="commandTitle">Resultados</span><small>Use as setas e Enter</small></div>
+            <div id="commandResults" class="command-results"></div>
+        </section>
+    </div>
+
+    <div id="toast" class="toast is-hidden" role="status" aria-live="polite"></div>
+
+    <script src="cache-reset-v150.js?v=150"></script>
+    <script src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.67.3/build/docxtemplater.js"></script>
+    <script src="https://unpkg.com/pizzip@3.2.0/dist/pizzip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="app-config.js?v=150"></script>
+    <script src="ai/ai-config.js?v=150"></script>
+    <script src="ai/ai-client.js?v=150"></script>
+    <script src="docspace-product.js?v=150"></script>
+    <script src="script.js?v=150"></script>
+</body>
+</html>

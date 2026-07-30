@@ -1,0 +1,6 @@
+Correção v145
+
+- Adicionada a função formatDateTime usada na tabela de usuários e na auditoria.
+- Datas do Cloudflare D1 são exibidas no fuso de Brasília.
+- Compatibilidade com propriedades createdAt/created_at e lastLoginAt/last_login_at.
+- Cache-busting atualizado para v145.

@@ -1,0 +1,1 @@
+Hotfix v144: melhora contraste, legibilidade e tamanho tipográfico do modal de preenchimento guiado.

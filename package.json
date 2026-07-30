@@ -1,0 +1,9 @@
+{
+  "name": "docspace-static-cloudflare",
+  "version": "1.49.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools/check-static.mjs"
+  }
+}

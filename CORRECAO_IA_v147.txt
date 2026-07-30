@@ -1,0 +1,9 @@
+DocSpace v1.47 — correção da IA
+
+- Confirma que a chave é usada exclusivamente no Worker.
+- Exibe provedor, modelo e relógio do servidor na interface.
+- Atualiza o modelo padrão do OpenRouter para openai/gpt-4.1-mini.
+- Injeta a data e hora atuais de Brasília em toda solicitação.
+- Responde perguntas simples de data diretamente pelo relógio do Worker.
+- Envia até 12 mensagens anteriores para manter o contexto do chat.
+- Nenhum valor de chave é enviado ao frontend.

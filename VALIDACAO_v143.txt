@@ -1,0 +1,56 @@
+DocSpace v1.43 — validações executadas em 2026-07-29
+
+1. Sintaxe
+   - frontend/script.js: aprovado com node --check
+   - frontend/docspace-product.js: aprovado
+   - frontend/ai/ai-client.js: aprovado
+   - frontend/ai/ai-config.js: aprovado
+   - backend-worker/src/worker.js: aprovado com node --check
+
+2. Verificação estática do projeto
+   - npm run check: aprovado
+   - arquivos obrigatórios encontrados
+   - referências ?v=143 encontradas
+   - cache-reset-v143 encontrado
+   - Service Worker identificado como docspace-v143-static
+   - integração de IA e Mercado Pago encontrada
+
+3. Assistente IA
+   - seletor Tipo de tarefa removido
+   - compositor compacto com botão + encontrado
+   - histórico local separado por documents/office encontrado
+   - formulário de campos ausentes encontrado
+   - data atual de Brasília encontrada
+   - bloqueio de geração genérica na área Documentos encontrado
+   - cota consumida uma única vez por resultado de modelo
+
+4. Administração e banco
+   - abas restritas a Usuários, Atendimento, Planos e pagamentos e Sistema
+   - cota diária total por usuário
+   - ação de zerar cota
+   - login, logout, IA, documento e PDF com auditoria
+   - colunas ip_address e user_agent presentes e migradas automaticamente
+
+5. Testes de regras
+   - funções de identificação de modelo, data brasileira e campos ausentes executadas em VM Node
+   - contrato de comodato detectado pelo texto do pedido
+   - CPF inválido removido dos dados extraídos e enviado para conferência
+   - consulta SQL da cota total aceitou 30 gerações e bloqueou a 31ª
+   - 34 arquivos DOCX validados como OpenXML
+   - schema.sql executado em SQLite e colunas de auditoria confirmadas
+   - HTML sem IDs duplicados
+
+6. Preços
+   - R$ 79,90 no plano mensal
+   - R$ 590,99 no plano anual
+   - valores iguais no frontend e Worker
+
+7. Limitação da validação visual
+   - O Chromium do ambiente possui política URLBlocklist=["*"], que bloqueia URLs locais e de teste.
+   - Por esse motivo, não foi possível produzir uma captura automatizada navegando no app.
+   - A estrutura, sintaxe, referências e regras foram validadas estaticamente.
+
+8. Não executado
+   - pagamento real no Mercado Pago
+   - chamada real ao provedor de IA
+   - publicação na conta Cloudflare do usuário

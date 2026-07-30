@@ -1,0 +1,19 @@
+DOCSPACE v1.49 — VALIDAÇÕES
+
+[APROVADO] JavaScript do frontend: node --check
+[APROVADO] JavaScript do Worker: node --check
+[APROVADO] Verificação estática do projeto
+[APROVADO] Workflow GitHub Pages e ações oficiais presentes
+[APROVADO] Frontend servido em subdiretório /docspace-web/
+[APROVADO] index.html, CSS, JS, manifest, catálogo e DOCX de teste: HTTP 200
+[APROVADO] 107 modelos lógicos no catálogo
+[APROVADO] 110 arquivos DOCX físicos
+[APROVADO] Nenhum arquivo indicado pelo catálogo está ausente
+[APROVADO] Nenhum DOCX inválido
+[APROVADO] 24 ferramentas PDF registradas
+[APROVADO] 137 IDs de documentos autorizados no Worker
+[APROVADO] Nenhuma chave privada de OpenAI/OpenRouter encontrada no pacote
+[APROVADO] Publicador protege branch main existente com confirmação
+[APROVADO] Publicador configura GitHub Pages, GitHub Actions e Cloudflare Worker
+
+Observação: pagamentos reais, envio real de e-mail e chamadas pagas de IA não foram executados na validação local.
