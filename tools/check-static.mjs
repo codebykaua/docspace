@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = resolve(root, "frontend");
-const version = "149";
+const version = "154";
 const required = [
   "index.html", "style.css", "lovable-original.css", "script.js", "app-config.js",
   "ai/ai-config.js", "ai/ai-client.js", "assets/LOGO1.png",
@@ -104,6 +104,10 @@ for (const marker of [
   "metadataOpts",
   "data-word-find",
   "data-excel-sort=\"asc\"",
+  "renderOfficeAiDialog",
+  "office-word",
+  "office-excel",
+  "office-sticky-controls",
 ]) {
   if (!script.includes(marker)) {
     console.error(`Recurso esperado não encontrado no frontend: ${marker}`);
@@ -112,7 +116,7 @@ for (const marker of [
 }
 
 
-if (script.includes("Tipo de tarefa") || script.includes('name="mode"')) {
+if (script.includes("Tipo de tarefa") || script.includes('id="aiMode"')) {
   console.error("O seletor antigo de tipo de tarefa ainda está presente.");
   process.exit(1);
 }
@@ -161,8 +165,8 @@ for (const marker of [
 }
 
 const serviceWorker = readFileSync(resolve(frontend, "service-worker.js"), "utf8");
-if (!serviceWorker.includes("docspace-v149-static")) {
-  console.error("Service Worker de contingência não foi atualizado para v149.");
+if (!serviceWorker.includes("docspace-v154-static")) {
+  console.error("Service Worker de contingência não foi atualizado para v154.");
   process.exit(1);
 }
 
@@ -182,4 +186,4 @@ for (const file of ["frontend/script.js", "frontend/docspace-product.js", "front
   }
 }
 
-console.log("OK: frontend v1.49 e Worker passaram nas verificações estáticas.");
+console.log("OK: frontend v1.54 e Worker passaram nas verificações estáticas.");

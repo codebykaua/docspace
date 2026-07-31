@@ -4967,6 +4967,12 @@
         excelZoom: 100,
         wordZoom: 100,
         wordSavedAt: "",
+        officeAiOpen: false,
+        officeAiTarget: "word",
+        officeAiBusy: false,
+        officeAiPrompt: "",
+        officeAiMode: "replace",
+        officeAiError: "",
     };
 
     function loadExcelDraft() {
@@ -5078,6 +5084,11 @@
             if (event.target.closest("[data-command-close]")) closeCommandPalette();
         });
         refs.pageActions?.addEventListener("click", (event) => {
+            const officeAi = event.target.closest("[data-office-ai-open]");
+            if (officeAi) {
+                launchOfficeAi(officeAi.dataset.officeAiOpen);
+                return;
+            }
             const target = event.target.closest("[data-goto]");
             if (!target) return;
             if (target.dataset.aiArea) setAiArea(target.dataset.aiArea);
@@ -5097,10 +5108,20 @@
         $("#sidebarClose")?.addEventListener("click", () => setSidebarOpen(false));
         $("#mobileSidebarBackdrop")?.addEventListener("click", () => setSidebarOpen(false));
         const handleChromeNavigation = (event) => {
-            const button = event.target.closest("[data-view]");
+            const button = event.target.closest("[data-view], [data-office-ai-open]");
             if (!button) return;
+            if (button.matches("[data-office-ai-open]")) {
+                setSidebarOpen(false);
+                launchOfficeAi(button.dataset.officeAiOpen);
+                return;
+            }
             if (button.dataset.view === "ai") {
                 const inferredArea = button.dataset.aiArea || (button.closest(".sidebar-group-office") ? "office" : "documents");
+                if (inferredArea === "office") {
+                    setSidebarOpen(false);
+                    launchOfficeAi(state.view === "excel" ? "excel" : "word");
+                    return;
+                }
                 setAiArea(inferredArea);
             }
             if (button.dataset.pdfOpenTool) state.activePdfTool = button.dataset.pdfOpenTool;
@@ -5986,8 +6007,8 @@
             dashboard: { kicker: "Painel", title: "Início", description: "Acesse os principais recursos e acompanhe sua conta.", actions: `<button class="primary-button" data-goto="documents"><i data-lucide="file-plus-2"></i> Novo documento</button>` },
             documents: { kicker: "Modelos", title: "Biblioteca de modelos", description: "Escolha um modelo para começar.", actions: `<button class="secondary-button" data-goto="pdf"><i data-lucide="file-cog"></i> Ferramentas PDF</button>` },
             ai: { kicker: "Inteligência artificial", title: "Assistente IA", description: "Crie, revise e organize textos com a API protegida no servidor.", actions: `<button class="secondary-button" data-goto="documents"><i data-lucide="files"></i> Usar modelos</button>` },
-            word: { kicker: "Ferramentas Office", title: "Editor Word", description: "Edite documentos direto no navegador. Importe .docx, formate e exporte em Word ou PDF.", actions: `<button class="secondary-button" data-goto="ai" data-ai-area="office"><i data-lucide="sparkles"></i> Assistente IA</button>` },
-            excel: { kicker: "Ferramentas Office", title: "Editor Excel", description: "Crie e edite planilhas no navegador. Importe Excel ou CSV e exporte quando terminar.", actions: `<button class="secondary-button" data-goto="ai" data-ai-area="office"><i data-lucide="sparkles"></i> Assistente IA</button>` },
+            word: { kicker: "Ferramentas Office", title: "Editor Word", description: "Edite documentos direto no navegador. Importe .docx, formate e exporte em Word ou PDF.", actions: `<button class="secondary-button office-ai-launch-button" data-office-ai-open="word"><i data-lucide="sparkles"></i> Assistente Word</button>` },
+            excel: { kicker: "Ferramentas Office", title: "Editor Excel", description: "Crie e edite planilhas no navegador. Importe Excel ou CSV e exporte quando terminar.", actions: `<button class="secondary-button office-ai-launch-button" data-office-ai-open="excel"><i data-lucide="sparkles"></i> Assistente Excel</button>` },
             pdf: { kicker: "Ferramentas", title: "Ferramentas PDF", description: "Processe arquivos PDF diretamente pelo navegador.", actions: `<button class="secondary-button" data-goto="documents"><i data-lucide="files"></i> Documentos</button>` },
             support: { kicker: "Atendimento", title: "Suporte", description: "Envie uma solicitação e acompanhe o atendimento.", actions: "" },
             profile: { kicker: "Minha conta", title: "Perfil", description: "Consulte seu plano, vencimento e limites de utilização.", actions: `<button class="secondary-button" data-goto="support"><i data-lucide="messages-square"></i> Atendimento</button>` },
@@ -6985,9 +7006,212 @@
         return buildAiDocxBlob(editor?.innerText || html.replace(/<[^>]+>/g, " "), state.wordFileName || "Documento");
     }
 
+    function resolveOfficeAiTarget(target = "") {
+        if (target === "excel" || target === "word") return target;
+        return state.view === "excel" ? "excel" : "word";
+    }
+
+    function launchOfficeAi(target = "") {
+        const resolved = resolveOfficeAiTarget(target);
+        state.officeAiTarget = resolved;
+        state.officeAiOpen = true;
+        state.officeAiBusy = false;
+        state.officeAiError = "";
+        state.officeAiMode = resolved === "word" ? "replace" : "replace";
+        if (state.view !== resolved) {
+            navigate(resolved);
+            return;
+        }
+        resolved === "excel" ? renderExcelEditor() : renderWordEditor();
+    }
+
+    function closeOfficeAi() {
+        const target = resolveOfficeAiTarget(state.officeAiTarget);
+        state.officeAiOpen = false;
+        state.officeAiBusy = false;
+        state.officeAiError = "";
+        target === "excel" ? renderExcelEditor() : renderWordEditor();
+    }
+
+    function officeAiExamplePrompts(target) {
+        return target === "excel"
+            ? [
+                "Crie uma planilha de controle financeiro mensal com receitas, despesas, saldo e fórmulas.",
+                "Monte uma planilha de estoque com produto, categoria, entrada, saída, quantidade atual e valor total.",
+                "Crie um cronograma de estudos semanal com disciplina, assunto, duração, status e observações.",
+            ]
+            : [
+                "Crie um relatório profissional com título, introdução, desenvolvimento, conclusão e recomendações.",
+                "Redija uma ata de reunião com pauta, participantes, decisões, responsáveis e prazos.",
+                "Revise e melhore o documento atual, preservando as informações e corrigindo clareza e organização.",
+            ];
+    }
+
+    function renderOfficeAiDialog(target) {
+        if (!state.officeAiOpen || resolveOfficeAiTarget(state.officeAiTarget) !== target) return "";
+        const isWord = target === "word";
+        const examples = officeAiExamplePrompts(target);
+        const modes = isWord
+            ? `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar um novo conteúdo e substituir o documento</option><option value="rewrite" ${state.officeAiMode === "rewrite" ? "selected" : ""}>Reescrever e melhorar o documento atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar o conteúdo ao final do documento</option>`
+            : `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar uma nova planilha e substituir a atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar a nova tabela abaixo dos dados atuais</option>`;
+        return `
+            <div class="office-ai-overlay" data-office-ai-backdrop>
+                <section class="office-ai-dialog" role="dialog" aria-modal="true" aria-labelledby="officeAiTitle">
+                    <header class="office-ai-dialog-header">
+                        <span class="office-ai-dialog-icon"><i data-lucide="sparkles"></i></span>
+                        <div><small>IA contextual do Office</small><h2 id="officeAiTitle">${isWord ? "Assistente Word" : "Assistente Excel"}</h2><p>${isWord ? "O resultado será aplicado diretamente no documento aberto." : "A IA criará linhas, colunas, dados e fórmulas diretamente na planilha aberta."}</p></div>
+                        <button type="button" class="ghost-button office-ai-close" data-office-ai-close aria-label="Fechar"><i data-lucide="x"></i></button>
+                    </header>
+                    <form id="officeAiForm" class="office-ai-form" data-office-ai-target="${target}">
+                        <label class="field"><span>O que você quer que a IA faça?</span><textarea id="officeAiPrompt" name="prompt" rows="6" maxlength="24000" placeholder="Descreva o ${isWord ? "documento" : "conteúdo da planilha"}, as informações e o formato desejado..." required>${escapeHtml(state.officeAiPrompt || "")}</textarea></label>
+                        <label class="field"><span>Como aplicar o resultado</span><select id="officeAiMode" name="mode">${modes}</select></label>
+                        <div class="office-ai-context-note"><i data-lucide="scan-text"></i><span>${isWord ? "O Assistente Word recebe o texto atual como contexto e devolve conteúdo estruturado para o editor." : "O Assistente Excel recebe a tabela atual como contexto e devolve uma estrutura de linhas e colunas."}</span></div>
+                        <div class="office-ai-examples">${examples.map((example) => `<button type="button" data-office-ai-example="${escapeAttr(example)}">${escapeHtml(example)}</button>`).join("")}</div>
+                        ${state.officeAiError ? `<p class="message error office-ai-error">${escapeHtml(state.officeAiError)}</p>` : `<p class="message">A IA não baixa um arquivo separado: ela aplica o resultado dentro do ${isWord ? "Word" : "Excel"}.</p>`}
+                        <footer class="office-ai-actions"><button type="button" class="ghost-button" data-office-ai-close>Cancelar</button><button type="submit" class="primary-button" ${state.officeAiBusy ? "disabled" : ""}><i data-lucide="${state.officeAiBusy ? "loader-circle" : "sparkles"}"></i> ${state.officeAiBusy ? "Gerando..." : isWord ? "Gerar no Word" : "Gerar no Excel"}</button></footer>
+                    </form>
+                </section>
+            </div>`;
+    }
+
+    function sanitizeOfficeWordHtml(value) {
+        const template = document.createElement("template");
+        template.innerHTML = String(value || "");
+        const allowed = new Set(["H1", "H2", "H3", "H4", "P", "BR", "STRONG", "B", "EM", "I", "U", "S", "UL", "OL", "LI", "BLOCKQUOTE", "TABLE", "THEAD", "TBODY", "TR", "TH", "TD", "HR", "A", "DIV", "SPAN"]);
+        const forbidden = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "FORM", "INPUT", "BUTTON", "TEXTAREA", "SELECT", "META", "LINK"]);
+        Array.from(template.content.querySelectorAll("*")).forEach((node) => {
+            if (forbidden.has(node.tagName)) {
+                node.remove();
+                return;
+            }
+            if (!allowed.has(node.tagName)) {
+                node.replaceWith(...Array.from(node.childNodes));
+                return;
+            }
+            Array.from(node.attributes).forEach((attribute) => {
+                const name = attribute.name.toLowerCase();
+                const keep = (node.tagName === "A" && ["href", "title"].includes(name)) || (["TD", "TH"].includes(node.tagName) && ["colspan", "rowspan"].includes(name));
+                if (!keep || name.startsWith("on")) node.removeAttribute(attribute.name);
+            });
+            if (node.tagName === "A") {
+                const href = String(node.getAttribute("href") || "").trim();
+                if (!/^(https?:|mailto:)/i.test(href)) node.removeAttribute("href");
+                else node.setAttribute("rel", "noopener noreferrer");
+            }
+        });
+        return template.innerHTML.trim();
+    }
+
+    function normalizeOfficeExcelPayload(payload) {
+        const columns = Array.isArray(payload?.columns) ? payload.columns.map((item) => String(item ?? "").slice(0, 500)) : [];
+        const rows = Array.isArray(payload?.rows) ? payload.rows.filter(Array.isArray).map((row) => row.map((item) => String(item ?? "").slice(0, 2000))) : [];
+        const data = columns.length ? [columns, ...rows] : rows;
+        if (!data.length) throw new Error("A IA não retornou linhas para a planilha.");
+        const limited = data.slice(0, 500).map((row) => row.slice(0, 60));
+        const cols = Math.max(1, ...limited.map((row) => row.length));
+        limited.forEach((row) => { while (row.length < cols) row.push(""); });
+        return limited;
+    }
+
+    function appendExcelData(current, generated) {
+        const base = (Array.isArray(current) ? current : []).map((row) => Array.isArray(row) ? [...row] : []);
+        while (base.length && base[base.length - 1].every((cell) => !String(cell || "").trim())) base.pop();
+        if (base.length) base.push(Array.from({ length: Math.max(base[0]?.length || 1, generated[0]?.length || 1) }, () => ""));
+        return [...base, ...generated];
+    }
+
+    async function submitOfficeAi(event) {
+        event.preventDefault();
+        if (state.officeAiBusy) return;
+        const form = event.target.closest("#officeAiForm");
+        const target = resolveOfficeAiTarget(form?.dataset?.officeAiTarget);
+        const prompt = String(form?.elements?.namedItem?.("prompt")?.value || "").trim();
+        const mode = String(form?.elements?.namedItem?.("mode")?.value || "replace");
+        if (!prompt) return;
+        if (!window.DocSpaceAI?.isEnabled) {
+            state.officeAiError = "A IA ainda não está ativada no frontend.";
+            target === "excel" ? renderExcelEditor() : renderWordEditor();
+            return;
+        }
+        state.officeAiPrompt = prompt;
+        state.officeAiMode = mode;
+        state.officeAiBusy = true;
+        state.officeAiError = "";
+        target === "excel" ? renderExcelEditor() : renderWordEditor();
+        try {
+            if (target === "word") {
+                const holder = document.createElement("div");
+                holder.innerHTML = state.wordHtml || "";
+                const result = await window.DocSpaceAI.run("office-word", {
+                    prompt,
+                    history: [],
+                    context: {
+                        area: "office",
+                        officeTarget: "word",
+                        operation: mode,
+                        currentFileName: state.wordFileName || "Documento",
+                        currentContent: String(holder.innerText || holder.textContent || "").slice(0, 18000),
+                    },
+                });
+                const parsed = parseAiJson(result.content);
+                const html = sanitizeOfficeWordHtml(parsed.html || parsed.content || "");
+                if (!html) throw new Error("A IA não retornou conteúdo utilizável para o Word.");
+                if (mode === "append") state.wordHtml = `${state.wordHtml || ""}<hr>${html}`;
+                else state.wordHtml = html;
+                const suggestedName = String(parsed.title || parsed.fileName || "").trim();
+                if (suggestedName && mode !== "append") state.wordFileName = suggestedName.slice(0, 120);
+                localStorage.setItem("docspace_word_draft", state.wordHtml);
+                localStorage.setItem("docspace_word_name", state.wordFileName || "Documento");
+                state.officeAiOpen = false;
+                state.officeAiPrompt = "";
+                toast(mode === "append" ? "Conteúdo adicionado ao Word pela IA." : "Documento criado no Word pela IA.", "success");
+                renderWordEditor();
+                return;
+            }
+
+            const compactCurrent = (state.excelData || []).slice(0, 120).map((row) => (row || []).slice(0, 30));
+            const result = await window.DocSpaceAI.run("office-excel", {
+                prompt,
+                history: [],
+                context: {
+                    area: "office",
+                    officeTarget: "excel",
+                    operation: mode,
+                    currentFileName: state.excelFileName || "Planilha",
+                    currentSheet: compactCurrent,
+                },
+            });
+            const parsed = parseAiJson(result.content);
+            const generated = normalizeOfficeExcelPayload(parsed);
+            state.excelData = mode === "append" ? appendExcelData(state.excelData, generated) : generated;
+            ensureExcelData();
+            const minimumRows = Math.max(20, state.excelData.length);
+            const minimumCols = Math.max(8, state.excelData[0]?.length || 1);
+            state.excelData = Array.from({ length: minimumRows }, (_, row) => Array.from({ length: minimumCols }, (_, col) => String(state.excelData[row]?.[col] ?? "")));
+            state.excelStyles = {};
+            if (mode !== "append" && Array.isArray(parsed.columns) && parsed.columns.length) {
+                parsed.columns.slice(0, minimumCols).forEach((_, col) => { state.excelStyles[excelCellKey(0, col)] = { bold: true, background: "#eef4ff" }; });
+            }
+            const suggestedName = String(parsed.fileName || parsed.title || "").trim();
+            if (suggestedName && mode !== "append") state.excelFileName = suggestedName.slice(0, 120);
+            localStorage.setItem("docspace_excel_draft", JSON.stringify(state.excelData));
+            state.officeAiOpen = false;
+            state.officeAiPrompt = "";
+            toast(mode === "append" ? "Tabela adicionada ao Excel pela IA." : "Planilha criada no Excel pela IA.", "success");
+            renderExcelEditor();
+        } catch (error) {
+            state.officeAiError = translateError(error);
+            toast(state.officeAiError, "error");
+        } finally {
+            state.officeAiBusy = false;
+            if (state.officeAiOpen) target === "excel" ? renderExcelEditor() : renderWordEditor();
+        }
+    }
+
     function renderWordEditor() {
         refs.content.innerHTML = `
             <section class="office-editor-shell word-editor-page">
+                <div class="office-sticky-controls office-sticky-controls-word">
                 <div class="office-filebar">
                     <input id="wordFileName" class="office-file-name" value="${escapeAttr(state.wordFileName || "Documento")}" placeholder="Nome do documento">
                     <span class="office-save-status" id="wordSaveStatus"><i data-lucide="cloud-check"></i> Rascunho salvo localmente</span>
@@ -6997,6 +7221,7 @@
                         <input id="wordImportInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
                         <input id="wordImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
                         <button type="button" class="secondary-button" data-word-print><i data-lucide="printer"></i> Imprimir</button>
+                        <button type="button" class="secondary-button office-ai-inline-button" data-office-ai-open="word"><i data-lucide="sparkles"></i> Assistente IA</button>
                         <button type="button" class="secondary-button" data-word-export-pdf><i data-lucide="file-type-2"></i> Exportar PDF</button>
                         <button type="button" class="primary-button" data-word-export-docx><i data-lucide="file-down"></i> Salvar Word</button>
                     </div>
@@ -7038,10 +7263,12 @@
                     <button type="button" data-word-command="undo" title="Desfazer"><i data-lucide="undo-2"></i></button>
                     <button type="button" data-word-command="redo" title="Refazer"><i data-lucide="redo-2"></i></button>
                 </div>
+                </div>
                 <div class="word-editor-surface">
                     <article id="wordEditor" class="word-page" style="zoom:${Number(state.wordZoom || 100) / 100}" contenteditable="true" spellcheck="true" aria-label="Editor de documento">${state.wordHtml || "<p></p>"}</article>
                 </div>
                 <footer class="word-statusbar"><span id="wordCountStatus">0 palavras · 0 caracteres</span><span>Salvamento local automático</span></footer>
+                ${renderOfficeAiDialog("word")}
             </section>`;
         bindWordEditor();
         initIcons();
@@ -7339,6 +7566,7 @@
         const filled = state.excelData.flat().filter((cell) => String(cell || "").trim()).length;
         refs.content.innerHTML = `
             <section class="office-editor-shell excel-editor-page">
+                <div class="office-sticky-controls office-sticky-controls-excel">
                 <div class="office-filebar excel-filebar">
                     <input id="excelFileName" class="office-file-name" value="${escapeAttr(state.excelFileName || "Planilha")}" placeholder="Nome da planilha">
                     <div class="office-file-actions">
@@ -7347,6 +7575,7 @@
                         <button type="button" class="primary-button" data-excel-export-xlsx><i data-lucide="file-down"></i> Excel (.xlsx)</button>
                         <button type="button" class="secondary-button" data-excel-export-csv><i data-lucide="file-down"></i> CSV</button>
                         <button type="button" class="ghost-button" data-excel-print><i data-lucide="printer"></i> Imprimir</button>
+                        <button type="button" class="secondary-button office-ai-inline-button" data-office-ai-open="excel"><i data-lucide="sparkles"></i> Assistente IA</button>
                         <span class="office-divider"></span>
                         <button type="button" class="ghost-button" data-excel-add-row><i data-lucide="plus"></i> Linha</button>
                         <button type="button" class="ghost-button" data-excel-add-col><i data-lucide="plus"></i> Coluna</button>
@@ -7375,8 +7604,10 @@
                     <label class="excel-color-control" title="Cor de fundo"><input type="color" value="#fff4bd" data-excel-background></label>
                     <label class="excel-zoom-control">Zoom <select data-excel-zoom><option value="80" ${state.excelZoom === 80 ? "selected" : ""}>80%</option><option value="100" ${state.excelZoom === 100 ? "selected" : ""}>100%</option><option value="120" ${state.excelZoom === 120 ? "selected" : ""}>120%</option></select></label>
                 </div>
+                </div>
                 <div class="excel-grid-wrap">${excelTableHtml()}</div>
-                <div class="excel-hint"><i data-lucide="sparkles"></i><span>Dica: use o <strong>Assistente IA</strong> na barra lateral para gerar tabelas, fórmulas de exemplo ou resumos.</span></div>
+                <div class="excel-hint"><i data-lucide="sparkles"></i><span>Dica: o <strong>Assistente Excel</strong> cria e aplica tabelas, fórmulas e estruturas diretamente nesta planilha.</span></div>
+                ${renderOfficeAiDialog("excel")}
             </section>`;
         bindExcelEditor();
         initIcons();
@@ -9784,6 +10015,19 @@
         if (nextStep) { moveDocumentStep(nextStep.closest("form"), 1); return; }
         const prevStep = event.target.closest("[data-doc-step-prev]");
         if (prevStep) { moveDocumentStep(prevStep.closest("form"), -1); return; }
+        const officeAiOpen = event.target.closest("[data-office-ai-open]");
+        if (officeAiOpen) { launchOfficeAi(officeAiOpen.dataset.officeAiOpen); return; }
+        const officeAiClose = event.target.closest("[data-office-ai-close]");
+        if (officeAiClose) { closeOfficeAi(); return; }
+        const officeAiBackdrop = event.target.closest("[data-office-ai-backdrop]");
+        if (officeAiBackdrop && event.target === officeAiBackdrop) { closeOfficeAi(); return; }
+        const officeAiExample = event.target.closest("[data-office-ai-example]");
+        if (officeAiExample) {
+            state.officeAiPrompt = officeAiExample.dataset.officeAiExample || "";
+            const input = $("#officeAiPrompt");
+            if (input) { input.value = state.officeAiPrompt; input.focus(); }
+            return;
+        }
         const goto = event.target.closest("[data-goto]");
         if (goto) {
             if (goto.dataset.aiArea) setAiArea(goto.dataset.aiArea);
@@ -10085,6 +10329,7 @@
         if (event.target.id === "documentGenerateForm") { event.preventDefault(); generateDocument(event); }
         if (event.target.id === "pdfToolForm") { event.preventDefault(); processPdfTool(event); }
         if (event.target.id === "aiForm") { event.preventDefault(); submitAi(event); }
+        if (event.target.id === "officeAiForm") { event.preventDefault(); submitOfficeAi(event); }
         if (event.target.id === "aiTemplateOptionsForm") { event.preventDefault(); confirmAiTemplateOptions(event); }
         if (event.target.id === "aiMissingFieldsForm") { event.preventDefault(); completeAiMissingFields(event); }
         if (event.target.id === "supportForm") { event.preventDefault(); submitSupport(event); }
@@ -10097,6 +10342,7 @@
             persistAiDraft(state.aiArea, event.target.value);
             autoResizeAiPrompt(event.target);
         }
+        if (event.target.id === "officeAiPrompt") state.officeAiPrompt = event.target.value;
         const smartField = event.target?.closest?.("[data-field-name]");
         if (smartField && "value" in smartField) applySmartFieldFormatting(smartField);
 
@@ -10238,6 +10484,10 @@
     }
 
     function handleContentChange(event) {
+        if (event.target?.id === "officeAiMode") {
+            state.officeAiMode = event.target.value || "replace";
+            return;
+        }
         if (event.target?.id === "profileAvatarInput") {
             const file = event.target.files?.[0];
             event.target.value = "";

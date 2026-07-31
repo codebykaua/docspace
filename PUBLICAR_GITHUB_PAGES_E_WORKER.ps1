@@ -1,79 +1,72 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $PSNativeCommandUseErrorActionPreference = $false
 
+$Gh = "$env:ProgramFiles\GitHub CLI\gh.exe"
 $Repositorio = "codebykaua/docspace"
 $RepositorioUrl = "https://github.com/codebykaua/docspace.git"
 $SiteUrl = "https://codebykaua.github.io/docspace/"
-$Versao = "152"
-$Gh = "$env:ProgramFiles\GitHub CLI\gh.exe"
+$Versao = "154"
 $Raiz = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Raiz
 
-if (-not (Test-Path $Gh)) { throw "GitHub CLI não encontrado." }
-if (-not (Test-Path ".\frontend\index.html")) { throw "frontend\index.html não encontrado." }
-if (-not (Test-Path ".\backend-worker\wrangler.toml")) { throw "backend-worker\wrangler.toml não encontrado." }
+function Falhar([string]$Mensagem) { Write-Host "`nERRO: $Mensagem" -ForegroundColor Red; exit 1 }
+function Verificar([string]$Mensagem) { if ($LASTEXITCODE -ne 0) { Falhar $Mensagem } }
 
-& $Gh auth status *> $null
-if ($LASTEXITCODE -ne 0) { & $Gh auth login --web --git-protocol https }
-if ($LASTEXITCODE -ne 0) { throw "Falha no login do GitHub." }
+if (-not (Test-Path $Gh)) { Falhar "GitHub CLI não encontrado." }
+if (-not (Test-Path ".\frontend\index.html")) { Falhar "frontend\index.html não encontrado." }
+if (-not (Test-Path ".\backend-worker\src\worker.js")) { Falhar "Worker não encontrado." }
 
 node --check ".\frontend\script.js"
-if ($LASTEXITCODE -ne 0) { throw "Erro no frontend." }
+Verificar "Erro no JavaScript do frontend."
 node --check ".\backend-worker\src\worker.js"
-if ($LASTEXITCODE -ne 0) { throw "Erro no Worker." }
+Verificar "Erro no JavaScript do Worker."
 
-# Atualiza main com os arquivos atuais.
-if (-not (Test-Path ".git")) { git init }
-git branch -M main
 git config user.name "DocSpace Publisher"
 git config user.email "codebykaua@users.noreply.github.com"
-$remotos = @(git remote)
-if ($remotos -contains "origin") { git remote set-url origin $RepositorioUrl } else { git remote add origin $RepositorioUrl }
+$Remotos = @(git remote)
+if ($Remotos -contains "origin") { git remote set-url origin $RepositorioUrl } else { git remote add origin $RepositorioUrl }
 git add -A
-git diff --cached --quiet
-if ($LASTEXITCODE -ne 0) { git commit -m "DocSpace v$Versao" }
-git push -u origin main --force
-if ($LASTEXITCODE -ne 0) { throw "Falha ao atualizar a branch main." }
+if (git status --porcelain) { git commit -m "DocSpace v154 - Office fixo e IA contextual"; Verificar "Falha ao criar commit." }
+git push -u origin main
+Verificar "Falha ao atualizar a branch main."
 
-# Publica somente o conteúdo de frontend na raiz da gh-pages.
-$Temp = Join-Path $env:TEMP "docspace-gh-pages-v$Versao"
-if (Test-Path $Temp) { Remove-Item $Temp -Recurse -Force }
+$Temp = Join-Path $env:TEMP "docspace-gh-pages-v154"
+if (Test-Path $Temp) { Remove-Item $Temp -Recurse -Force -ErrorAction SilentlyContinue }
 git clone $RepositorioUrl $Temp
-if ($LASTEXITCODE -ne 0) { throw "Falha ao clonar o repositório." }
+Verificar "Falha ao clonar o repositório."
 Push-Location $Temp
-git checkout --orphan gh-pages
+git checkout --orphan docspace-publicacao-v154
+if ($LASTEXITCODE -ne 0) { Pop-Location; Falhar "Falha ao criar publicação limpa." }
 Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
 Get-ChildItem -LiteralPath (Join-Path $Raiz "frontend") -Force | Copy-Item -Destination $Temp -Recurse -Force
-if (-not (Test-Path ".\index.html")) { Pop-Location; throw "index.html não foi copiado para gh-pages." }
-if (-not (Test-Path ".\.nojekyll")) { New-Item ".\.nojekyll" -ItemType File -Force | Out-Null }
+New-Item -Path ".\.nojekyll" -ItemType File -Force | Out-Null
 git add -A
-git -c user.name="DocSpace Publisher" -c user.email="codebykaua@users.noreply.github.com" commit -m "Publica DocSpace v$Versao"
-git push origin gh-pages --force
-$PushPages = $LASTEXITCODE
+git -c user.name="DocSpace Publisher" -c user.email="codebykaua@users.noreply.github.com" commit -m "Publica DocSpace v154"
+if ($LASTEXITCODE -ne 0) { Pop-Location; Falhar "Falha ao criar commit da gh-pages." }
+git push origin HEAD:gh-pages --force
+$PagesPush = $LASTEXITCODE
 Pop-Location
-if ($PushPages -ne 0) { throw "Falha ao publicar gh-pages." }
+if ($PagesPush -ne 0) { Falhar "Falha ao atualizar gh-pages." }
 
-# Configura Pages para gh-pages. Não tenta desativar workflow.
-$Config = Join-Path $env:TEMP "docspace-pages-config.json"
-[System.IO.File]::WriteAllText($Config, '{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}', (New-Object System.Text.UTF8Encoding($false)))
-& $Gh api --method PUT "repos/$Repositorio/pages" --input $Config *> $null
+$Config = Join-Path $env:TEMP "docspace-pages-v154.json"
+[System.IO.File]::WriteAllText($Config, '{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}', [System.Text.UTF8Encoding]::new($false))
+& $Gh api --method PUT "repos/$Repositorio/pages" --input $Config 2>$null
 if ($LASTEXITCODE -ne 0) {
-    & $Gh api --method DELETE "repos/$Repositorio/pages" *> $null
+    & $Gh api --method DELETE "repos/$Repositorio/pages" 2>$null
     Start-Sleep -Seconds 3
-    & $Gh api --method POST "repos/$Repositorio/pages" --input $Config *> $null
+    & $Gh api --method POST "repos/$Repositorio/pages" --input $Config
 }
-if ($LASTEXITCODE -ne 0) { throw "Falha ao configurar GitHub Pages." }
+if ($LASTEXITCODE -ne 0) { Falhar "Falha ao configurar GitHub Pages." }
 
-# Publica Worker.
 Push-Location ".\backend-worker"
 npx --yes wrangler whoami *> $null
 if ($LASTEXITCODE -ne 0) { npx --yes wrangler login }
 npx --yes wrangler deploy
-$WorkerExit = $LASTEXITCODE
+$Worker = $LASTEXITCODE
 Pop-Location
-if ($WorkerExit -ne 0) { throw "Site publicado, mas Worker falhou." }
+if ($Worker -ne 0) { Falhar "O Worker não foi publicado." }
 
 $UrlFinal = "${SiteUrl}?build=${Versao}"
-Write-Host "PUBLICAÇÃO CONCLUÍDA" -ForegroundColor Green
+Write-Host "`nDOCSPACE V154 PUBLICADO" -ForegroundColor Green
 Write-Host "Site: $UrlFinal" -ForegroundColor Green
 Start-Process $UrlFinal

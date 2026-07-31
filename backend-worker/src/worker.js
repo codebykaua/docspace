@@ -284,7 +284,7 @@ const PDF_TOOL_TYPES = new Set([
     "resizeA4",
     "metadata",
 ]);
-const AI_ACTIONS = new Set(["assist", "draft", "review", "extract-fields"]);
+const AI_ACTIONS = new Set(["assist", "draft", "review", "extract-fields", "office-word", "office-excel"]);
 const AI_DEFAULT_TIMEOUT_MS = 60_000;
 const AI_MAX_PROMPT_LENGTH = 24_000;
 const AI_MAX_HISTORY_MESSAGES = 14;
@@ -4326,9 +4326,9 @@ Arquivos anexados: ${images.map((image, index) => `${index + 1}. ${image.name}`)
                             : prompt,
                     },
                 ],
-                temperature: action === "extract-fields" ? 0 : 0.2,
-                max_tokens: action === "extract-fields" ? 5000 : 6000,
-                ...(action === "extract-fields" ? { response_format: { type: "json_object" } } : {}),
+                temperature: ["extract-fields", "office-word", "office-excel"].includes(action) ? 0 : 0.2,
+                max_tokens: action === "extract-fields" ? 5000 : ["office-word", "office-excel"].includes(action) ? 8000 : 6000,
+                ...(["extract-fields", "office-word", "office-excel"].includes(action) ? { response_format: { type: "json_object" } } : {}),
                 stream: false,
             }),
         });
@@ -4481,6 +4481,8 @@ function buildAiSystemPrompt(action, context) {
         assist: "Ajude o usuário a entender, estruturar ou preencher documentos e tarefas do sistema.",
         draft: "Crie uma minuta completa, profissional e pronta para Word/PDF usando os dados fornecidos e os dados legíveis dos anexos. Marque informações ausentes, duvidosas ou ilegíveis como [PREENCHER].",
         review: "Revise o conteúdo, identifique inconsistências, campos ausentes, repetições e problemas de clareza. Não altere silenciosamente dados objetivos.",
+        "office-word": "Você é o Assistente Word do DocSpace. Gere conteúdo completo e pronto para ser inserido diretamente no editor Word. Retorne exclusivamente JSON válido no formato {\"title\":\"nome curto do documento\",\"html\":\"conteúdo HTML\",\"summary\":\"resumo curto\"}. No campo html use somente h1, h2, h3, h4, p, strong, em, u, ul, ol, li, blockquote, table, thead, tbody, tr, th, td, hr e br. Não use markdown, cercas de código, scripts, CSS, comentários ou texto fora do JSON. Preserve fatos fornecidos e marque dados essenciais ausentes como [PREENCHER].",
+        "office-excel": "Você é o Assistente Excel do DocSpace. Gere uma planilha utilizável diretamente no editor. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto da planilha\",\"columns\":[\"Coluna 1\",\"Coluna 2\"],\"rows\":[[\"valor 1\",\"valor 2\"]],\"summary\":\"resumo curto\"}. columns contém os cabeçalhos e rows contém apenas as linhas de dados. Use fórmulas iniciadas por = quando forem úteis, preferindo SUM, AVERAGE, MIN, MAX e COUNT. Não use markdown, cercas de código, objetos dentro das células nem texto fora do JSON. Não invente dados objetivos que o usuário não forneceu; use exemplos claramente identificáveis ou [PREENCHER].",
         "extract-fields": "Faça leitura visual cuidadosa de todos os anexos e extraia somente campos claramente identificáveis. Retorne exclusivamente um objeto JSON no formato {\"fields\":{\"nome_do_campo\":\"valor\"},\"unreadable\":[\"...\"],\"conflicts\":[\"...\"],\"notes\":[\"...\"]}. Use apenas chaves permitidas, valores em texto simples e arrays de strings. Não use markdown, não inclua explicações fora do JSON, não adivinhe dígitos e não troque dados entre pessoas diferentes.",
     };
 
@@ -4505,6 +4507,21 @@ function buildAiSystemPrompt(action, context) {
     }
     const outputFormats = Array.isArray(context.outputFormats) ? context.outputFormats.join(", ") : "";
     if (outputFormats) base.push(`A interface permitirá baixar sua resposta nos formatos: ${outputFormats}. Entregue o conteúdo final completo, sem comentários antes ou depois quando o usuário pedir um documento.`);
+    if (action === "office-word") {
+        const operation = String(context.operation || "replace").slice(0, 30);
+        const currentFileName = String(context.currentFileName || "Documento").slice(0, 120);
+        const currentContent = String(context.currentContent || "").slice(0, 18000);
+        base.push(`Destino: editor Word. Operação solicitada: ${operation}. Nome atual: ${currentFileName}.`);
+        if (currentContent) base.push(`Conteúdo atual do documento, para contexto e eventual revisão:\n${currentContent}`);
+    }
+    if (action === "office-excel") {
+        const operation = String(context.operation || "replace").slice(0, 30);
+        const currentFileName = String(context.currentFileName || "Planilha").slice(0, 120);
+        let currentSheet = "";
+        try { currentSheet = JSON.stringify(Array.isArray(context.currentSheet) ? context.currentSheet.slice(0, 120) : []).slice(0, 18000); } catch (_) {}
+        base.push(`Destino: editor Excel. Operação solicitada: ${operation}. Nome atual: ${currentFileName}.`);
+        if (currentSheet && currentSheet !== "[]") base.push(`Dados atuais da planilha, para contexto:\n${currentSheet}`);
+    }
     if (context.hasAttachments) base.push(`Existem ${Number(context.imageCount || 0)} imagem(ns) anexada(s). Examine frente e verso, compare informações repetidas entre páginas e preserve exatamente a grafia e os números visíveis. Um CPF ou RG parcialmente oculto deve ser omitido e registrado em unreadable, nunca completado por padrão.`);
     return base.join("\n");
 }
