@@ -1683,3 +1683,108 @@ body[data-view="checkout"] { background: #fff; }
   .powerpoint-inspector { max-height: none; grid-template-columns: 1fr; }
   .powerpoint-inspector header, .powerpoint-inspector .powerpoint-image-actions, .powerpoint-inspector .powerpoint-inspector-row { grid-column: auto; }
 }
+
+/* DocSpace v157 — PowerPoint visual real: layouts, fotografias e ícones SVG */
+.powerpoint-slide-canvas {
+  display: block;
+  padding: 0;
+  background: var(--ppt-bg);
+}
+.powerpoint-slide-canvas .powerpoint-slide-accent { width: .8%; z-index: 8; }
+.powerpoint-slide-canvas svg { stroke-width: 1.8; }
+.powerpoint-slide-number { position: relative; z-index: 5; display: inline-flex; color: var(--ppt-accent); font-size: clamp(7px,.65vw,10px); font-weight: 900; letter-spacing: .16em; }
+.powerpoint-kicker { display: inline-flex; color: var(--ppt-accent); font-size: clamp(7px,.7vw,11px); font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+.powerpoint-icon-badge, .powerpoint-card-icon, .powerpoint-strip-icon { display: grid; place-items: center; flex: 0 0 auto; color: #fff; background: var(--ppt-accent); border-radius: 999px; }
+.powerpoint-icon-badge { width: clamp(26px,3vw,48px); height: clamp(26px,3vw,48px); margin: 2.4% 0; }
+.powerpoint-icon-badge svg { width: 52%; height: 52%; }
+.powerpoint-slide-canvas h2 { margin: 0; font-size: clamp(18px,2.25vw,38px); line-height: 1.04; letter-spacing: -.035em; }
+.powerpoint-subtitle { margin: 3% 0 0; font-size: clamp(9px,1.05vw,16px); line-height: 1.4; }
+.powerpoint-body { margin: 3% 0 0; color: var(--ppt-muted); font-size: clamp(8px,.92vw,14px); line-height: 1.5; }
+
+.powerpoint-cover-media, .powerpoint-cover-shade { position: absolute; inset: 0; }
+.powerpoint-cover-media img { width: 100%; height: 100%; object-fit: cover; }
+.powerpoint-cover-media.is-empty { background: radial-gradient(circle at 80% 25%, color-mix(in srgb,var(--ppt-accent) 55%,transparent), transparent 38%), linear-gradient(135deg,var(--ppt-primary), color-mix(in srgb,var(--ppt-primary) 72%,#000)); }
+.powerpoint-cover-shade { background: linear-gradient(90deg, color-mix(in srgb,var(--ppt-primary) 92%,transparent) 0%, color-mix(in srgb,var(--ppt-primary) 76%,transparent) 48%, color-mix(in srgb,var(--ppt-primary) 20%,transparent) 100%); }
+.powerpoint-cover-content { position: absolute; z-index: 3; left: 7%; top: 13%; width: 58%; color: #fff; }
+.powerpoint-layout-cover .powerpoint-kicker { color: #fff; opacity: .84; }
+.powerpoint-layout-cover .powerpoint-icon-badge { background: var(--ppt-accent); }
+.powerpoint-layout-cover h2 { font-size: clamp(23px,3.15vw,52px); color: #fff; }
+.powerpoint-layout-cover .powerpoint-subtitle, .powerpoint-layout-cover .powerpoint-body { color: rgba(255,255,255,.9); }
+.powerpoint-layout-cover > .powerpoint-slide-number { position: absolute; z-index: 4; left: 7%; bottom: 7%; color: #fff; }
+
+.powerpoint-split { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0,1.12fr) minmax(0,.88fr); }
+.powerpoint-split.is-image-left { grid-template-columns: minmax(0,.88fr) minmax(0,1.12fr); }
+.powerpoint-split.is-image-left .powerpoint-split-copy { order: 2; }
+.powerpoint-split.is-image-left .powerpoint-slide-image { order: 1; }
+.powerpoint-split-copy { min-width: 0; padding: 8% 8.2% 7% 10%; align-self: center; }
+.powerpoint-split .powerpoint-slide-image { min-height: 100%; border: 0; border-radius: 0; }
+.powerpoint-split .powerpoint-slide-image img { object-fit: cover; }
+.powerpoint-visual-list { display: grid; gap: .72em; margin: 5% 0 0; padding: 0; list-style: none; }
+.powerpoint-visual-list li { display: grid; grid-template-columns: auto 1fr; gap: .6em; align-items: start; color: var(--ppt-text); font-size: clamp(8px,.85vw,13px); line-height: 1.35; }
+.powerpoint-visual-list li svg { width: 1em; height: 1em; color: var(--ppt-accent); margin-top: .12em; }
+
+.powerpoint-full-content { position: absolute; inset: 0; padding: 5.8% 6.2% 5%; }
+.powerpoint-full-content > header { display: grid; grid-template-columns: auto 1fr; column-gap: 2.2%; align-items: center; }
+.powerpoint-full-content > header .powerpoint-kicker { grid-column: 2; }
+.powerpoint-full-content > header .powerpoint-icon-badge { grid-row: 1 / span 3; margin: 0; }
+.powerpoint-full-content > header h2 { grid-column: 2; }
+.powerpoint-full-content > header .powerpoint-subtitle, .powerpoint-full-content > header .powerpoint-body { grid-column: 2; margin-top: 1.4%; }
+.powerpoint-full-content > .powerpoint-slide-number { position: absolute; right: 4%; top: 5%; }
+.powerpoint-card-grid, .powerpoint-metric-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 2.2%; margin-top: 5%; }
+.powerpoint-card-grid:has(article:nth-child(4)), .powerpoint-metric-grid:has(article:nth-child(4)) { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.powerpoint-card-grid article { min-width: 0; min-height: 178px; padding: 11% 9%; background: color-mix(in srgb,var(--ppt-bg) 82%,#fff); border: 1px solid color-mix(in srgb,var(--ppt-accent) 30%,transparent); border-radius: 10px; box-shadow: 0 12px 28px rgba(15,23,42,.08); }
+.powerpoint-card-icon { width: clamp(24px,2.6vw,42px); height: clamp(24px,2.6vw,42px); margin-bottom: 10%; }
+.powerpoint-card-icon svg { width: 52%; height: 52%; }
+.powerpoint-card-grid h3, .powerpoint-content-strips h3, .powerpoint-timeline h3 { margin: 0; color: var(--ppt-text); font-size: clamp(9px,1vw,15px); line-height: 1.2; }
+.powerpoint-card-grid p, .powerpoint-content-strips p, .powerpoint-timeline p { margin: 7% 0 0; color: var(--ppt-muted); font-size: clamp(7px,.72vw,11px); line-height: 1.4; }
+
+.powerpoint-metric-grid article { min-height: 190px; display: grid; place-items: center; align-content: center; gap: 11%; padding: 9%; color: #fff; background: var(--ppt-primary); border-radius: 12px; box-shadow: 0 18px 35px color-mix(in srgb,var(--ppt-primary) 22%,transparent); text-align: center; }
+.powerpoint-metric-grid article:nth-child(even) { background: color-mix(in srgb,var(--ppt-primary) 82%,var(--ppt-accent)); }
+.powerpoint-metric-grid strong { font-size: clamp(18px,2.7vw,44px); letter-spacing: -.04em; }
+.powerpoint-metric-grid span { max-width: 160px; font-size: clamp(7px,.8vw,12px); line-height: 1.35; }
+
+.powerpoint-timeline { position: relative; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 1%; margin-top: 6%; padding-top: 4%; }
+.powerpoint-timeline::before { content: ""; position: absolute; left: 4%; right: 4%; top: 14%; height: 2px; background: color-mix(in srgb,var(--ppt-accent) 65%,transparent); }
+.powerpoint-timeline article { position: relative; z-index: 2; min-width: 0; text-align: center; }
+.powerpoint-timeline article > span { width: clamp(24px,2.6vw,42px); height: clamp(24px,2.6vw,42px); display: grid; place-items: center; margin: 0 auto 12%; color: #fff; background: var(--ppt-accent); border: 4px solid var(--ppt-bg); border-radius: 999px; font-size: clamp(7px,.72vw,11px); font-weight: 900; }
+.powerpoint-timeline p { margin: 8% auto 0; max-width: 145px; }
+
+.powerpoint-quote-content { position: absolute; inset: 0; width: 67%; display: flex; flex-direction: column; justify-content: center; padding: 7% 7.5%; }
+.powerpoint-layout-quote:has(.powerpoint-slide-image) .powerpoint-quote-content { width: 64%; }
+.powerpoint-layout-quote > .powerpoint-slide-image { position: absolute; right: 0; top: 0; bottom: 0; width: 38%; border: 0; border-radius: 0; }
+.powerpoint-quote-mark { color: var(--ppt-accent); font-size: clamp(38px,6vw,96px); font-family: Georgia,serif; line-height: .7; }
+.powerpoint-layout-quote h2 { font-size: clamp(17px,2.2vw,36px); font-style: italic; line-height: 1.15; }
+.powerpoint-quote-author { margin-top: 6%; color: var(--ppt-muted); font-size: clamp(8px,.9vw,14px); font-weight: 800; }
+
+.powerpoint-center-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 9%; text-align: center; }
+.powerpoint-center-content .powerpoint-icon-badge { margin: 2.5% 0; }
+.powerpoint-center-content h2 { max-width: 82%; font-size: clamp(23px,3vw,48px); }
+.powerpoint-center-content .powerpoint-subtitle, .powerpoint-center-content .powerpoint-body { max-width: 68%; }
+.powerpoint-layout-section { background: var(--ppt-primary); }
+.powerpoint-layout-section h2, .powerpoint-layout-section .powerpoint-subtitle, .powerpoint-layout-section .powerpoint-body { color: #fff; }
+.powerpoint-layout-section .powerpoint-kicker, .powerpoint-layout-section .powerpoint-slide-number { color: color-mix(in srgb,var(--ppt-accent) 85%,#fff); }
+.powerpoint-closing-line { width: 16%; height: 4px; margin-top: 5%; background: var(--ppt-accent); border-radius: 999px; }
+
+.powerpoint-content-strips { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2.4%; margin-top: 4.5%; }
+.powerpoint-content-strips article { display: grid; grid-template-columns: auto 1fr; gap: 5%; align-items: start; min-width: 0; padding: 5%; background: color-mix(in srgb,var(--ppt-bg) 80%,#fff); border: 1px solid color-mix(in srgb,var(--ppt-accent) 28%,transparent); border-radius: 9px; }
+.powerpoint-strip-icon { width: clamp(22px,2.3vw,38px); height: clamp(22px,2.3vw,38px); }
+.powerpoint-strip-icon svg { width: 52%; height: 52%; }
+
+.powerpoint-slide-canvas.is-thumbnail { display: block; padding: 0; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-cover-content { width: 70%; top: 16%; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-icon-badge, .powerpoint-slide-canvas.is-thumbnail .powerpoint-card-grid p, .powerpoint-slide-canvas.is-thumbnail .powerpoint-content-strips p, .powerpoint-slide-canvas.is-thumbnail .powerpoint-timeline p, .powerpoint-slide-canvas.is-thumbnail .powerpoint-subtitle, .powerpoint-slide-canvas.is-thumbnail .powerpoint-body, .powerpoint-slide-canvas.is-thumbnail .powerpoint-kicker, .powerpoint-slide-canvas.is-thumbnail .powerpoint-slide-number, .powerpoint-slide-canvas.is-thumbnail .powerpoint-attribution { display: none; }
+.powerpoint-slide-canvas.is-thumbnail h2 { font-size: 7px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-card-grid { margin-top: 8%; gap: 3%; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-card-grid article { min-height: 34px; padding: 7%; border-radius: 2px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-card-icon, .powerpoint-slide-canvas.is-thumbnail .powerpoint-strip-icon { width: 8px; height: 8px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-card-grid h3, .powerpoint-slide-canvas.is-thumbnail .powerpoint-content-strips h3, .powerpoint-slide-canvas.is-thumbnail .powerpoint-timeline h3 { font-size: 3px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-metric-grid article { min-height: 34px; border-radius: 2px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-metric-grid strong { font-size: 7px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-metric-grid span { font-size: 2.8px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-timeline article > span { width: 8px; height: 8px; border-width: 1px; font-size: 3px; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-visual-list { display: none; }
+
+@media (max-width: 720px) {
+  .powerpoint-card-grid, .powerpoint-card-grid:has(article:nth-child(4)), .powerpoint-metric-grid, .powerpoint-metric-grid:has(article:nth-child(4)) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .powerpoint-timeline { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}

@@ -4984,8 +4984,12 @@
 
     function defaultPowerpointSlides() {
         return [
-            { type: "cover", title: "Nova apresentação", subtitle: "Clique em Assistente PowerPoint e descreva o tema", bullets: [], imageQuery: "", imageUrl: "", imageData: "", icon: "✨", notes: "" },
-            { type: "content", title: "Visão geral", subtitle: "", bullets: ["Apresente o contexto", "Explique os pontos principais", "Finalize com próximos passos"], imageQuery: "", imageUrl: "", imageData: "", icon: "📌", notes: "" },
+            { layout: "cover", type: "cover", kicker: "APRESENTAÇÃO", title: "Nova apresentação", subtitle: "Clique em Assistente PowerPoint e descreva o tema", body: "", bullets: [], cards: [], metrics: [], timeline: [], imageQuery: "professional presentation workspace", imageUrl: "", imageData: "", icon: "presentation", notes: "" },
+            { layout: "cards", type: "cards", kicker: "VISÃO GERAL", title: "Uma apresentação de verdade", subtitle: "Conteúdo organizado visualmente, sem transformar todos os slides em listas.", body: "", bullets: [], cards: [
+                { title: "Contexto", text: "Apresente o cenário de forma clara.", icon: "globe-2" },
+                { title: "Análise", text: "Destaque os pontos importantes.", icon: "chart-no-axes-combined" },
+                { title: "Próximos passos", text: "Finalize com uma orientação prática.", icon: "rocket" }
+            ], metrics: [], timeline: [], imageQuery: "", imageUrl: "", imageData: "", icon: "layout-grid", notes: "" },
         ];
     }
 
@@ -7098,7 +7102,7 @@
         const title = isWord ? "Assistente Word" : isExcel ? "Assistente Excel" : "Assistente PowerPoint";
         const description = isWord ? "O resultado será aplicado diretamente no documento aberto." : isExcel ? "A IA criará linhas, colunas, dados e fórmulas diretamente na planilha aberta." : "A IA criará os slides, buscará imagens e preparará a apresentação para exportação em .pptx.";
         const placeholder = isWord ? "documento" : isExcel ? "conteúdo da planilha" : "tema, público, quantidade de slides e estilo da apresentação";
-        const contextNote = isWord ? "O Assistente Word recebe o texto atual como contexto e devolve conteúdo estruturado para o editor." : isExcel ? "O Assistente Excel recebe a tabela atual como contexto e devolve uma estrutura de linhas e colunas." : "O Assistente PowerPoint cria títulos, tópicos, notas, ícones e pesquisas de imagens. As imagens são procuradas automaticamente no Wikimedia Commons.";
+        const contextNote = isWord ? "O Assistente Word recebe o texto atual como contexto e devolve conteúdo estruturado para o editor." : isExcel ? "O Assistente Excel recebe a tabela atual como contexto e devolve uma estrutura de linhas e colunas." : "O Assistente PowerPoint monta slides com layouts visuais, fotografias reais, cards, indicadores, etapas, notas e ícones SVG.";
         const targetLabel = isWord ? "Word" : isExcel ? "Excel" : "PowerPoint";
         return `
             <div class="office-ai-overlay" data-office-ai-backdrop>
@@ -7166,28 +7170,131 @@
         return [...base, ...generated];
     }
 
+    function powerpointLayoutOptions() {
+        return [
+            ["cover", "Capa visual"],
+            ["image-right", "Imagem à direita"],
+            ["image-left", "Imagem à esquerda"],
+            ["cards", "Cards"],
+            ["stats", "Números e indicadores"],
+            ["timeline", "Etapas / linha do tempo"],
+            ["quote", "Citação"],
+            ["section", "Abertura de seção"],
+            ["closing", "Encerramento"],
+            ["content", "Conteúdo visual"],
+        ];
+    }
+
+    function powerpointIconOptions() {
+        return [
+            ["presentation", "Apresentação"], ["sparkles", "Destaque"], ["brain-circuit", "Inteligência artificial"],
+            ["briefcase-business", "Trabalho"], ["chart-no-axes-combined", "Crescimento"], ["lightbulb", "Ideia"],
+            ["users", "Pessoas"], ["shield-check", "Segurança"], ["target", "Objetivo"], ["rocket", "Inovação"],
+            ["globe-2", "Mundo"], ["building-2", "Empresa"], ["laptop", "Tecnologia"], ["bot", "Automação"],
+            ["graduation-cap", "Educação"], ["workflow", "Processo"], ["circle-check-big", "Conclusão"],
+            ["triangle-alert", "Atenção"], ["scale", "Ética"], ["heart-handshake", "Parceria"],
+            ["database", "Dados"], ["cloud", "Nuvem"], ["image", "Imagem"], ["leaf", "Sustentabilidade"],
+            ["landmark", "Instituição"], ["map-pin", "Localização"], ["wrench", "Ferramentas"],
+            ["hand-coins", "Finanças"], ["book-open", "Conhecimento"], ["layout-grid", "Estrutura"],
+        ];
+    }
+
+    function normalizePowerpointIcon(value, index = 0) {
+        const names = new Set(powerpointIconOptions().map(([name]) => name));
+        const raw = String(value || "").trim().toLowerCase();
+        const emojiMap = { "✨": "sparkles", "📌": "target", "📊": "chart-no-axes-combined", "💡": "lightbulb", "🤖": "bot", "🚀": "rocket", "🌍": "globe-2", "💼": "briefcase-business", "🎓": "graduation-cap", "✅": "circle-check-big", "⚠️": "triangle-alert", "🛡️": "shield-check" };
+        if (emojiMap[value]) return emojiMap[value];
+        if (names.has(raw)) return raw;
+        return index === 0 ? "presentation" : "sparkles";
+    }
+
+    function normalizePowerpointCards(value) {
+        const source = Array.isArray(value) ? value : [];
+        return source.slice(0, 4).map((item, index) => {
+            if (typeof item === "string") return { title: item.slice(0, 90), text: "", icon: normalizePowerpointIcon("", index + 1) };
+            return {
+                title: String(item?.title || item?.label || `Ponto ${index + 1}`).trim().slice(0, 90),
+                text: String(item?.text || item?.description || item?.body || "").trim().slice(0, 260),
+                icon: normalizePowerpointIcon(item?.icon, index + 1),
+            };
+        }).filter((item) => item.title || item.text);
+    }
+
+    function normalizePowerpointMetrics(value) {
+        const source = Array.isArray(value) ? value : [];
+        return source.slice(0, 4).map((item, index) => ({
+            value: String(item?.value || item?.number || item?.amount || "—").trim().slice(0, 32),
+            label: String(item?.label || item?.title || `Indicador ${index + 1}`).trim().slice(0, 120),
+        }));
+    }
+
+    function normalizePowerpointTimeline(value) {
+        const source = Array.isArray(value) ? value : [];
+        return source.slice(0, 5).map((item, index) => ({
+            title: String(item?.title || item?.step || `Etapa ${index + 1}`).trim().slice(0, 80),
+            text: String(item?.text || item?.description || "").trim().slice(0, 220),
+        }));
+    }
+
     function normalizePowerpointSlide(slide, index = 0) {
-        const allowedTypes = new Set(["cover", "content", "section", "quote", "closing"]);
-        const type = allowedTypes.has(String(slide?.type || "")) ? String(slide.type) : index === 0 ? "cover" : "content";
-        const bullets = Array.isArray(slide?.bullets) ? slide.bullets.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 8) : String(slide?.bullets || "").split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 8);
+        const allowed = new Set(powerpointLayoutOptions().map(([name]) => name));
+        const legacy = { cover: "cover", section: "section", quote: "quote", closing: "closing", content: "image-right" };
+        const requested = String(slide?.layout || legacy[String(slide?.type || "")] || (index === 0 ? "cover" : "content"));
+        const layout = allowed.has(requested) ? requested : index === 0 ? "cover" : "content";
+        const bullets = Array.isArray(slide?.bullets)
+            ? slide.bullets.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 4)
+            : String(slide?.bullets || "").split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 4);
         return {
-            type,
-            title: String(slide?.title || (index === 0 ? "Nova apresentação" : `Slide ${index + 1}`)).slice(0, 180),
-            subtitle: String(slide?.subtitle || "").slice(0, 260),
+            type: layout,
+            layout,
+            kicker: String(slide?.kicker || slide?.eyebrow || "").trim().slice(0, 80),
+            title: String(slide?.title || (index === 0 ? "Nova apresentação" : `Slide ${index + 1}`)).trim().slice(0, 180),
+            subtitle: String(slide?.subtitle || "").trim().slice(0, 280),
+            body: String(slide?.body || slide?.paragraph || slide?.description || "").trim().slice(0, 900),
             bullets,
-            imageQuery: String(slide?.imageQuery || slide?.image_query || "").slice(0, 180),
-            imageUrl: String(slide?.imageUrl || slide?.image_url || "").slice(0, 2000),
+            cards: normalizePowerpointCards(slide?.cards),
+            metrics: normalizePowerpointMetrics(slide?.metrics || slide?.stats),
+            timeline: normalizePowerpointTimeline(slide?.timeline || slide?.steps),
+            quote: String(slide?.quote || "").trim().slice(0, 600),
+            author: String(slide?.author || slide?.source || "").trim().slice(0, 160),
+            imageQuery: String(slide?.imageQuery || slide?.image_query || "").trim().slice(0, 180),
+            imageUrl: String(slide?.imageUrl || slide?.image_url || "").trim().slice(0, 3000),
             imageData: String(slide?.imageData || "").slice(0, 8_000_000),
-            imageAttribution: String(slide?.imageAttribution || "").slice(0, 300),
-            icon: String(slide?.icon || (index === 0 ? "✨" : "📌")).slice(0, 8),
-            notes: String(slide?.notes || slide?.speakerNotes || "").slice(0, 4000),
+            imageAttribution: String(slide?.imageAttribution || "").trim().slice(0, 400),
+            icon: normalizePowerpointIcon(slide?.icon, index),
+            notes: String(slide?.notes || slide?.speakerNotes || "").trim().slice(0, 4000),
         };
     }
 
     function normalizeOfficePowerpointPayload(payload) {
         const slides = Array.isArray(payload?.slides) ? payload.slides.slice(0, 20).map(normalizePowerpointSlide) : [];
         if (!slides.length) throw new Error("A IA não retornou slides utilizáveis.");
-        if (slides[0].type !== "cover") slides[0].type = "cover";
+        slides[0].layout = "cover";
+        slides[0].type = "cover";
+        const visualCycle = ["image-right", "cards", "image-left", "timeline", "content", "image-right", "cards"];
+        for (let index = 1; index < slides.length; index += 1) {
+            const slide = slides[index];
+            const previous = slides[index - 1];
+            if (slide.metrics.length) slide.layout = slide.type = "stats";
+            else if (slide.timeline.length) slide.layout = slide.type = "timeline";
+            else if (slide.quote) slide.layout = slide.type = "quote";
+            else if (slide.cards.length) slide.layout = slide.type = "cards";
+            else if (slide.layout === previous.layout || slide.layout === "cover") slide.layout = slide.type = visualCycle[(index - 1) % visualCycle.length];
+            if (slide.layout === "cards" && !slide.cards.length) {
+                slide.cards = slide.bullets.slice(0, 4).map((title, cardIndex) => ({ title, text: "", icon: powerpointIconOptions()[(cardIndex + index + 2) % powerpointIconOptions().length][0] }));
+                slide.bullets = [];
+            }
+            if (slide.layout === "timeline" && !slide.timeline.length) {
+                slide.timeline = slide.bullets.slice(0, 5).map((text, stepIndex) => ({ title: `Etapa ${stepIndex + 1}`, text }));
+                slide.bullets = [];
+            }
+            if (["image-right", "image-left"].includes(slide.layout) && !slide.imageQuery) slide.imageQuery = slide.title;
+        }
+        if (slides.length >= 6 && !["closing", "quote"].includes(slides[slides.length - 1].layout)) {
+            slides[slides.length - 1].layout = "closing";
+            slides[slides.length - 1].type = "closing";
+        }
+        if (!slides[0].imageQuery) slides[0].imageQuery = slides[0].title;
         return {
             fileName: String(payload?.fileName || payload?.title || "Apresentação").trim().slice(0, 120) || "Apresentação",
             theme: String(payload?.theme || "executive").trim().slice(0, 40),
@@ -7221,17 +7328,26 @@
     async function searchWikimediaImage(query) {
         const cleaned = String(query || "").trim();
         if (!cleaned) return null;
+        if (window.DocSpaceAI?.searchMedia) {
+            try {
+                const result = await window.DocSpaceAI.searchMedia(cleaned);
+                const item = Array.isArray(result?.images) ? result.images[0] : null;
+                if (item?.proxyUrl || item?.url) {
+                    return { url: item.proxyUrl || item.url, attribution: String(item.attribution || "Wikimedia Commons").slice(0, 400) };
+                }
+            } catch (_) {}
+        }
         const url = new URL("https://commons.wikimedia.org/w/api.php");
         url.searchParams.set("action", "query");
         url.searchParams.set("format", "json");
         url.searchParams.set("origin", "*");
         url.searchParams.set("generator", "search");
-        url.searchParams.set("gsrsearch", `filetype:bitmap ${cleaned}`);
+        url.searchParams.set("gsrsearch", `${cleaned} filetype:bitmap`);
         url.searchParams.set("gsrnamespace", "6");
-        url.searchParams.set("gsrlimit", "8");
+        url.searchParams.set("gsrlimit", "12");
         url.searchParams.set("prop", "imageinfo");
-        url.searchParams.set("iiprop", "url|extmetadata");
-        url.searchParams.set("iiurlwidth", "1400");
+        url.searchParams.set("iiprop", "url|mime|size|extmetadata");
+        url.searchParams.set("iiurlwidth", "1600");
         const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
         if (!response.ok) throw new Error("Não foi possível buscar a imagem.");
         const data = await response.json();
@@ -7239,36 +7355,43 @@
         for (const page of pages) {
             const info = page?.imageinfo?.[0];
             const imageUrl = String(info?.thumburl || info?.url || "");
-            if (!/^https:\/\//i.test(imageUrl) || /\.svg(?:\?|$)/i.test(imageUrl)) continue;
+            const mime = String(info?.mime || "");
+            if (!/^https:\/\//i.test(imageUrl) || !/^image\/(jpeg|png|webp)$/i.test(mime) || /\.(svg|gif|tiff?)(?:\?|$)/i.test(imageUrl)) continue;
             const artist = String(info?.extmetadata?.Artist?.value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
             const license = String(info?.extmetadata?.LicenseShortName?.value || "").replace(/<[^>]+>/g, " ").trim();
-            return { url: imageUrl, attribution: [artist, license, "Wikimedia Commons"].filter(Boolean).join(" · ").slice(0, 300) };
+            return { url: imageUrl, attribution: [artist, license, "Wikimedia Commons"].filter(Boolean).join(" · ").slice(0, 400) };
         }
         return null;
     }
 
     async function enrichPowerpointImages(slides) {
-        const output = [];
-        for (const slide of slides) {
-            const next = normalizePowerpointSlide(slide, output.length);
-            if (!next.imageUrl && !next.imageData && next.imageQuery) {
+        const output = slides.map((slide, index) => normalizePowerpointSlide(slide, index));
+        let cursor = 0;
+        async function worker() {
+            while (cursor < output.length) {
+                const index = cursor++;
+                const next = output[index];
+                if (next.imageUrl || next.imageData || !next.imageQuery) continue;
                 try {
-                    const found = await searchWikimediaImage(next.imageQuery);
+                    let found = await searchWikimediaImage(next.imageQuery);
+                    if (!found && next.title && next.title.toLowerCase() !== next.imageQuery.toLowerCase()) {
+                        found = await searchWikimediaImage(next.title);
+                    }
                     if (found) {
                         next.imageUrl = found.url;
                         next.imageAttribution = found.attribution;
                     }
                 } catch (_) {}
             }
-            output.push(next);
         }
+        await Promise.all([worker(), worker(), worker()]);
         return output;
     }
 
     async function urlToDataUri(url) {
         if (!url) return "";
         if (/^data:image\//i.test(url)) return url;
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: /workers\.dev/i.test(url) ? "include" : "omit" });
         if (!response.ok) throw new Error("Não foi possível carregar uma imagem da apresentação.");
         const blob = await response.blob();
         return await new Promise((resolve, reject) => {
@@ -7279,29 +7402,63 @@
         });
     }
 
-    function powerpointSlidePreview(slide, index, compact = false) {
-        const theme = getPowerpointTheme();
+    function powerpointIconMarkup(icon, className = "") {
+        return `<span class="${escapeAttr(className)}"><i data-lucide="${escapeAttr(normalizePowerpointIcon(icon))}"></i></span>`;
+    }
+
+    function powerpointImageMarkup(slide, compact = false) {
         const image = slide.imageData || slide.imageUrl;
-        const bullets = (slide.bullets || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-        return `<div class="powerpoint-slide-canvas powerpoint-slide-${escapeAttr(slide.type)} ${compact ? "is-thumbnail" : ""}" style="--ppt-primary:#${theme.primary};--ppt-accent:#${theme.accent};--ppt-bg:#${theme.background};--ppt-text:#${theme.text};--ppt-muted:#${theme.muted}">
-            <span class="powerpoint-slide-accent"></span>
-            <div class="powerpoint-slide-copy">
-                <span class="powerpoint-slide-number">${String(index + 1).padStart(2, "0")}</span>
-                <div class="powerpoint-slide-icon">${escapeHtml(slide.icon || "📌")}</div>
-                <h2>${escapeHtml(slide.title || "Sem título")}</h2>
-                ${slide.subtitle ? `<p>${escapeHtml(slide.subtitle)}</p>` : ""}
-                ${bullets ? `<ul>${bullets}</ul>` : ""}
-            </div>
-            ${image ? `<div class="powerpoint-slide-image"><img src="${escapeAttr(image)}" alt="Imagem do slide" referrerpolicy="no-referrer"></div>` : `<div class="powerpoint-slide-image is-empty"><i data-lucide="image"></i><span>${escapeHtml(slide.imageQuery || "Imagem opcional")}</span></div>`}
-            ${slide.imageAttribution && !compact ? `<small class="powerpoint-attribution">${escapeHtml(slide.imageAttribution)}</small>` : ""}
-        </div>`;
+        if (image) return `<div class="powerpoint-slide-image"><img src="${escapeAttr(image)}" alt="Imagem relacionada ao conteúdo" referrerpolicy="no-referrer"></div>`;
+        return `<div class="powerpoint-slide-image is-empty"><i data-lucide="image"></i><span>${escapeHtml(compact ? "" : slide.imageQuery || "Imagem ainda não encontrada")}</span></div>`;
+    }
+
+    function powerpointSlidePreview(slideInput, index, compact = false) {
+        const slide = normalizePowerpointSlide(slideInput, index);
+        const theme = getPowerpointTheme();
+        const style = `--ppt-primary:#${theme.primary};--ppt-accent:#${theme.accent};--ppt-bg:#${theme.background};--ppt-text:#${theme.text};--ppt-muted:#${theme.muted}`;
+        const image = slide.imageData || slide.imageUrl;
+        const kicker = slide.kicker ? `<span class="powerpoint-kicker">${escapeHtml(slide.kicker)}</span>` : "";
+        const subtitle = slide.subtitle ? `<p class="powerpoint-subtitle">${escapeHtml(slide.subtitle)}</p>` : "";
+        const body = slide.body ? `<p class="powerpoint-body">${escapeHtml(slide.body)}</p>` : "";
+        const bullets = slide.bullets.map((item) => `<li><i data-lucide="circle-check-big"></i><span>${escapeHtml(item)}</span></li>`).join("");
+        const icon = powerpointIconMarkup(slide.icon, "powerpoint-icon-badge");
+        const number = `<span class="powerpoint-slide-number">${String(index + 1).padStart(2, "0")}</span>`;
+        let content = "";
+
+        if (slide.layout === "cover") {
+            content = `${image ? `<div class="powerpoint-cover-media"><img src="${escapeAttr(image)}" alt="Imagem da capa" referrerpolicy="no-referrer"></div>` : `<div class="powerpoint-cover-media is-empty"></div>`}<div class="powerpoint-cover-shade"></div><div class="powerpoint-cover-content">${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle || body}</div>${number}`;
+        } else if (slide.layout === "section" || slide.layout === "closing") {
+            content = `<div class="powerpoint-center-content">${number}${icon}${kicker}<h2>${escapeHtml(slide.title)}</h2>${subtitle}${body}${slide.layout === "closing" ? `<span class="powerpoint-closing-line"></span>` : ""}</div>`;
+        } else if (slide.layout === "quote") {
+            content = `<div class="powerpoint-quote-content">${number}${icon}${kicker}<span class="powerpoint-quote-mark">“</span><h2>${escapeHtml(slide.quote || slide.title)}</h2>${slide.author ? `<p class="powerpoint-quote-author">${escapeHtml(slide.author)}</p>` : subtitle}</div>${image ? powerpointImageMarkup(slide, compact) : ""}`;
+        } else if (slide.layout === "cards") {
+            const cards = (slide.cards.length ? slide.cards : slide.bullets.map((item, i) => ({ title: item, text: "", icon: powerpointIconOptions()[i + 2]?.[0] || "sparkles" }))).slice(0, 4);
+            content = `<div class="powerpoint-full-content">${number}<header>${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle || body}</header><div class="powerpoint-card-grid">${cards.map((card) => `<article>${powerpointIconMarkup(card.icon, "powerpoint-card-icon")}<h3>${escapeHtml(card.title)}</h3>${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}</article>`).join("")}</div></div>`;
+        } else if (slide.layout === "stats") {
+            const metrics = slide.metrics.length ? slide.metrics : [{ value: "01", label: "Indicador principal" }, { value: "02", label: "Segundo destaque" }, { value: "03", label: "Terceiro destaque" }];
+            content = `<div class="powerpoint-full-content">${number}<header>${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle || body}</header><div class="powerpoint-metric-grid">${metrics.map((metric) => `<article><strong>${escapeHtml(metric.value)}</strong><span>${escapeHtml(metric.label)}</span></article>`).join("")}</div></div>`;
+        } else if (slide.layout === "timeline") {
+            const steps = slide.timeline.length ? slide.timeline : slide.bullets.map((item, i) => ({ title: `Etapa ${i + 1}`, text: item }));
+            content = `<div class="powerpoint-full-content">${number}<header>${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle || body}</header><div class="powerpoint-timeline">${steps.slice(0, 5).map((step, i) => `<article><span>${String(i + 1).padStart(2, "0")}</span><h3>${escapeHtml(step.title)}</h3><p>${escapeHtml(step.text)}</p></article>`).join("")}</div></div>`;
+        } else if (slide.layout === "image-left" || slide.layout === "image-right") {
+            content = `<div class="powerpoint-split ${slide.layout === "image-left" ? "is-image-left" : ""}"><div class="powerpoint-split-copy">${number}${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle}${body}${bullets ? `<ul class="powerpoint-visual-list">${bullets}</ul>` : ""}</div>${powerpointImageMarkup(slide, compact)}</div>`;
+        } else {
+            const items = slide.cards.length ? slide.cards : slide.bullets.map((item, i) => ({ title: item, text: "", icon: powerpointIconOptions()[i + 3]?.[0] || "circle-check-big" }));
+            content = `<div class="powerpoint-full-content">${number}<header>${kicker}${icon}<h2>${escapeHtml(slide.title)}</h2>${subtitle || body}</header><div class="powerpoint-content-strips">${items.slice(0, 4).map((item) => `<article>${powerpointIconMarkup(item.icon, "powerpoint-strip-icon")}<div><h3>${escapeHtml(item.title)}</h3>${item.text ? `<p>${escapeHtml(item.text)}</p>` : ""}</div></article>`).join("")}</div></div>`;
+        }
+
+        return `<div class="powerpoint-slide-canvas powerpoint-layout-${escapeAttr(slide.layout)} ${compact ? "is-thumbnail" : ""}" style="${style}"><span class="powerpoint-slide-accent"></span>${content}${slide.imageAttribution && !compact ? `<small class="powerpoint-attribution">${escapeHtml(slide.imageAttribution)}</small>` : ""}</div>`;
     }
 
     function renderPowerpointEditor() {
         if (!state.powerpointSlides.length) state.powerpointSlides = defaultPowerpointSlides();
+        state.powerpointSlides = state.powerpointSlides.map(normalizePowerpointSlide);
         state.powerpointSelectedSlide = Math.max(0, Math.min(state.powerpointSelectedSlide, state.powerpointSlides.length - 1));
         const selected = state.powerpointSlides[state.powerpointSelectedSlide];
         const themes = powerpointThemes();
+        const cardsText = selected.cards.map((item) => `${item.title} | ${item.text} | ${item.icon}`).join("\n");
+        const metricsText = selected.metrics.map((item) => `${item.value} | ${item.label}`).join("\n");
+        const timelineText = selected.timeline.map((item) => `${item.title} | ${item.text}`).join("\n");
         refs.content.innerHTML = `
             <section class="office-editor-shell powerpoint-editor-page">
                 <div class="office-sticky-controls powerpoint-sticky-controls">
@@ -7331,42 +7488,124 @@
                         ${powerpointSlidePreview(selected, state.powerpointSelectedSlide)}
                     </main>
                     <aside class="powerpoint-inspector">
-                        <header><strong>Editar slide ${state.powerpointSelectedSlide + 1}</strong><small>Alterações instantâneas</small></header>
-                        <label class="field"><span>Layout</span><select data-ppt-field="type"><option value="cover" ${selected.type === "cover" ? "selected" : ""}>Capa</option><option value="content" ${selected.type === "content" ? "selected" : ""}>Conteúdo</option><option value="section" ${selected.type === "section" ? "selected" : ""}>Seção</option><option value="quote" ${selected.type === "quote" ? "selected" : ""}>Citação</option><option value="closing" ${selected.type === "closing" ? "selected" : ""}>Encerramento</option></select></label>
+                        <header><strong>Editar slide ${state.powerpointSelectedSlide + 1}</strong><small>Layout visual e conteúdo</small></header>
+                        <label class="field"><span>Layout</span><select data-ppt-field="layout">${powerpointLayoutOptions().map(([key, label]) => `<option value="${key}" ${selected.layout === key ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}</select></label>
+                        <label class="field"><span>Chamada pequena</span><input data-ppt-field="kicker" value="${escapeAttr(selected.kicker)}" placeholder="Ex.: CENÁRIO ATUAL"></label>
                         <label class="field"><span>Título</span><input data-ppt-field="title" value="${escapeAttr(selected.title)}"></label>
                         <label class="field"><span>Subtítulo</span><textarea data-ppt-field="subtitle" rows="2">${escapeHtml(selected.subtitle)}</textarea></label>
-                        <label class="field"><span>Tópicos, um por linha</span><textarea data-ppt-field="bullets" rows="6">${escapeHtml((selected.bullets || []).join("\n"))}</textarea></label>
+                        <label class="field"><span>Texto principal</span><textarea data-ppt-field="body" rows="3">${escapeHtml(selected.body)}</textarea></label>
+                        <label class="field"><span>Destaques, um por linha</span><textarea data-ppt-field="bullets" rows="4">${escapeHtml((selected.bullets || []).join("\n"))}</textarea></label>
+                        ${selected.layout === "cards" || selected.layout === "content" ? `<label class="field"><span>Cards: título | texto | ícone</span><textarea data-ppt-field="cards" rows="5">${escapeHtml(cardsText)}</textarea></label>` : ""}
+                        ${selected.layout === "stats" ? `<label class="field"><span>Indicadores: valor | rótulo</span><textarea data-ppt-field="metrics" rows="5">${escapeHtml(metricsText)}</textarea></label>` : ""}
+                        ${selected.layout === "timeline" ? `<label class="field"><span>Etapas: título | descrição</span><textarea data-ppt-field="timeline" rows="5">${escapeHtml(timelineText)}</textarea></label>` : ""}
+                        ${selected.layout === "quote" ? `<label class="field"><span>Citação</span><textarea data-ppt-field="quote" rows="4">${escapeHtml(selected.quote)}</textarea></label><label class="field"><span>Autor ou fonte</span><input data-ppt-field="author" value="${escapeAttr(selected.author)}"></label>` : ""}
                         <div class="powerpoint-inspector-row">
-                            <label class="field"><span>Ícone</span><input data-ppt-field="icon" maxlength="8" value="${escapeAttr(selected.icon || "📌")}"></label>
+                            <label class="field"><span>Ícone real</span><select data-ppt-field="icon">${powerpointIconOptions().map(([key, label]) => `<option value="${key}" ${selected.icon === key ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}</select></label>
                             <label class="field"><span>Tema</span><select data-ppt-theme>${Object.entries(themes).map(([key, theme]) => `<option value="${key}" ${state.powerpointTheme === key ? "selected" : ""}>${escapeHtml(theme.name)}</option>`).join("")}</select></label>
                         </div>
-                        <label class="field"><span>Pesquisar imagem</span><div class="powerpoint-image-search"><input data-ppt-field="imageQuery" value="${escapeAttr(selected.imageQuery)}" placeholder="Ex.: tecnologia sustentável"><button type="button" class="secondary-button" data-ppt-search-image ${state.powerpointImageBusy ? "disabled" : ""}><i data-lucide="search"></i></button></div></label>
+                        <label class="field"><span>Imagem real</span><div class="powerpoint-image-search"><input data-ppt-field="imageQuery" value="${escapeAttr(selected.imageQuery)}" placeholder="Termos da fotografia"><button type="button" class="secondary-button" data-ppt-search-image ${state.powerpointImageBusy ? "disabled" : ""}><i data-lucide="${state.powerpointImageBusy ? "loader-circle" : "search"}"></i></button></div></label>
                         <div class="powerpoint-image-actions"><button type="button" class="ghost-button" data-ppt-upload-image><i data-lucide="image-up"></i> Enviar imagem</button><button type="button" class="ghost-button" data-ppt-remove-image><i data-lucide="image-off"></i> Remover</button><input id="powerpointImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
                         <label class="field"><span>Notas do apresentador</span><textarea data-ppt-field="notes" rows="4">${escapeHtml(selected.notes || "")}</textarea></label>
                     </aside>
                 </div>
-                <p class="powerpoint-source-note"><i data-lucide="image"></i> Imagens automáticas: Wikimedia Commons. Revise a imagem e a atribuição antes de uso comercial.</p>
+                <p class="powerpoint-source-note"><i data-lucide="image"></i> A IA monta layouts completos e procura fotografias pelo Worker. Ícones são SVG, não emojis.</p>
                 ${renderOfficeAiDialog("powerpoint")}
             </section>`;
         bindPowerpointEditor();
         initIcons();
     }
 
+    function parsePowerpointLines(value, kind) {
+        const lines = String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (kind === "cards") return lines.slice(0, 4).map((line, index) => { const [title = "", text = "", icon = ""] = line.split("|").map((part) => part.trim()); return { title: title.slice(0, 90), text: text.slice(0, 260), icon: normalizePowerpointIcon(icon, index + 1) }; });
+        if (kind === "metrics") return lines.slice(0, 4).map((line) => { const [value = "—", label = ""] = line.split("|").map((part) => part.trim()); return { value: value.slice(0, 32), label: label.slice(0, 120) }; });
+        if (kind === "timeline") return lines.slice(0, 5).map((line, index) => { const [title = `Etapa ${index + 1}`, text = ""] = line.split("|").map((part) => part.trim()); return { title: title.slice(0, 80), text: text.slice(0, 220) }; });
+        return lines;
+    }
+
     function bindPowerpointEditor() {
         $("#powerpointFileName")?.addEventListener("input", (event) => { state.powerpointFileName = event.target.value || "Apresentação"; persistPowerpointDraft(); });
-        $$('[data-ppt-select]', refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSelectedSlide = Number(button.dataset.pptSelect || 0); renderPowerpointEditor(); }));
-        $$('[data-ppt-add]', refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSlides.push(normalizePowerpointSlide({ title: `Novo slide ${state.powerpointSlides.length + 1}`, bullets: ["Digite o primeiro tópico"], icon: "📌" }, state.powerpointSlides.length)); state.powerpointSelectedSlide = state.powerpointSlides.length - 1; persistPowerpointDraft(); renderPowerpointEditor(); }));
+        $$("[data-ppt-select]", refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSelectedSlide = Number(button.dataset.pptSelect || 0); renderPowerpointEditor(); }));
+        $$("[data-ppt-add]", refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSlides.push(normalizePowerpointSlide({ layout: "image-right", title: `Novo slide ${state.powerpointSlides.length + 1}`, subtitle: "Descreva a ideia principal", body: "", bullets: [], imageQuery: "", icon: "sparkles" }, state.powerpointSlides.length)); state.powerpointSelectedSlide = state.powerpointSlides.length - 1; persistPowerpointDraft(); renderPowerpointEditor(); }));
         $("[data-ppt-new]")?.addEventListener("click", () => { if (!confirm("Criar uma apresentação nova?")) return; state.powerpointSlides = defaultPowerpointSlides(); state.powerpointSelectedSlide = 0; state.powerpointFileName = "Apresentação"; persistPowerpointDraft(); renderPowerpointEditor(); });
         $("[data-ppt-delete]")?.addEventListener("click", () => { if (state.powerpointSlides.length <= 1) return; state.powerpointSlides.splice(state.powerpointSelectedSlide, 1); state.powerpointSelectedSlide = Math.max(0, state.powerpointSelectedSlide - 1); persistPowerpointDraft(); renderPowerpointEditor(); });
         $("[data-ppt-duplicate]")?.addEventListener("click", () => { const copy = JSON.parse(JSON.stringify(state.powerpointSlides[state.powerpointSelectedSlide])); state.powerpointSlides.splice(state.powerpointSelectedSlide + 1, 0, copy); state.powerpointSelectedSlide += 1; persistPowerpointDraft(); renderPowerpointEditor(); });
-        $$('[data-ppt-move]', refs.content).forEach((button) => button.addEventListener("click", () => { const direction = button.dataset.pptMove === "up" ? -1 : 1; const next = state.powerpointSelectedSlide + direction; if (next < 0 || next >= state.powerpointSlides.length) return; [state.powerpointSlides[state.powerpointSelectedSlide], state.powerpointSlides[next]] = [state.powerpointSlides[next], state.powerpointSlides[state.powerpointSelectedSlide]]; state.powerpointSelectedSlide = next; persistPowerpointDraft(); renderPowerpointEditor(); }));
-        $$('[data-ppt-field]', refs.content).forEach((field) => field.addEventListener("input", () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; const key = field.dataset.pptField; slide[key] = key === "bullets" ? field.value.split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 8) : field.value; persistPowerpointDraft(); const canvas = refs.content.querySelector(".powerpoint-stage .powerpoint-slide-canvas"); if (canvas) { const replacement = document.createElement("div"); replacement.innerHTML = powerpointSlidePreview(slide, state.powerpointSelectedSlide); canvas.replaceWith(replacement.firstElementChild); initIcons(); } }));
+        $$("[data-ppt-move]", refs.content).forEach((button) => button.addEventListener("click", () => { const direction = button.dataset.pptMove === "up" ? -1 : 1; const next = state.powerpointSelectedSlide + direction; if (next < 0 || next >= state.powerpointSlides.length) return; [state.powerpointSlides[state.powerpointSelectedSlide], state.powerpointSlides[next]] = [state.powerpointSlides[next], state.powerpointSlides[state.powerpointSelectedSlide]]; state.powerpointSelectedSlide = next; persistPowerpointDraft(); renderPowerpointEditor(); }));
+        $$("[data-ppt-field]", refs.content).forEach((field) => {
+            const handler = () => {
+                const slide = state.powerpointSlides[state.powerpointSelectedSlide];
+                const key = field.dataset.pptField;
+                if (key === "bullets") slide[key] = parsePowerpointLines(field.value, "bullets").slice(0, 4);
+                else if (["cards", "metrics", "timeline"].includes(key)) slide[key] = parsePowerpointLines(field.value, key);
+                else if (key === "icon") slide[key] = normalizePowerpointIcon(field.value, state.powerpointSelectedSlide);
+                else if (key === "layout") { slide.layout = field.value; slide.type = field.value; persistPowerpointDraft(); renderPowerpointEditor(); return; }
+                else slide[key] = field.value;
+                persistPowerpointDraft();
+                const canvas = refs.content.querySelector(".powerpoint-stage .powerpoint-slide-canvas");
+                if (canvas) { const replacement = document.createElement("div"); replacement.innerHTML = powerpointSlidePreview(slide, state.powerpointSelectedSlide); canvas.replaceWith(replacement.firstElementChild); initIcons(); }
+            };
+            field.addEventListener(field.tagName === "SELECT" ? "change" : "input", handler);
+        });
         $("[data-ppt-theme]")?.addEventListener("change", (event) => { state.powerpointTheme = event.target.value || "executive"; persistPowerpointDraft(); renderPowerpointEditor(); });
-        $("[data-ppt-search-image]")?.addEventListener("click", async () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; const query = String(slide.imageQuery || "").trim(); if (!query) return toast("Digite o tema da imagem.", "error"); state.powerpointImageBusy = true; renderPowerpointEditor(); try { const found = await searchWikimediaImage(query); if (!found) throw new Error("Nenhuma imagem encontrada para esse tema."); slide.imageUrl = found.url; slide.imageData = ""; slide.imageAttribution = found.attribution; persistPowerpointDraft(); toast("Imagem adicionada ao slide.", "success"); } catch (error) { toast(translateError(error), "error"); } finally { state.powerpointImageBusy = false; renderPowerpointEditor(); } });
+        $("[data-ppt-search-image]")?.addEventListener("click", async () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; const query = String(slide.imageQuery || "").trim(); if (!query) return toast("Digite o tema da imagem.", "error"); state.powerpointImageBusy = true; renderPowerpointEditor(); try { const found = await searchWikimediaImage(query); if (!found) throw new Error("Nenhuma fotografia adequada foi encontrada. Tente termos mais objetivos, preferencialmente em inglês."); slide.imageUrl = found.url; slide.imageData = ""; slide.imageAttribution = found.attribution; persistPowerpointDraft(); toast("Imagem real adicionada ao slide.", "success"); } catch (error) { toast(translateError(error), "error"); } finally { state.powerpointImageBusy = false; renderPowerpointEditor(); } });
         $("[data-ppt-upload-image]")?.addEventListener("click", () => $("#powerpointImageInput")?.click());
-        $("#powerpointImageInput")?.addEventListener("change", async (event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (file.size > 8 * 1024 * 1024) return toast("Use uma imagem de até 8 MB.", "error"); const slide = state.powerpointSlides[state.powerpointSelectedSlide]; slide.imageData = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); slide.imageUrl = ""; slide.imageAttribution = "Imagem enviada pelo usuário"; renderPowerpointEditor(); });
+        $("#powerpointImageInput")?.addEventListener("change", async (event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (file.size > 8 * 1024 * 1024) return toast("Use uma imagem de até 8 MB.", "error"); const slide = state.powerpointSlides[state.powerpointSelectedSlide]; slide.imageData = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); slide.imageUrl = ""; slide.imageAttribution = "Imagem enviada pelo usuário"; persistPowerpointDraft(); renderPowerpointEditor(); });
         $("[data-ppt-remove-image]")?.addEventListener("click", () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; slide.imageUrl = ""; slide.imageData = ""; slide.imageAttribution = ""; persistPowerpointDraft(); renderPowerpointEditor(); });
         $("[data-ppt-export]")?.addEventListener("click", exportPowerpointPresentation);
+    }
+
+    function powerpointIconSvgBody(name) {
+        const icons = {
+            presentation: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 10l2.5 2.5L16 7"/>',
+            sparkles: '<path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2Z"/><path d="m5 14 .8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8Z"/><path d="m19 13 .7 1.8 1.8.7-1.8.7L19 18l-.7-1.8-1.8-.7 1.8-.7Z"/>',
+            'brain-circuit': '<path d="M9.5 4.5A3 3 0 0 0 6 7.4 3 3 0 0 0 5 13a3 3 0 0 0 3 4h1.5V4.5ZM14.5 4.5A3 3 0 0 1 18 7.4a3 3 0 0 1 1 5.6 3 3 0 0 1-3 4h-1.5V4.5Z"/><path d="M9.5 9H7m7.5 3H17M9.5 15H8m6.5-7H16"/><circle cx="6" cy="9" r="1"/><circle cx="18" cy="12" r="1"/>',
+            'briefcase-business': '<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 7V5h8v2M3 12h18M10 12v2h4v-2"/>',
+            'chart-no-axes-combined': '<path d="m3 17 5-5 4 3 7-8"/><path d="M14 7h5v5"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="15" r="1"/>',
+            lightbulb: '<path d="M9 18h6M10 22h4M8.5 15.5A7 7 0 1 1 15.5 15.5L14 18h-4Z"/><path d="M12 2v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4"/>',
+            users: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 2.7-6 6-6s6 2 6 6M14 15c3.5 0 6 1.6 6 5"/>',
+            'shield-check': '<path d="M12 3 5 6v5c0 4.6 2.8 7.8 7 10 4.2-2.2 7-5.4 7-10V6Z"/><path d="m9 12 2 2 4-4"/>',
+            target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/><path d="M15 9 21 3"/>',
+            rocket: '<path d="M14 4c3-2 5-1 6 0 1 1 2 3 0 6l-5 5-6-6Z"/><path d="m9 9-4 1-2 3 5 1m7 1-1 5-3 1-1-4M7 17l-3 3"/><circle cx="16" cy="8" r="1.5"/>',
+            'globe-2': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+            'building-2': '<rect x="4" y="3" width="12" height="18" rx="1"/><path d="M16 8h4v13H4M8 7h1m3 0h1M8 11h1m3 0h1M8 15h1m3 0h1M9 21v-3h2v3"/>',
+            laptop: '<rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20M8 19h8"/>',
+            bot: '<rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 3h6M8 12h.01M16 12h.01M8 16h8"/>',
+            'graduation-cap': '<path d="m2 9 10-5 10 5-10 5Z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
+            workflow: '<rect x="3" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M9 5.5h6M18 8v8M6 8v8h9"/>',
+            'circle-check-big': '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 6-7"/>',
+            'triangle-alert': '<path d="M12 3 2.5 20h19Z"/><path d="M12 9v4M12 17h.01"/>',
+            scale: '<path d="M12 3v18M7 6h10M5 6l-3 6h6Zm14 0-3 6h6ZM7 21h10"/>',
+            'heart-handshake': '<path d="M12 20 4 12a5 5 0 0 1 7-7l1 1 1-1a5 5 0 0 1 7 7Z"/><path d="m8 12 2 2 4-4 2 2"/>',
+            database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+            cloud: '<path d="M7 18h11a4 4 0 0 0 .5-8 6 6 0 0 0-11.4-1.7A5 5 0 0 0 7 18Z"/>',
+            image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
+            leaf: '<path d="M20 4C10 4 4 9 4 16c4 1 10 0 13-4 2-3 3-8 3-8Z"/><path d="M4 20c3-6 7-9 13-12"/>',
+            landmark: '<path d="m3 9 9-5 9 5M5 10v8m4-8v8m6-8v8m4-8v8M3 20h18"/>',
+            'map-pin': '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+            wrench: '<path d="M14 6a5 5 0 0 0-6 6L3 17l4 4 5-5a5 5 0 0 0 6-6l-3 3-4-4Z"/>',
+            'hand-coins': '<circle cx="17" cy="7" r="3"/><path d="M3 17h5l3 2h5c2 0 4-1 5-3l-8-3-3 1H3ZM3 14v6"/>',
+            'book-open': '<path d="M3 5c4-1 7 0 9 2v13c-2-2-5-3-9-2ZM21 5c-4-1-7 0-9 2v13c2-2 5-3 9-2Z"/>',
+            'layout-grid': '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>',
+        };
+        return icons[normalizePowerpointIcon(name)] || icons.sparkles;
+    }
+
+    function powerpointIconDataUri(name, color = "FFFFFF") {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${powerpointIconSvgBody(name)}</svg>`;
+        return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    }
+
+    function addPowerpointIconToSlide(slide, pptx, icon, x, y, size, theme, filled = true) {
+        if (filled) slide.addShape(pptx.ShapeType.ellipse, { x, y, w: size, h: size, fill: { color: theme.accent }, line: { color: theme.accent } });
+        slide.addImage({ data: powerpointIconDataUri(icon, filled ? "FFFFFF" : theme.accent), x: x + size * .23, y: y + size * .23, w: size * .54, h: size * .54 });
+    }
+
+    async function getPowerpointImageData(item) {
+        try { return item.imageData || (item.imageUrl ? await urlToDataUri(item.imageUrl) : ""); } catch (_) { return ""; }
+    }
+
+    function addPowerpointFooter(slide, index, theme) {
+        slide.addText(`${String(index + 1).padStart(2, "0")}  •  ${state.powerpointFileName || "DocSpace"}`, { x: .7, y: 7.08, w: 7.5, h: .18, fontSize: 7, color: theme.muted, margin: 0 });
     }
 
     async function exportPowerpointPresentation() {
@@ -7384,38 +7623,97 @@
             pptx.title = state.powerpointFileName || "Apresentação";
             pptx.lang = "pt-BR";
             pptx.theme = { headFontFace: "Aptos Display", bodyFontFace: "Aptos", lang: "pt-BR" };
-            for (let index = 0; index < state.powerpointSlides.length; index += 1) {
-                const item = normalizePowerpointSlide(state.powerpointSlides[index], index);
+            const items = state.powerpointSlides.map(normalizePowerpointSlide);
+            for (let index = 0; index < items.length; index += 1) {
+                const item = items[index];
                 const slide = pptx.addSlide();
+                const imageData = await getPowerpointImageData(item);
                 slide.background = { color: theme.background };
-                slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: theme.accent }, line: { color: theme.accent } });
-                slide.addText(item.icon || "📌", { x: 0.62, y: 0.52, w: 0.55, h: 0.42, fontSize: 20, margin: 0, breakLine: false });
-                const hasImage = Boolean(item.imageData || item.imageUrl);
-                const titleWidth = hasImage ? 7.15 : 11.7;
-                const titleSize = item.type === "cover" ? 27 : item.type === "section" ? 28 : 22;
-                slide.addText(item.title || `Slide ${index + 1}`, { x: 0.72, y: item.type === "cover" ? 1.25 : 0.78, w: titleWidth, h: item.type === "cover" ? 1.2 : 0.76, fontFace: "Aptos Display", fontSize: titleSize, bold: true, color: theme.text, margin: 0, breakLine: false, fit: "shrink" });
-                if (item.subtitle) slide.addText(item.subtitle, { x: 0.75, y: item.type === "cover" ? 2.65 : 1.58, w: titleWidth, h: 0.72, fontSize: item.type === "cover" ? 15 : 12, color: theme.muted, margin: 0, fit: "shrink" });
-                if (item.bullets.length) {
-                    const runs = item.bullets.map((text) => ({ text, options: { bullet: { indent: 18 }, hanging: 4, breakLine: true } }));
-                    slide.addText(runs, { x: 0.82, y: item.type === "cover" ? 3.45 : 2.25, w: titleWidth - 0.15, h: item.type === "cover" ? 2.45 : 3.95, fontSize: 14, color: theme.text, margin: 0.04, paraSpaceAfterPt: 12, breakLine: false, valign: "top", fit: "shrink" });
-                }
-                if (hasImage) {
-                    try {
-                        const data = item.imageData || await urlToDataUri(item.imageUrl);
-                        slide.addShape(pptx.ShapeType.roundRect, { x: 8.35, y: 0.68, w: 4.35, h: 5.95, rectRadius: 0.08, fill: { color: "FFFFFF", transparency: 0 }, line: { color: theme.accent, transparency: 35, width: 1.2 } });
-                        slide.addImage({ data, x: 8.48, y: 0.82, w: 4.08, h: 5.66, transparency: 0 });
-                    } catch (_) {
-                        slide.addShape(pptx.ShapeType.roundRect, { x: 8.35, y: 0.68, w: 4.35, h: 5.95, fill: { color: theme.primary, transparency: 8 }, line: { color: theme.primary } });
-                        slide.addText(item.imageQuery || "Imagem", { x: 8.75, y: 3.2, w: 3.55, h: 0.5, fontSize: 16, bold: true, color: "FFFFFF", align: "center", margin: 0 });
+
+                if (item.layout === "cover") {
+                    if (imageData) {
+                        slide.addImage({ data: imageData, x: 0, y: 0, w: 13.333, h: 7.5, transparency: 0 });
+                        slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.333, h: 7.5, fill: { color: theme.primary, transparency: 22 }, line: { color: theme.primary, transparency: 100 } });
+                    } else {
+                        slide.background = { color: theme.primary };
+                        slide.addShape(pptx.ShapeType.ellipse, { x: 8.5, y: -1, w: 6.2, h: 6.2, fill: { color: theme.accent, transparency: 55 }, line: { color: theme.accent, transparency: 100 } });
                     }
+                    addPowerpointIconToSlide(slide, pptx, item.icon, .8, .7, .72, theme, true);
+                    if (item.kicker) slide.addText(item.kicker.toUpperCase(), { x: .82, y: 1.62, w: 6.8, h: .3, fontSize: 10, bold: true, color: "FFFFFF", charSpacing: 2, margin: 0 });
+                    slide.addText(item.title, { x: .8, y: 2.0, w: 8.6, h: 1.55, fontFace: "Aptos Display", fontSize: 30, bold: true, color: "FFFFFF", margin: 0, fit: "shrink", breakLine: false });
+                    slide.addText(item.subtitle || item.body, { x: .82, y: 3.75, w: 7.2, h: 1.0, fontSize: 15, color: "FFFFFF", transparency: 8, margin: 0, fit: "shrink" });
+                    slide.addShape(pptx.ShapeType.line, { x: .82, y: 5.4, w: 1.6, h: 0, line: { color: theme.accent, width: 4 } });
+                } else if (item.layout === "image-left" || item.layout === "image-right") {
+                    const imageLeft = item.layout === "image-left";
+                    const imageX = imageLeft ? 0 : 7.55;
+                    const copyX = imageLeft ? 6.3 : .72;
+                    if (imageData) slide.addImage({ data: imageData, x: imageX, y: 0, w: 5.8, h: 7.5 });
+                    else slide.addShape(pptx.ShapeType.rect, { x: imageX, y: 0, w: 5.8, h: 7.5, fill: { color: theme.primary, transparency: 5 }, line: { color: theme.primary } });
+                    addPowerpointIconToSlide(slide, pptx, item.icon, copyX, .7, .62, theme, true);
+                    if (item.kicker) slide.addText(item.kicker.toUpperCase(), { x: copyX + .82, y: .83, w: 4.9, h: .25, fontSize: 9, bold: true, color: theme.accent, charSpacing: 1.4, margin: 0 });
+                    slide.addText(item.title, { x: copyX, y: 1.55, w: 5.9, h: 1.0, fontSize: 24, bold: true, color: theme.text, margin: 0, fit: "shrink" });
+                    if (item.subtitle || item.body) slide.addText(item.subtitle || item.body, { x: copyX, y: 2.75, w: 5.7, h: 1.0, fontSize: 13, color: theme.muted, margin: 0, fit: "shrink" });
+                    const points = item.bullets.slice(0, 4);
+                    points.forEach((point, i) => {
+                        addPowerpointIconToSlide(slide, pptx, "circle-check-big", copyX, 4.0 + i * .62, .34, theme, false);
+                        slide.addText(point, { x: copyX + .48, y: 4.02 + i * .62, w: 5.1, h: .38, fontSize: 11.5, color: theme.text, margin: 0, fit: "shrink" });
+                    });
+                    addPowerpointFooter(slide, index, theme);
+                } else if (item.layout === "cards" || item.layout === "content") {
+                    addPowerpointIconToSlide(slide, pptx, item.icon, .72, .55, .62, theme, true);
+                    slide.addText(item.title, { x: 1.55, y: .62, w: 10.8, h: .62, fontSize: 24, bold: true, color: theme.text, margin: 0, fit: "shrink" });
+                    if (item.subtitle || item.body) slide.addText(item.subtitle || item.body, { x: .75, y: 1.42, w: 11.9, h: .55, fontSize: 11.5, color: theme.muted, margin: 0, fit: "shrink" });
+                    const cards = (item.cards.length ? item.cards : item.bullets.map((title, i) => ({ title, text: "", icon: powerpointIconOptions()[i + 2]?.[0] || "sparkles" }))).slice(0, 4);
+                    const count = Math.max(1, cards.length);
+                    const gap = .28;
+                    const cardW = (11.9 - gap * (count - 1)) / count;
+                    cards.forEach((card, i) => {
+                        const x = .72 + i * (cardW + gap);
+                        slide.addShape(pptx.ShapeType.roundRect, { x, y: 2.25, w: cardW, h: 3.9, rectRadius: .08, fill: { color: "FFFFFF", transparency: state.powerpointTheme === "dark" ? 90 : 0 }, line: { color: theme.accent, transparency: 50, width: 1 } });
+                        addPowerpointIconToSlide(slide, pptx, card.icon, x + .3, 2.65, .62, theme, true);
+                        slide.addText(card.title, { x: x + .3, y: 3.58, w: cardW - .6, h: .7, fontSize: 15, bold: true, color: theme.text, margin: 0, fit: "shrink" });
+                        slide.addText(card.text || "", { x: x + .3, y: 4.45, w: cardW - .6, h: 1.1, fontSize: 10.5, color: theme.muted, margin: 0, fit: "shrink", valign: "top" });
+                    });
+                    addPowerpointFooter(slide, index, theme);
+                } else if (item.layout === "stats") {
+                    addPowerpointIconToSlide(slide, pptx, item.icon, .72, .55, .62, theme, true);
+                    slide.addText(item.title, { x: 1.55, y: .62, w: 10.6, h: .62, fontSize: 24, bold: true, color: theme.text, margin: 0, fit: "shrink" });
+                    slide.addText(item.subtitle || item.body, { x: .75, y: 1.4, w: 11.8, h: .55, fontSize: 11.5, color: theme.muted, margin: 0, fit: "shrink" });
+                    const metrics = (item.metrics.length ? item.metrics : [{value:"—",label:"Indicador"}]).slice(0,4);
+                    const gap=.28, w=(11.9-gap*(metrics.length-1))/metrics.length;
+                    metrics.forEach((metric,i)=>{ const x=.72+i*(w+gap); slide.addShape(pptx.ShapeType.roundRect,{x,y:2.35,w,h:3.55,rectRadius:.08,fill:{color:theme.primary,transparency:i%2?4:0},line:{color:theme.primary}}); slide.addText(metric.value,{x:x+.25,y:2.85,w:w-.5,h:1.05,fontSize:29,bold:true,color:"FFFFFF",align:"center",margin:0,fit:"shrink"}); slide.addShape(pptx.ShapeType.line,{x:x+.55,y:4.15,w:w-1.1,h:0,line:{color:theme.accent,width:3}}); slide.addText(metric.label,{x:x+.35,y:4.55,w:w-.7,h:.9,fontSize:11,color:"FFFFFF",align:"center",margin:0,fit:"shrink"}); });
+                    addPowerpointFooter(slide,index,theme);
+                } else if (item.layout === "timeline") {
+                    addPowerpointIconToSlide(slide,pptx,item.icon,.72,.55,.62,theme,true);
+                    slide.addText(item.title,{x:1.55,y:.62,w:10.6,h:.62,fontSize:24,bold:true,color:theme.text,margin:0,fit:"shrink"});
+                    slide.addText(item.subtitle||item.body,{x:.75,y:1.4,w:11.8,h:.55,fontSize:11.5,color:theme.muted,margin:0,fit:"shrink"});
+                    const steps=(item.timeline.length?item.timeline:item.bullets.map((text,i)=>({title:`Etapa ${i+1}`,text}))).slice(0,5);
+                    slide.addShape(pptx.ShapeType.line,{x:1.25,y:3.35,w:10.6,h:0,line:{color:theme.accent,width:2}});
+                    const stepW=10.8/Math.max(1,steps.length);
+                    steps.forEach((step,i)=>{ const x=1+i*stepW; slide.addShape(pptx.ShapeType.ellipse,{x:x+.18,y:3.08,w:.52,h:.52,fill:{color:theme.accent},line:{color:theme.accent}}); slide.addText(String(i+1),{x:x+.18,y:3.18,w:.52,h:.16,fontSize:8,bold:true,color:"FFFFFF",align:"center",margin:0}); slide.addText(step.title,{x,y:3.9,w:stepW-.15,h:.5,fontSize:12,bold:true,color:theme.text,align:"center",margin:0,fit:"shrink"}); slide.addText(step.text,{x,y:4.55,w:stepW-.15,h:1.1,fontSize:9.5,color:theme.muted,align:"center",margin:0,fit:"shrink",valign:"top"}); });
+                    addPowerpointFooter(slide,index,theme);
+                } else if (item.layout === "quote") {
+                    if (imageData) { slide.addImage({data:imageData,x:8.2,y:0,w:5.133,h:7.5}); slide.addShape(pptx.ShapeType.rect,{x:8.2,y:0,w:5.133,h:7.5,fill:{color:theme.primary,transparency:55},line:{color:theme.primary,transparency:100}}); }
+                    addPowerpointIconToSlide(slide,pptx,item.icon,.8,.65,.65,theme,true);
+                    slide.addText('“',{x:.78,y:1.55,w:1.0,h:1.1,fontSize:54,bold:true,color:theme.accent,margin:0});
+                    slide.addText(item.quote||item.title,{x:1.15,y:2.15,w:imageData?6.4:10.8,h:2.5,fontSize:23,bold:true,italic:true,color:theme.text,margin:0,fit:"shrink",valign:"mid"});
+                    if(item.author||item.subtitle) slide.addText(item.author||item.subtitle,{x:1.18,y:5.15,w:6.2,h:.45,fontSize:11,bold:true,color:theme.muted,margin:0});
+                    addPowerpointFooter(slide,index,theme);
+                } else {
+                    slide.background={color:item.layout==="section"?theme.primary:theme.background};
+                    addPowerpointIconToSlide(slide,pptx,item.icon,6.02,1.1,.9,theme,true);
+                    if(item.kicker) slide.addText(item.kicker.toUpperCase(),{x:3.0,y:2.25,w:7.3,h:.3,fontSize:10,bold:true,color:item.layout==="section"?"FFFFFF":theme.accent,align:"center",charSpacing:2,margin:0});
+                    slide.addText(item.title,{x:1.6,y:2.75,w:10.1,h:1.35,fontSize:30,bold:true,color:item.layout==="section"?"FFFFFF":theme.text,align:"center",margin:0,fit:"shrink"});
+                    slide.addText(item.subtitle||item.body,{x:2.5,y:4.35,w:8.3,h:.9,fontSize:14,color:item.layout==="section"?"FFFFFF":theme.muted,align:"center",margin:0,fit:"shrink"});
+                    slide.addShape(pptx.ShapeType.line,{x:5.75,y:5.75,w:1.85,h:0,line:{color:theme.accent,width:4}});
+                    if(item.layout!=="section") addPowerpointFooter(slide,index,theme);
                 }
-                slide.addText(`${String(index + 1).padStart(2, "0")}  •  ${state.powerpointFileName || "DocSpace"}`, { x: 0.75, y: 7.08, w: 7.5, h: 0.2, fontSize: 8, color: theme.muted, margin: 0 });
-                if (item.imageAttribution) slide.addText(item.imageAttribution, { x: 8.35, y: 6.78, w: 4.35, h: 0.28, fontSize: 6, color: theme.muted, align: "right", margin: 0, fit: "shrink" });
+                if (item.imageAttribution && imageData) slide.addText(item.imageAttribution, { x: 8.3, y: 7.18, w: 4.7, h: .14, fontSize: 5.5, color: "FFFFFF", align: "right", margin: 0, fit: "shrink" });
                 if (item.notes && typeof slide.addNotes === "function") slide.addNotes(item.notes);
             }
             const safe = String(state.powerpointFileName || "Apresentação").replace(/[\\/:*?"<>|]+/g, "-").trim() || "Apresentação";
             await pptx.writeFile({ fileName: `${safe}.pptx` });
-            toast("Apresentação PowerPoint gerada.", "success");
+            toast("Apresentação visual exportada em PowerPoint.", "success");
         } catch (error) {
             toast(translateError(error), "error");
         } finally {

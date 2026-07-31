@@ -334,7 +334,7 @@ async function handleRequest(request, env) {
     await expireOverdueUsersIfDue(env);
 
     if (request.method === "GET" && match(path, ["version"])) {
-        return json({ service: "DocSpace API", version: "1.49", build: 149, database: "d1" });
+        return json({ service: "DocSpace API", version: "1.57", build: 157, database: "d1" });
     }
 
     if (request.method === "GET" && match(path, ["setup", "status"])) {
@@ -405,6 +405,15 @@ async function handleRequest(request, env) {
             endpointHost: safeEndpointHost(env.AI_API_URL),
             serverClock: clock,
         });
+    }
+
+    if (request.method === "GET" && match(path, ["media", "search"])) {
+        await requireSession(request, env);
+        return searchPresentationMedia(request);
+    }
+
+    if (request.method === "GET" && match(path, ["media", "image"])) {
+        return proxyPresentationMedia(request);
     }
 
     if (request.method === "POST" && match(path, ["ai", "actions"])) {
@@ -4122,6 +4131,97 @@ function getSetupAdminPage() {
 </html>`;
 }
 
+
+async function searchPresentationMedia(request) {
+    const requestUrl = new URL(request.url);
+    const query = String(requestUrl.searchParams.get("q") || "").trim().slice(0, 180);
+    if (!query) return json({ images: [] });
+
+    const blockedWords = /\b(logo|icon|coat of arms|flag|map|diagram|chart|symbol|seal|signature|poster|screenshot)\b/i;
+    const images = [];
+    const seen = new Set();
+    const searches = [`${query} filetype:bitmap`, query];
+
+    for (const searchText of searches) {
+        if (images.length >= 8) break;
+        const api = new URL("https://commons.wikimedia.org/w/api.php");
+        api.searchParams.set("action", "query");
+        api.searchParams.set("format", "json");
+        api.searchParams.set("generator", "search");
+        api.searchParams.set("gsrsearch", searchText);
+        api.searchParams.set("gsrnamespace", "6");
+        api.searchParams.set("gsrlimit", "24");
+        api.searchParams.set("prop", "imageinfo");
+        api.searchParams.set("iiprop", "url|mime|size|extmetadata");
+        api.searchParams.set("iiurlwidth", "1800");
+
+        const response = await fetch(api.toString(), {
+            headers: {
+                Accept: "application/json",
+                "Api-User-Agent": "DocSpace/1.57 presentation-media-search",
+            },
+        });
+        if (!response.ok) continue;
+        const data = await response.json();
+        const pages = Object.values(data?.query?.pages || {}).sort((a, b) => Number(a?.index || 999) - Number(b?.index || 999));
+
+        for (const page of pages) {
+            const info = page?.imageinfo?.[0];
+            const originalUrl = String(info?.thumburl || info?.url || "");
+            const mime = String(info?.mime || "");
+            const title = String(page?.title || "").replace(/^File:/i, "").trim();
+            const width = Number(info?.thumbwidth || info?.width || 0);
+            const height = Number(info?.thumbheight || info?.height || 0);
+            if (!/^https:\/\//i.test(originalUrl) || seen.has(originalUrl)) continue;
+            if (!/^image\/(jpeg|png|webp)$/i.test(mime)) continue;
+            if (blockedWords.test(title) && !blockedWords.test(query)) continue;
+            if (width && height && (width < 700 || width / Math.max(1, height) < 1.05)) continue;
+            const artist = stripMediaHtml(info?.extmetadata?.Artist?.value || "");
+            const license = stripMediaHtml(info?.extmetadata?.LicenseShortName?.value || "");
+            const description = stripMediaHtml(info?.extmetadata?.ImageDescription?.value || "");
+            const proxyUrl = new URL("/api/media/image", request.url);
+            proxyUrl.searchParams.set("url", originalUrl);
+            images.push({
+                title: title.slice(0, 180),
+                url: originalUrl,
+                proxyUrl: proxyUrl.toString(),
+                width,
+                height,
+                description: description.slice(0, 300),
+                attribution: [artist, license, "Wikimedia Commons"].filter(Boolean).join(" · ").slice(0, 400),
+            });
+            seen.add(originalUrl);
+            if (images.length >= 8) break;
+        }
+    }
+    return json({ query, images });
+}
+
+async function proxyPresentationMedia(request) {
+    const requestUrl = new URL(request.url);
+    const raw = String(requestUrl.searchParams.get("url") || "").trim();
+    let target;
+    try { target = new URL(raw); } catch (_) { throw httpError(400, "URL de imagem inválida."); }
+    const host = target.hostname.toLowerCase();
+    const allowed = host === "upload.wikimedia.org" || host.endsWith(".wikimedia.org");
+    if (target.protocol !== "https:" || !allowed) throw httpError(403, "Origem da imagem não permitida.");
+    const upstream = await fetch(target.toString(), { headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,*/*" } });
+    if (!upstream.ok) throw httpError(502, "Não foi possível carregar a imagem selecionada.");
+    const contentType = String(upstream.headers.get("Content-Type") || "");
+    if (!/^image\/(jpeg|png|webp|avif)$/i.test(contentType)) throw httpError(415, "O arquivo retornado não é uma imagem compatível.");
+    const contentLength = Number(upstream.headers.get("Content-Length") || 0);
+    if (contentLength > 12 * 1024 * 1024) throw httpError(413, "A imagem encontrada é grande demais.");
+    const headers = new Headers();
+    headers.set("Content-Type", contentType);
+    headers.set("Cache-Control", "public, max-age=86400, s-maxage=604800");
+    headers.set("X-Content-Type-Options", "nosniff");
+    return new Response(upstream.body, { status: 200, headers });
+}
+
+function stripMediaHtml(value) {
+    return String(value || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
+}
+
 function createCorsPreflightResponse(request, env) {
     return withCors(request, new Response(null, { status: 204 }), env);
 }
@@ -4326,7 +4426,7 @@ Arquivos anexados: ${images.map((image, index) => `${index + 1}. ${image.name}`)
                             : prompt,
                     },
                 ],
-                temperature: ["extract-fields", "office-word", "office-excel", "office-powerpoint"].includes(action) ? 0 : 0.2,
+                temperature: action === "office-powerpoint" ? 0.15 : ["extract-fields", "office-word", "office-excel"].includes(action) ? 0 : 0.2,
                 max_tokens: action === "extract-fields" ? 5000 : ["office-word", "office-excel"].includes(action) ? 8000 : 6000,
                 ...(["extract-fields", "office-word", "office-excel", "office-powerpoint"].includes(action) ? { response_format: { type: "json_object" } } : {}),
                 stream: false,
@@ -4483,7 +4583,7 @@ function buildAiSystemPrompt(action, context) {
         review: "Revise o conteúdo, identifique inconsistências, campos ausentes, repetições e problemas de clareza. Não altere silenciosamente dados objetivos.",
         "office-word": "Você é o Assistente Word do DocSpace. Gere conteúdo completo e pronto para ser inserido diretamente no editor Word. Retorne exclusivamente JSON válido no formato {\"title\":\"nome curto do documento\",\"html\":\"conteúdo HTML\",\"summary\":\"resumo curto\"}. No campo html use somente h1, h2, h3, h4, p, strong, em, u, ul, ol, li, blockquote, table, thead, tbody, tr, th, td, hr e br. Não use markdown, cercas de código, scripts, CSS, comentários ou texto fora do JSON. Preserve fatos fornecidos e marque dados essenciais ausentes como [PREENCHER].",
         "office-excel": "Você é o Assistente Excel do DocSpace. Gere uma planilha utilizável diretamente no editor. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto da planilha\",\"columns\":[\"Coluna 1\",\"Coluna 2\"],\"rows\":[[\"valor 1\",\"valor 2\"]],\"summary\":\"resumo curto\"}. columns contém os cabeçalhos e rows contém apenas as linhas de dados. Use fórmulas iniciadas por = quando forem úteis, preferindo SUM, AVERAGE, MIN, MAX e COUNT. Não use markdown, cercas de código, objetos dentro das células nem texto fora do JSON. Não invente dados objetivos que o usuário não forneceu; use exemplos claramente identificáveis ou [PREENCHER].",
-        "office-powerpoint": "Você é o Assistente PowerPoint do DocSpace. Crie uma apresentação profissional, visual e objetiva, pronta para o editor e para exportação .pptx. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto\",\"theme\":\"executive\",\"slides\":[{\"type\":\"cover\",\"title\":\"Título\",\"subtitle\":\"Subtítulo\",\"bullets\":[],\"imageQuery\":\"termos objetivos para buscar uma fotografia\",\"icon\":\"✨\",\"notes\":\"notas do apresentador\"}]}. Use de 5 a 15 slides, salvo quantidade diferente pedida. O primeiro slide deve usar type cover. Os demais podem usar content, section, quote ou closing. Cada slide deve ter no máximo 6 tópicos curtos. imageQuery deve ser específico, factual e adequado para busca no Wikimedia Commons, sem URLs. icon deve ser um único emoji coerente. theme deve ser executive, ocean, dark, warm ou minimal. Não use markdown, cercas de código nem texto fora do JSON. Não invente dados objetivos; use [PREENCHER] quando necessário.",
+        "office-powerpoint": "Você é o diretor de apresentações do DocSpace. Crie uma apresentação VISUAL de verdade, não um documento dividido em tópicos. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto\",\"theme\":\"executive\",\"slides\":[{\"layout\":\"cover\",\"kicker\":\"CHAMADA CURTA\",\"title\":\"Título forte\",\"subtitle\":\"Subtítulo\",\"body\":\"parágrafo curto quando necessário\",\"bullets\":[],\"cards\":[{\"title\":\"Título\",\"text\":\"Explicação curta\",\"icon\":\"lightbulb\"}],\"metrics\":[{\"value\":\"42%\",\"label\":\"descrição\"}],\"timeline\":[{\"title\":\"Etapa 1\",\"text\":\"descrição\"}],\"quote\":\"citação\",\"author\":\"fonte\",\"imageQuery\":\"English stock photo search phrase\",\"icon\":\"presentation\",\"notes\":\"notas do apresentador\"}]}. Layouts permitidos: cover, image-right, image-left, cards, stats, timeline, quote, section, closing e content. Use pelo menos 4 layouts diferentes e não repita o mesmo layout em slides consecutivos. O primeiro slide deve ser cover. Não transforme todos os slides em listas: no máximo 3 tópicos em um slide e prefira cards, métricas, linha do tempo, imagem com texto, citação e seções. Pelo menos 60% dos slides devem ter imageQuery com termos objetivos EM INGLÊS para encontrar fotografia horizontal real; não use URLs e não peça logotipos, desenhos ou emojis. icon deve ser o nome de um ícone real desta lista: presentation, sparkles, brain-circuit, briefcase-business, chart-no-axes-combined, lightbulb, users, shield-check, target, rocket, globe-2, building-2, laptop, bot, graduation-cap, workflow, circle-check-big, triangle-alert, scale, heart-handshake, database, cloud, image, leaf, landmark, map-pin, wrench, hand-coins, book-open, layout-grid. Nunca use emoji. Use de 5 a 15 slides, ou exatamente a quantidade solicitada. Cada slide deve transmitir uma única ideia, com título forte e pouco texto. Para comparação use cards; para números use stats; para processo use timeline; para abertura use section; para mensagem final use closing. theme deve ser executive, ocean, dark, warm ou minimal. Não use markdown, cercas de código nem texto fora do JSON. Não invente estatísticas, datas, leis, pesquisas ou citações; quando faltar um dado escreva [DADO A INSERIR].",
         "extract-fields": "Faça leitura visual cuidadosa de todos os anexos e extraia somente campos claramente identificáveis. Retorne exclusivamente um objeto JSON no formato {\"fields\":{\"nome_do_campo\":\"valor\"},\"unreadable\":[\"...\"],\"conflicts\":[\"...\"],\"notes\":[\"...\"]}. Use apenas chaves permitidas, valores em texto simples e arrays de strings. Não use markdown, não inclua explicações fora do JSON, não adivinhe dígitos e não troque dados entre pessoas diferentes.",
     };
 

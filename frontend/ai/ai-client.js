@@ -86,5 +86,12 @@
                 body: JSON.stringify({ action, ...payload }),
             });
         },
+        async searchMedia(query) {
+            const value = String(query || "").trim();
+            if (!value) return { images: [] };
+            return request(`/api/media/search?q=${encodeURIComponent(value)}`, {
+                method: "GET",
+            });
+        },
     });
 })();
