@@ -4967,6 +4967,12 @@
         excelZoom: 100,
         wordZoom: 100,
         wordSavedAt: "",
+        powerpointFileName: localStorage.getItem("docspace_powerpoint_name") || "Apresentação",
+        powerpointSlides: loadPowerpointDraft(),
+        powerpointSelectedSlide: 0,
+        powerpointTheme: localStorage.getItem("docspace_powerpoint_theme") || "executive",
+        powerpointExportBusy: false,
+        powerpointImageBusy: false,
         officeAiOpen: false,
         officeAiTarget: "word",
         officeAiBusy: false,
@@ -4974,6 +4980,22 @@
         officeAiMode: "replace",
         officeAiError: "",
     };
+
+
+    function defaultPowerpointSlides() {
+        return [
+            { type: "cover", title: "Nova apresentação", subtitle: "Clique em Assistente PowerPoint e descreva o tema", bullets: [], imageQuery: "", imageUrl: "", imageData: "", icon: "✨", notes: "" },
+            { type: "content", title: "Visão geral", subtitle: "", bullets: ["Apresente o contexto", "Explique os pontos principais", "Finalize com próximos passos"], imageQuery: "", imageUrl: "", imageData: "", icon: "📌", notes: "" },
+        ];
+    }
+
+    function loadPowerpointDraft() {
+        try {
+            const saved = JSON.parse(localStorage.getItem("docspace_powerpoint_draft") || "null");
+            if (Array.isArray(saved) && saved.length) return saved.map(normalizePowerpointSlide);
+        } catch (_) {}
+        return defaultPowerpointSlides();
+    }
 
     function loadExcelDraft() {
         try {
@@ -5119,7 +5141,7 @@
                 const inferredArea = button.dataset.aiArea || (button.closest(".sidebar-group-office") ? "office" : "documents");
                 if (inferredArea === "office") {
                     setSidebarOpen(false);
-                    launchOfficeAi(state.view === "excel" ? "excel" : "word");
+                    launchOfficeAi(state.view === "excel" ? "excel" : state.view === "powerpoint" ? "powerpoint" : "word");
                     return;
                 }
                 setAiArea(inferredArea);
@@ -5232,6 +5254,7 @@
             { type: "view", id: "documents", label: "Documentos", description: "Abrir a biblioteca de modelos", icon: "files", group: "Área" },
             { type: "view", id: "word", label: "Editor Word", description: "Criar, importar e exportar documentos Word", icon: "file-edit", group: "Área" },
             { type: "view", id: "excel", label: "Editor Excel", description: "Criar, importar e exportar planilhas", icon: "file-spreadsheet", group: "Área" },
+            { type: "view", id: "powerpoint", label: "Editor PowerPoint", description: "Criar apresentações com IA, imagens e ícones", icon: "presentation", group: "Área" },
             { type: "view", id: "ai", label: "Assistente IA", description: "Criar documentos e conteúdos para Word ou PDF", icon: "sparkles", group: "Área" },
             { type: "view", id: "pdf", label: "Ferramentas PDF", description: "Abrir a central de PDF", icon: "file-cog", group: "Área" },
             { type: "view", id: "support", label: "Atendimento", description: "Abrir suporte e mensagens", icon: "messages-square", group: "Área" },
@@ -5960,7 +5983,7 @@
         if (view === "documents") return "documents";
         if (view === "pdf") return "pdf";
         if (view === "ai") return state.aiArea === "office" ? "office" : "documents";
-        if (view === "word" || view === "excel") return "office";
+        if (view === "word" || view === "excel" || view === "powerpoint") return "office";
         return "";
     }
 
@@ -6009,6 +6032,7 @@
             ai: { kicker: "Inteligência artificial", title: "Assistente IA", description: "Crie, revise e organize textos com a API protegida no servidor.", actions: `<button class="secondary-button" data-goto="documents"><i data-lucide="files"></i> Usar modelos</button>` },
             word: { kicker: "Ferramentas Office", title: "Editor Word", description: "Edite documentos direto no navegador. Importe .docx, formate e exporte em Word ou PDF.", actions: `<button class="secondary-button office-ai-launch-button" data-office-ai-open="word"><i data-lucide="sparkles"></i> Assistente Word</button>` },
             excel: { kicker: "Ferramentas Office", title: "Editor Excel", description: "Crie e edite planilhas no navegador. Importe Excel ou CSV e exporte quando terminar.", actions: `<button class="secondary-button office-ai-launch-button" data-office-ai-open="excel"><i data-lucide="sparkles"></i> Assistente Excel</button>` },
+            powerpoint: { kicker: "Ferramentas Office", title: "Editor PowerPoint", description: "Crie apresentações com IA, imagens, ícones e exportação em .pptx.", actions: `<button class="secondary-button office-ai-launch-button" data-office-ai-open="powerpoint"><i data-lucide="sparkles"></i> Assistente PowerPoint</button>` },
             pdf: { kicker: "Ferramentas", title: "Ferramentas PDF", description: "Processe arquivos PDF diretamente pelo navegador.", actions: `<button class="secondary-button" data-goto="documents"><i data-lucide="files"></i> Documentos</button>` },
             support: { kicker: "Atendimento", title: "Suporte", description: "Envie uma solicitação e acompanhe o atendimento.", actions: "" },
             profile: { kicker: "Minha conta", title: "Perfil", description: "Consulte seu plano, vencimento e limites de utilização.", actions: `<button class="secondary-button" data-goto="support"><i data-lucide="messages-square"></i> Atendimento</button>` },
@@ -6031,6 +6055,7 @@
         if (state.view === "documents") renderDocuments();
         if (state.view === "word") renderWordEditor();
         if (state.view === "excel") renderExcelEditor();
+        if (state.view === "powerpoint") renderPowerpointEditor();
         if (state.view === "ai") renderAi();
         if (state.view === "pdf") renderPdfTools();
         if (state.view === "support") renderSupport();
@@ -7007,8 +7032,16 @@
     }
 
     function resolveOfficeAiTarget(target = "") {
-        if (target === "excel" || target === "word") return target;
-        return state.view === "excel" ? "excel" : "word";
+        if (["excel", "word", "powerpoint"].includes(target)) return target;
+        if (state.view === "excel") return "excel";
+        if (state.view === "powerpoint") return "powerpoint";
+        return "word";
+    }
+
+    function renderOfficeTarget(target) {
+        if (target === "excel") renderExcelEditor();
+        else if (target === "powerpoint") renderPowerpointEditor();
+        else renderWordEditor();
     }
 
     function launchOfficeAi(target = "") {
@@ -7017,12 +7050,12 @@
         state.officeAiOpen = true;
         state.officeAiBusy = false;
         state.officeAiError = "";
-        state.officeAiMode = resolved === "word" ? "replace" : "replace";
+        state.officeAiMode = "replace";
         if (state.view !== resolved) {
             navigate(resolved);
             return;
         }
-        resolved === "excel" ? renderExcelEditor() : renderWordEditor();
+        renderOfficeTarget(resolved);
     }
 
     function closeOfficeAi() {
@@ -7030,45 +7063,58 @@
         state.officeAiOpen = false;
         state.officeAiBusy = false;
         state.officeAiError = "";
-        target === "excel" ? renderExcelEditor() : renderWordEditor();
+        renderOfficeTarget(target);
     }
 
     function officeAiExamplePrompts(target) {
-        return target === "excel"
-            ? [
-                "Crie uma planilha de controle financeiro mensal com receitas, despesas, saldo e fórmulas.",
-                "Monte uma planilha de estoque com produto, categoria, entrada, saída, quantidade atual e valor total.",
-                "Crie um cronograma de estudos semanal com disciplina, assunto, duração, status e observações.",
-            ]
-            : [
-                "Crie um relatório profissional com título, introdução, desenvolvimento, conclusão e recomendações.",
-                "Redija uma ata de reunião com pauta, participantes, decisões, responsáveis e prazos.",
-                "Revise e melhore o documento atual, preservando as informações e corrigindo clareza e organização.",
-            ];
+        if (target === "excel") return [
+            "Crie uma planilha de controle financeiro mensal com receitas, despesas, saldo e fórmulas.",
+            "Monte uma planilha de estoque com produto, categoria, entrada, saída, quantidade atual e valor total.",
+            "Crie um cronograma de estudos semanal com disciplina, assunto, duração, status e observações.",
+        ];
+        if (target === "powerpoint") return [
+            "Crie uma apresentação profissional de 8 slides sobre transformação digital, com imagens e conclusão.",
+            "Monte uma apresentação comercial para vender um software de gestão, com benefícios, diferenciais e chamada para ação.",
+            "Crie slides para uma aula sobre sustentabilidade, usando linguagem simples, imagens e ícones.",
+        ];
+        return [
+            "Crie um relatório profissional com título, introdução, desenvolvimento, conclusão e recomendações.",
+            "Redija uma ata de reunião com pauta, participantes, decisões, responsáveis e prazos.",
+            "Revise e melhore o documento atual, preservando as informações e corrigindo clareza e organização.",
+        ];
     }
 
     function renderOfficeAiDialog(target) {
         if (!state.officeAiOpen || resolveOfficeAiTarget(state.officeAiTarget) !== target) return "";
         const isWord = target === "word";
+        const isExcel = target === "excel";
+        const isPowerpoint = target === "powerpoint";
         const examples = officeAiExamplePrompts(target);
         const modes = isWord
             ? `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar um novo conteúdo e substituir o documento</option><option value="rewrite" ${state.officeAiMode === "rewrite" ? "selected" : ""}>Reescrever e melhorar o documento atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar o conteúdo ao final do documento</option>`
-            : `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar uma nova planilha e substituir a atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar a nova tabela abaixo dos dados atuais</option>`;
+            : isExcel
+                ? `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar uma nova planilha e substituir a atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar a nova tabela abaixo dos dados atuais</option>`
+                : `<option value="replace" ${state.officeAiMode === "replace" ? "selected" : ""}>Criar uma apresentação nova e substituir a atual</option><option value="append" ${state.officeAiMode === "append" ? "selected" : ""}>Adicionar novos slides ao final</option>`;
+        const title = isWord ? "Assistente Word" : isExcel ? "Assistente Excel" : "Assistente PowerPoint";
+        const description = isWord ? "O resultado será aplicado diretamente no documento aberto." : isExcel ? "A IA criará linhas, colunas, dados e fórmulas diretamente na planilha aberta." : "A IA criará os slides, buscará imagens e preparará a apresentação para exportação em .pptx.";
+        const placeholder = isWord ? "documento" : isExcel ? "conteúdo da planilha" : "tema, público, quantidade de slides e estilo da apresentação";
+        const contextNote = isWord ? "O Assistente Word recebe o texto atual como contexto e devolve conteúdo estruturado para o editor." : isExcel ? "O Assistente Excel recebe a tabela atual como contexto e devolve uma estrutura de linhas e colunas." : "O Assistente PowerPoint cria títulos, tópicos, notas, ícones e pesquisas de imagens. As imagens são procuradas automaticamente no Wikimedia Commons.";
+        const targetLabel = isWord ? "Word" : isExcel ? "Excel" : "PowerPoint";
         return `
             <div class="office-ai-overlay" data-office-ai-backdrop>
                 <section class="office-ai-dialog" role="dialog" aria-modal="true" aria-labelledby="officeAiTitle">
                     <header class="office-ai-dialog-header">
-                        <span class="office-ai-dialog-icon"><i data-lucide="sparkles"></i></span>
-                        <div><small>IA contextual do Office</small><h2 id="officeAiTitle">${isWord ? "Assistente Word" : "Assistente Excel"}</h2><p>${isWord ? "O resultado será aplicado diretamente no documento aberto." : "A IA criará linhas, colunas, dados e fórmulas diretamente na planilha aberta."}</p></div>
+                        <span class="office-ai-dialog-icon"><i data-lucide="${isPowerpoint ? "presentation" : "sparkles"}"></i></span>
+                        <div><small>IA contextual do Office</small><h2 id="officeAiTitle">${title}</h2><p>${description}</p></div>
                         <button type="button" class="ghost-button office-ai-close" data-office-ai-close aria-label="Fechar"><i data-lucide="x"></i></button>
                     </header>
                     <form id="officeAiForm" class="office-ai-form" data-office-ai-target="${target}">
-                        <label class="field"><span>O que você quer que a IA faça?</span><textarea id="officeAiPrompt" name="prompt" rows="6" maxlength="24000" placeholder="Descreva o ${isWord ? "documento" : "conteúdo da planilha"}, as informações e o formato desejado..." required>${escapeHtml(state.officeAiPrompt || "")}</textarea></label>
+                        <label class="field"><span>O que você quer que a IA faça?</span><textarea id="officeAiPrompt" name="prompt" rows="6" maxlength="24000" placeholder="Descreva o ${placeholder}..." required>${escapeHtml(state.officeAiPrompt || "")}</textarea></label>
                         <label class="field"><span>Como aplicar o resultado</span><select id="officeAiMode" name="mode">${modes}</select></label>
-                        <div class="office-ai-context-note"><i data-lucide="scan-text"></i><span>${isWord ? "O Assistente Word recebe o texto atual como contexto e devolve conteúdo estruturado para o editor." : "O Assistente Excel recebe a tabela atual como contexto e devolve uma estrutura de linhas e colunas."}</span></div>
+                        <div class="office-ai-context-note"><i data-lucide="${isPowerpoint ? "image" : "scan-text"}"></i><span>${contextNote}</span></div>
                         <div class="office-ai-examples">${examples.map((example) => `<button type="button" data-office-ai-example="${escapeAttr(example)}">${escapeHtml(example)}</button>`).join("")}</div>
-                        ${state.officeAiError ? `<p class="message error office-ai-error">${escapeHtml(state.officeAiError)}</p>` : `<p class="message">A IA não baixa um arquivo separado: ela aplica o resultado dentro do ${isWord ? "Word" : "Excel"}.</p>`}
-                        <footer class="office-ai-actions"><button type="button" class="ghost-button" data-office-ai-close>Cancelar</button><button type="submit" class="primary-button" ${state.officeAiBusy ? "disabled" : ""}><i data-lucide="${state.officeAiBusy ? "loader-circle" : "sparkles"}"></i> ${state.officeAiBusy ? "Gerando..." : isWord ? "Gerar no Word" : "Gerar no Excel"}</button></footer>
+                        ${state.officeAiError ? `<p class="message error office-ai-error">${escapeHtml(state.officeAiError)}</p>` : `<p class="message">A IA aplica o resultado diretamente dentro do ${targetLabel}.</p>`}
+                        <footer class="office-ai-actions"><button type="button" class="ghost-button" data-office-ai-close>Cancelar</button><button type="submit" class="primary-button" ${state.officeAiBusy ? "disabled" : ""}><i data-lucide="${state.officeAiBusy ? "loader-circle" : "sparkles"}"></i> ${state.officeAiBusy ? "Gerando..." : `Gerar no ${targetLabel}`}</button></footer>
                     </form>
                 </section>
             </div>`;
@@ -7120,6 +7166,264 @@
         return [...base, ...generated];
     }
 
+    function normalizePowerpointSlide(slide, index = 0) {
+        const allowedTypes = new Set(["cover", "content", "section", "quote", "closing"]);
+        const type = allowedTypes.has(String(slide?.type || "")) ? String(slide.type) : index === 0 ? "cover" : "content";
+        const bullets = Array.isArray(slide?.bullets) ? slide.bullets.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 8) : String(slide?.bullets || "").split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 8);
+        return {
+            type,
+            title: String(slide?.title || (index === 0 ? "Nova apresentação" : `Slide ${index + 1}`)).slice(0, 180),
+            subtitle: String(slide?.subtitle || "").slice(0, 260),
+            bullets,
+            imageQuery: String(slide?.imageQuery || slide?.image_query || "").slice(0, 180),
+            imageUrl: String(slide?.imageUrl || slide?.image_url || "").slice(0, 2000),
+            imageData: String(slide?.imageData || "").slice(0, 8_000_000),
+            imageAttribution: String(slide?.imageAttribution || "").slice(0, 300),
+            icon: String(slide?.icon || (index === 0 ? "✨" : "📌")).slice(0, 8),
+            notes: String(slide?.notes || slide?.speakerNotes || "").slice(0, 4000),
+        };
+    }
+
+    function normalizeOfficePowerpointPayload(payload) {
+        const slides = Array.isArray(payload?.slides) ? payload.slides.slice(0, 20).map(normalizePowerpointSlide) : [];
+        if (!slides.length) throw new Error("A IA não retornou slides utilizáveis.");
+        if (slides[0].type !== "cover") slides[0].type = "cover";
+        return {
+            fileName: String(payload?.fileName || payload?.title || "Apresentação").trim().slice(0, 120) || "Apresentação",
+            theme: String(payload?.theme || "executive").trim().slice(0, 40),
+            slides,
+        };
+    }
+
+    function persistPowerpointDraft() {
+        try {
+            const compact = state.powerpointSlides.map((slide) => ({ ...slide, imageData: "" }));
+            localStorage.setItem("docspace_powerpoint_draft", JSON.stringify(compact));
+            localStorage.setItem("docspace_powerpoint_name", state.powerpointFileName || "Apresentação");
+            localStorage.setItem("docspace_powerpoint_theme", state.powerpointTheme || "executive");
+        } catch (_) {}
+    }
+
+    function powerpointThemes() {
+        return {
+            executive: { name: "Executivo", primary: "0F4C5C", accent: "2AA876", background: "F7FAFC", text: "172033", muted: "5C677D" },
+            ocean: { name: "Azul moderno", primary: "134E8E", accent: "1FA2D6", background: "F3F8FD", text: "10233F", muted: "53657C" },
+            dark: { name: "Escuro", primary: "111827", accent: "22C55E", background: "0B1220", text: "F8FAFC", muted: "CBD5E1" },
+            warm: { name: "Quente", primary: "8A3B12", accent: "E28A2B", background: "FFF9F2", text: "321A10", muted: "73584B" },
+            minimal: { name: "Minimalista", primary: "20242A", accent: "7C3AED", background: "FFFFFF", text: "15171A", muted: "6B7280" },
+        };
+    }
+
+    function getPowerpointTheme() {
+        return powerpointThemes()[state.powerpointTheme] || powerpointThemes().executive;
+    }
+
+    async function searchWikimediaImage(query) {
+        const cleaned = String(query || "").trim();
+        if (!cleaned) return null;
+        const url = new URL("https://commons.wikimedia.org/w/api.php");
+        url.searchParams.set("action", "query");
+        url.searchParams.set("format", "json");
+        url.searchParams.set("origin", "*");
+        url.searchParams.set("generator", "search");
+        url.searchParams.set("gsrsearch", `filetype:bitmap ${cleaned}`);
+        url.searchParams.set("gsrnamespace", "6");
+        url.searchParams.set("gsrlimit", "8");
+        url.searchParams.set("prop", "imageinfo");
+        url.searchParams.set("iiprop", "url|extmetadata");
+        url.searchParams.set("iiurlwidth", "1400");
+        const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("Não foi possível buscar a imagem.");
+        const data = await response.json();
+        const pages = Object.values(data?.query?.pages || {});
+        for (const page of pages) {
+            const info = page?.imageinfo?.[0];
+            const imageUrl = String(info?.thumburl || info?.url || "");
+            if (!/^https:\/\//i.test(imageUrl) || /\.svg(?:\?|$)/i.test(imageUrl)) continue;
+            const artist = String(info?.extmetadata?.Artist?.value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+            const license = String(info?.extmetadata?.LicenseShortName?.value || "").replace(/<[^>]+>/g, " ").trim();
+            return { url: imageUrl, attribution: [artist, license, "Wikimedia Commons"].filter(Boolean).join(" · ").slice(0, 300) };
+        }
+        return null;
+    }
+
+    async function enrichPowerpointImages(slides) {
+        const output = [];
+        for (const slide of slides) {
+            const next = normalizePowerpointSlide(slide, output.length);
+            if (!next.imageUrl && !next.imageData && next.imageQuery) {
+                try {
+                    const found = await searchWikimediaImage(next.imageQuery);
+                    if (found) {
+                        next.imageUrl = found.url;
+                        next.imageAttribution = found.attribution;
+                    }
+                } catch (_) {}
+            }
+            output.push(next);
+        }
+        return output;
+    }
+
+    async function urlToDataUri(url) {
+        if (!url) return "";
+        if (/^data:image\//i.test(url)) return url;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Não foi possível carregar uma imagem da apresentação.");
+        const blob = await response.blob();
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(reader.error || new Error("Falha ao converter imagem."));
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function powerpointSlidePreview(slide, index, compact = false) {
+        const theme = getPowerpointTheme();
+        const image = slide.imageData || slide.imageUrl;
+        const bullets = (slide.bullets || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+        return `<div class="powerpoint-slide-canvas powerpoint-slide-${escapeAttr(slide.type)} ${compact ? "is-thumbnail" : ""}" style="--ppt-primary:#${theme.primary};--ppt-accent:#${theme.accent};--ppt-bg:#${theme.background};--ppt-text:#${theme.text};--ppt-muted:#${theme.muted}">
+            <span class="powerpoint-slide-accent"></span>
+            <div class="powerpoint-slide-copy">
+                <span class="powerpoint-slide-number">${String(index + 1).padStart(2, "0")}</span>
+                <div class="powerpoint-slide-icon">${escapeHtml(slide.icon || "📌")}</div>
+                <h2>${escapeHtml(slide.title || "Sem título")}</h2>
+                ${slide.subtitle ? `<p>${escapeHtml(slide.subtitle)}</p>` : ""}
+                ${bullets ? `<ul>${bullets}</ul>` : ""}
+            </div>
+            ${image ? `<div class="powerpoint-slide-image"><img src="${escapeAttr(image)}" alt="Imagem do slide" referrerpolicy="no-referrer"></div>` : `<div class="powerpoint-slide-image is-empty"><i data-lucide="image"></i><span>${escapeHtml(slide.imageQuery || "Imagem opcional")}</span></div>`}
+            ${slide.imageAttribution && !compact ? `<small class="powerpoint-attribution">${escapeHtml(slide.imageAttribution)}</small>` : ""}
+        </div>`;
+    }
+
+    function renderPowerpointEditor() {
+        if (!state.powerpointSlides.length) state.powerpointSlides = defaultPowerpointSlides();
+        state.powerpointSelectedSlide = Math.max(0, Math.min(state.powerpointSelectedSlide, state.powerpointSlides.length - 1));
+        const selected = state.powerpointSlides[state.powerpointSelectedSlide];
+        const themes = powerpointThemes();
+        refs.content.innerHTML = `
+            <section class="office-editor-shell powerpoint-editor-page">
+                <div class="office-sticky-controls powerpoint-sticky-controls">
+                    <div class="office-filebar powerpoint-filebar">
+                        <input id="powerpointFileName" class="office-file-name" value="${escapeAttr(state.powerpointFileName || "Apresentação")}" placeholder="Nome da apresentação">
+                        <span class="office-save-status"><i data-lucide="cloud-check"></i> Salvo localmente</span>
+                        <div class="office-file-actions">
+                            <button type="button" class="secondary-button" data-ppt-new><i data-lucide="file-plus-2"></i> Novo</button>
+                            <button type="button" class="secondary-button" data-ppt-add><i data-lucide="plus"></i> Slide</button>
+                            <button type="button" class="secondary-button office-ai-inline-button" data-office-ai-open="powerpoint"><i data-lucide="sparkles"></i> Gerar com IA</button>
+                            <button type="button" class="primary-button" data-ppt-export ${state.powerpointExportBusy ? "disabled" : ""}><i data-lucide="${state.powerpointExportBusy ? "loader-circle" : "presentation"}"></i> ${state.powerpointExportBusy ? "Exportando..." : "Salvar PowerPoint"}</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="powerpoint-workspace">
+                    <aside class="powerpoint-slide-list" aria-label="Slides">
+                        <div class="powerpoint-slide-list-head"><strong>${state.powerpointSlides.length} slides</strong><button type="button" data-ppt-add title="Adicionar slide"><i data-lucide="plus"></i></button></div>
+                        <div class="powerpoint-thumbnails">${state.powerpointSlides.map((slide, index) => `<button type="button" class="powerpoint-thumbnail ${index === state.powerpointSelectedSlide ? "is-active" : ""}" data-ppt-select="${index}"><span>${index + 1}</span>${powerpointSlidePreview(slide, index, true)}</button>`).join("")}</div>
+                    </aside>
+                    <main class="powerpoint-stage">
+                        <div class="powerpoint-stage-toolbar">
+                            <button type="button" class="ghost-button" data-ppt-move="up" ${state.powerpointSelectedSlide === 0 ? "disabled" : ""}><i data-lucide="arrow-up"></i></button>
+                            <button type="button" class="ghost-button" data-ppt-move="down" ${state.powerpointSelectedSlide === state.powerpointSlides.length - 1 ? "disabled" : ""}><i data-lucide="arrow-down"></i></button>
+                            <button type="button" class="ghost-button" data-ppt-duplicate><i data-lucide="copy-plus"></i> Duplicar</button>
+                            <button type="button" class="ghost-button office-danger" data-ppt-delete ${state.powerpointSlides.length <= 1 ? "disabled" : ""}><i data-lucide="trash-2"></i> Excluir</button>
+                        </div>
+                        ${powerpointSlidePreview(selected, state.powerpointSelectedSlide)}
+                    </main>
+                    <aside class="powerpoint-inspector">
+                        <header><strong>Editar slide ${state.powerpointSelectedSlide + 1}</strong><small>Alterações instantâneas</small></header>
+                        <label class="field"><span>Layout</span><select data-ppt-field="type"><option value="cover" ${selected.type === "cover" ? "selected" : ""}>Capa</option><option value="content" ${selected.type === "content" ? "selected" : ""}>Conteúdo</option><option value="section" ${selected.type === "section" ? "selected" : ""}>Seção</option><option value="quote" ${selected.type === "quote" ? "selected" : ""}>Citação</option><option value="closing" ${selected.type === "closing" ? "selected" : ""}>Encerramento</option></select></label>
+                        <label class="field"><span>Título</span><input data-ppt-field="title" value="${escapeAttr(selected.title)}"></label>
+                        <label class="field"><span>Subtítulo</span><textarea data-ppt-field="subtitle" rows="2">${escapeHtml(selected.subtitle)}</textarea></label>
+                        <label class="field"><span>Tópicos, um por linha</span><textarea data-ppt-field="bullets" rows="6">${escapeHtml((selected.bullets || []).join("\n"))}</textarea></label>
+                        <div class="powerpoint-inspector-row">
+                            <label class="field"><span>Ícone</span><input data-ppt-field="icon" maxlength="8" value="${escapeAttr(selected.icon || "📌")}"></label>
+                            <label class="field"><span>Tema</span><select data-ppt-theme>${Object.entries(themes).map(([key, theme]) => `<option value="${key}" ${state.powerpointTheme === key ? "selected" : ""}>${escapeHtml(theme.name)}</option>`).join("")}</select></label>
+                        </div>
+                        <label class="field"><span>Pesquisar imagem</span><div class="powerpoint-image-search"><input data-ppt-field="imageQuery" value="${escapeAttr(selected.imageQuery)}" placeholder="Ex.: tecnologia sustentável"><button type="button" class="secondary-button" data-ppt-search-image ${state.powerpointImageBusy ? "disabled" : ""}><i data-lucide="search"></i></button></div></label>
+                        <div class="powerpoint-image-actions"><button type="button" class="ghost-button" data-ppt-upload-image><i data-lucide="image-up"></i> Enviar imagem</button><button type="button" class="ghost-button" data-ppt-remove-image><i data-lucide="image-off"></i> Remover</button><input id="powerpointImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
+                        <label class="field"><span>Notas do apresentador</span><textarea data-ppt-field="notes" rows="4">${escapeHtml(selected.notes || "")}</textarea></label>
+                    </aside>
+                </div>
+                <p class="powerpoint-source-note"><i data-lucide="image"></i> Imagens automáticas: Wikimedia Commons. Revise a imagem e a atribuição antes de uso comercial.</p>
+                ${renderOfficeAiDialog("powerpoint")}
+            </section>`;
+        bindPowerpointEditor();
+        initIcons();
+    }
+
+    function bindPowerpointEditor() {
+        $("#powerpointFileName")?.addEventListener("input", (event) => { state.powerpointFileName = event.target.value || "Apresentação"; persistPowerpointDraft(); });
+        $$('[data-ppt-select]', refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSelectedSlide = Number(button.dataset.pptSelect || 0); renderPowerpointEditor(); }));
+        $$('[data-ppt-add]', refs.content).forEach((button) => button.addEventListener("click", () => { state.powerpointSlides.push(normalizePowerpointSlide({ title: `Novo slide ${state.powerpointSlides.length + 1}`, bullets: ["Digite o primeiro tópico"], icon: "📌" }, state.powerpointSlides.length)); state.powerpointSelectedSlide = state.powerpointSlides.length - 1; persistPowerpointDraft(); renderPowerpointEditor(); }));
+        $("[data-ppt-new]")?.addEventListener("click", () => { if (!confirm("Criar uma apresentação nova?")) return; state.powerpointSlides = defaultPowerpointSlides(); state.powerpointSelectedSlide = 0; state.powerpointFileName = "Apresentação"; persistPowerpointDraft(); renderPowerpointEditor(); });
+        $("[data-ppt-delete]")?.addEventListener("click", () => { if (state.powerpointSlides.length <= 1) return; state.powerpointSlides.splice(state.powerpointSelectedSlide, 1); state.powerpointSelectedSlide = Math.max(0, state.powerpointSelectedSlide - 1); persistPowerpointDraft(); renderPowerpointEditor(); });
+        $("[data-ppt-duplicate]")?.addEventListener("click", () => { const copy = JSON.parse(JSON.stringify(state.powerpointSlides[state.powerpointSelectedSlide])); state.powerpointSlides.splice(state.powerpointSelectedSlide + 1, 0, copy); state.powerpointSelectedSlide += 1; persistPowerpointDraft(); renderPowerpointEditor(); });
+        $$('[data-ppt-move]', refs.content).forEach((button) => button.addEventListener("click", () => { const direction = button.dataset.pptMove === "up" ? -1 : 1; const next = state.powerpointSelectedSlide + direction; if (next < 0 || next >= state.powerpointSlides.length) return; [state.powerpointSlides[state.powerpointSelectedSlide], state.powerpointSlides[next]] = [state.powerpointSlides[next], state.powerpointSlides[state.powerpointSelectedSlide]]; state.powerpointSelectedSlide = next; persistPowerpointDraft(); renderPowerpointEditor(); }));
+        $$('[data-ppt-field]', refs.content).forEach((field) => field.addEventListener("input", () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; const key = field.dataset.pptField; slide[key] = key === "bullets" ? field.value.split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean).slice(0, 8) : field.value; persistPowerpointDraft(); const canvas = refs.content.querySelector(".powerpoint-stage .powerpoint-slide-canvas"); if (canvas) { const replacement = document.createElement("div"); replacement.innerHTML = powerpointSlidePreview(slide, state.powerpointSelectedSlide); canvas.replaceWith(replacement.firstElementChild); initIcons(); } }));
+        $("[data-ppt-theme]")?.addEventListener("change", (event) => { state.powerpointTheme = event.target.value || "executive"; persistPowerpointDraft(); renderPowerpointEditor(); });
+        $("[data-ppt-search-image]")?.addEventListener("click", async () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; const query = String(slide.imageQuery || "").trim(); if (!query) return toast("Digite o tema da imagem.", "error"); state.powerpointImageBusy = true; renderPowerpointEditor(); try { const found = await searchWikimediaImage(query); if (!found) throw new Error("Nenhuma imagem encontrada para esse tema."); slide.imageUrl = found.url; slide.imageData = ""; slide.imageAttribution = found.attribution; persistPowerpointDraft(); toast("Imagem adicionada ao slide.", "success"); } catch (error) { toast(translateError(error), "error"); } finally { state.powerpointImageBusy = false; renderPowerpointEditor(); } });
+        $("[data-ppt-upload-image]")?.addEventListener("click", () => $("#powerpointImageInput")?.click());
+        $("#powerpointImageInput")?.addEventListener("change", async (event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (file.size > 8 * 1024 * 1024) return toast("Use uma imagem de até 8 MB.", "error"); const slide = state.powerpointSlides[state.powerpointSelectedSlide]; slide.imageData = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); slide.imageUrl = ""; slide.imageAttribution = "Imagem enviada pelo usuário"; renderPowerpointEditor(); });
+        $("[data-ppt-remove-image]")?.addEventListener("click", () => { const slide = state.powerpointSlides[state.powerpointSelectedSlide]; slide.imageUrl = ""; slide.imageData = ""; slide.imageAttribution = ""; persistPowerpointDraft(); renderPowerpointEditor(); });
+        $("[data-ppt-export]")?.addEventListener("click", exportPowerpointPresentation);
+    }
+
+    async function exportPowerpointPresentation() {
+        if (state.powerpointExportBusy) return;
+        if (!window.PptxGenJS) return toast("A biblioteca PowerPoint não carregou. Atualize a página e tente novamente.", "error");
+        state.powerpointExportBusy = true;
+        renderPowerpointEditor();
+        try {
+            const theme = getPowerpointTheme();
+            const pptx = new window.PptxGenJS();
+            pptx.layout = "LAYOUT_WIDE";
+            pptx.author = "DocSpace";
+            pptx.company = "DocSpace";
+            pptx.subject = state.powerpointFileName || "Apresentação";
+            pptx.title = state.powerpointFileName || "Apresentação";
+            pptx.lang = "pt-BR";
+            pptx.theme = { headFontFace: "Aptos Display", bodyFontFace: "Aptos", lang: "pt-BR" };
+            for (let index = 0; index < state.powerpointSlides.length; index += 1) {
+                const item = normalizePowerpointSlide(state.powerpointSlides[index], index);
+                const slide = pptx.addSlide();
+                slide.background = { color: theme.background };
+                slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: theme.accent }, line: { color: theme.accent } });
+                slide.addText(item.icon || "📌", { x: 0.62, y: 0.52, w: 0.55, h: 0.42, fontSize: 20, margin: 0, breakLine: false });
+                const hasImage = Boolean(item.imageData || item.imageUrl);
+                const titleWidth = hasImage ? 7.15 : 11.7;
+                const titleSize = item.type === "cover" ? 27 : item.type === "section" ? 28 : 22;
+                slide.addText(item.title || `Slide ${index + 1}`, { x: 0.72, y: item.type === "cover" ? 1.25 : 0.78, w: titleWidth, h: item.type === "cover" ? 1.2 : 0.76, fontFace: "Aptos Display", fontSize: titleSize, bold: true, color: theme.text, margin: 0, breakLine: false, fit: "shrink" });
+                if (item.subtitle) slide.addText(item.subtitle, { x: 0.75, y: item.type === "cover" ? 2.65 : 1.58, w: titleWidth, h: 0.72, fontSize: item.type === "cover" ? 15 : 12, color: theme.muted, margin: 0, fit: "shrink" });
+                if (item.bullets.length) {
+                    const runs = item.bullets.map((text) => ({ text, options: { bullet: { indent: 18 }, hanging: 4, breakLine: true } }));
+                    slide.addText(runs, { x: 0.82, y: item.type === "cover" ? 3.45 : 2.25, w: titleWidth - 0.15, h: item.type === "cover" ? 2.45 : 3.95, fontSize: 14, color: theme.text, margin: 0.04, paraSpaceAfterPt: 12, breakLine: false, valign: "top", fit: "shrink" });
+                }
+                if (hasImage) {
+                    try {
+                        const data = item.imageData || await urlToDataUri(item.imageUrl);
+                        slide.addShape(pptx.ShapeType.roundRect, { x: 8.35, y: 0.68, w: 4.35, h: 5.95, rectRadius: 0.08, fill: { color: "FFFFFF", transparency: 0 }, line: { color: theme.accent, transparency: 35, width: 1.2 } });
+                        slide.addImage({ data, x: 8.48, y: 0.82, w: 4.08, h: 5.66, transparency: 0 });
+                    } catch (_) {
+                        slide.addShape(pptx.ShapeType.roundRect, { x: 8.35, y: 0.68, w: 4.35, h: 5.95, fill: { color: theme.primary, transparency: 8 }, line: { color: theme.primary } });
+                        slide.addText(item.imageQuery || "Imagem", { x: 8.75, y: 3.2, w: 3.55, h: 0.5, fontSize: 16, bold: true, color: "FFFFFF", align: "center", margin: 0 });
+                    }
+                }
+                slide.addText(`${String(index + 1).padStart(2, "0")}  •  ${state.powerpointFileName || "DocSpace"}`, { x: 0.75, y: 7.08, w: 7.5, h: 0.2, fontSize: 8, color: theme.muted, margin: 0 });
+                if (item.imageAttribution) slide.addText(item.imageAttribution, { x: 8.35, y: 6.78, w: 4.35, h: 0.28, fontSize: 6, color: theme.muted, align: "right", margin: 0, fit: "shrink" });
+                if (item.notes && typeof slide.addNotes === "function") slide.addNotes(item.notes);
+            }
+            const safe = String(state.powerpointFileName || "Apresentação").replace(/[\\/:*?"<>|]+/g, "-").trim() || "Apresentação";
+            await pptx.writeFile({ fileName: `${safe}.pptx` });
+            toast("Apresentação PowerPoint gerada.", "success");
+        } catch (error) {
+            toast(translateError(error), "error");
+        } finally {
+            state.powerpointExportBusy = false;
+            if (state.view === "powerpoint") renderPowerpointEditor();
+        }
+    }
+
     async function submitOfficeAi(event) {
         event.preventDefault();
         if (state.officeAiBusy) return;
@@ -7130,14 +7434,14 @@
         if (!prompt) return;
         if (!window.DocSpaceAI?.isEnabled) {
             state.officeAiError = "A IA ainda não está ativada no frontend.";
-            target === "excel" ? renderExcelEditor() : renderWordEditor();
+            renderOfficeTarget(target);
             return;
         }
         state.officeAiPrompt = prompt;
         state.officeAiMode = mode;
         state.officeAiBusy = true;
         state.officeAiError = "";
-        target === "excel" ? renderExcelEditor() : renderWordEditor();
+        renderOfficeTarget(target);
         try {
             if (target === "word") {
                 const holder = document.createElement("div");
@@ -7145,13 +7449,7 @@
                 const result = await window.DocSpaceAI.run("office-word", {
                     prompt,
                     history: [],
-                    context: {
-                        area: "office",
-                        officeTarget: "word",
-                        operation: mode,
-                        currentFileName: state.wordFileName || "Documento",
-                        currentContent: String(holder.innerText || holder.textContent || "").slice(0, 18000),
-                    },
+                    context: { area: "office", officeTarget: "word", operation: mode, currentFileName: state.wordFileName || "Documento", currentContent: String(holder.innerText || holder.textContent || "").slice(0, 18000) },
                 });
                 const parsed = parseAiJson(result.content);
                 const html = sanitizeOfficeWordHtml(parsed.html || parsed.content || "");
@@ -7169,17 +7467,35 @@
                 return;
             }
 
+            if (target === "powerpoint") {
+                const result = await window.DocSpaceAI.run("office-powerpoint", {
+                    prompt,
+                    history: [],
+                    context: { area: "office", officeTarget: "powerpoint", operation: mode, currentFileName: state.powerpointFileName || "Apresentação", currentSlides: state.powerpointSlides.slice(0, 20).map(({ imageData, ...slide }) => slide) },
+                });
+                const parsed = normalizeOfficePowerpointPayload(parseAiJson(result.content));
+                const generated = await enrichPowerpointImages(parsed.slides);
+                state.powerpointSlides = mode === "append" ? [...state.powerpointSlides, ...generated] : generated;
+                if (mode !== "append") {
+                    state.powerpointFileName = parsed.fileName;
+                    if (powerpointThemes()[parsed.theme]) state.powerpointTheme = parsed.theme;
+                    state.powerpointSelectedSlide = 0;
+                } else {
+                    state.powerpointSelectedSlide = Math.max(0, state.powerpointSlides.length - generated.length);
+                }
+                persistPowerpointDraft();
+                state.officeAiOpen = false;
+                state.officeAiPrompt = "";
+                toast(mode === "append" ? "Novos slides adicionados pela IA." : "Apresentação criada pela IA.", "success");
+                renderPowerpointEditor();
+                return;
+            }
+
             const compactCurrent = (state.excelData || []).slice(0, 120).map((row) => (row || []).slice(0, 30));
             const result = await window.DocSpaceAI.run("office-excel", {
                 prompt,
                 history: [],
-                context: {
-                    area: "office",
-                    officeTarget: "excel",
-                    operation: mode,
-                    currentFileName: state.excelFileName || "Planilha",
-                    currentSheet: compactCurrent,
-                },
+                context: { area: "office", officeTarget: "excel", operation: mode, currentFileName: state.excelFileName || "Planilha", currentSheet: compactCurrent },
             });
             const parsed = parseAiJson(result.content);
             const generated = normalizeOfficeExcelPayload(parsed);
@@ -7189,9 +7505,7 @@
             const minimumCols = Math.max(8, state.excelData[0]?.length || 1);
             state.excelData = Array.from({ length: minimumRows }, (_, row) => Array.from({ length: minimumCols }, (_, col) => String(state.excelData[row]?.[col] ?? "")));
             state.excelStyles = {};
-            if (mode !== "append" && Array.isArray(parsed.columns) && parsed.columns.length) {
-                parsed.columns.slice(0, minimumCols).forEach((_, col) => { state.excelStyles[excelCellKey(0, col)] = { bold: true, background: "#eef4ff" }; });
-            }
+            if (mode !== "append" && Array.isArray(parsed.columns) && parsed.columns.length) parsed.columns.slice(0, minimumCols).forEach((_, col) => { state.excelStyles[excelCellKey(0, col)] = { bold: true, background: "#eef4ff" }; });
             const suggestedName = String(parsed.fileName || parsed.title || "").trim();
             if (suggestedName && mode !== "append") state.excelFileName = suggestedName.slice(0, 120);
             localStorage.setItem("docspace_excel_draft", JSON.stringify(state.excelData));
@@ -7204,7 +7518,7 @@
             toast(state.officeAiError, "error");
         } finally {
             state.officeAiBusy = false;
-            if (state.officeAiOpen) target === "excel" ? renderExcelEditor() : renderWordEditor();
+            if (state.officeAiOpen) renderOfficeTarget(target);
         }
     }
 

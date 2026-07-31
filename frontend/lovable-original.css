@@ -1551,3 +1551,135 @@ body[data-view="checkout"] { background: #fff; }
   .ai-prompt-field textarea { min-height: 84px !important; }
 }
 
+
+
+/* =========================================================
+   DocSpace v156 — densidade compacta real + Editor PowerPoint
+   ========================================================= */
+@media (min-width: 901px) {
+  :root { --sidebar-width: 190px; }
+  body { font-size: 11px; }
+  .sidebar-brand { min-height: 56px; padding: 9px 12px; }
+  .sidebar-brand .brand-symbol { width: 27px; height: 27px; }
+  .sidebar-brand strong { font-size: 12px; }
+  .sidebar-brand small { font-size: 7px; letter-spacing: .08em; }
+  .main-nav { padding: 0 7px 8px; }
+  .sidebar-group { margin-bottom: 10px; }
+  .sidebar-label { padding: 0 7px 3px; font-size: 7px; }
+  .sidebar-change { padding: 1px 4px !important; font-size: 7px !important; }
+  .main-nav button { min-height: 29px; gap: 7px; padding: 0 8px; border-radius: 6px; font-size: 10px; }
+  .main-nav button svg { width: 13px; height: 13px; flex-basis: 13px; }
+  .nav-admin-only { font-size: 6px; padding: 2px 4px; }
+  .sidebar-user { min-height: 50px; grid-template-columns: 27px minmax(0,1fr) 24px; gap: 6px; margin: 0 7px 6px; padding: 6px; }
+  .sidebar-user .user-avatar { width: 27px; height: 27px; font-size: 9px; }
+  .sidebar-user-copy strong { font-size: 9px; }
+  .sidebar-user-copy small, .sidebar-user-copy em { font-size: 7px; }
+  .sidebar-logout { width: 24px; height: 24px; }
+
+  .area-topbar-inner { min-height: 42px; padding: 5px 18px; }
+  .active-area-icon { width: 24px; height: 24px; }
+  .active-area-copy small { font-size: 7px; }
+  .active-area-copy strong { font-size: 10px; }
+  .area-switcher button { height: 24px; padding: 0 8px; font-size: 8px; }
+  .area-switcher button svg { width: 10px; }
+
+  .workspace { max-width: 1500px; padding: 12px 18px 18px; }
+  .page-header { min-height: 48px; margin-bottom: 9px; }
+  .page-heading h1, .page-header h1 { font-size: 20px; line-height: 1.05; }
+  .page-heading p, .page-header p { margin-top: 2px; font-size: 10px; }
+  .page-actions { gap: 4px; }
+  .content-area { gap: 7px; }
+  .app-footer { min-height: 32px; padding: 6px 14px; font-size: 8px; }
+
+  .primary-button, .secondary-button, .ghost-button {
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    border-radius: 6px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+  .primary-button svg, .secondary-button svg, .ghost-button svg { width: 12px; height: 12px; }
+  .field > span { font-size: 9px !important; }
+  .field input, .field textarea, .field select, .search-input { min-height: 30px !important; padding: 5px 8px !important; font-size: 10px !important; }
+  .field textarea { min-height: 68px !important; }
+  .panel { padding: 11px; }
+
+  .office-editor-shell { gap: 5px; }
+  .office-sticky-controls { gap: 4px; padding-bottom: 4px; }
+  .office-filebar { flex-wrap: nowrap; gap: 4px; padding: 5px; border-radius: 8px; }
+  .office-file-name { width: clamp(220px, 34%, 430px); min-height: 27px !important; padding: 4px 7px !important; font-size: 10px !important; }
+  .office-save-status { flex: 0 0 auto; font-size: 7px; }
+  .office-file-actions { flex: 1 1 auto; justify-content: flex-end; flex-wrap: nowrap; gap: 4px; overflow-x: auto; }
+  .office-file-actions .primary-button, .office-file-actions .secondary-button, .office-file-actions .ghost-button { min-height: 27px !important; padding: 0 7px !important; font-size: 8px !important; }
+  .word-toolbar { gap: 1px; padding: 3px; border-radius: 7px; }
+  .word-toolbar button { width: 24px; height: 24px; border-radius: 5px; }
+  .word-toolbar button svg { width: 12px; }
+  .word-toolbar select { min-height: 24px; padding: 0 4px; border-radius: 5px; font-size: 8px; }
+  .word-toolbar-separator { height: 16px; margin: 0 1px; }
+  .excel-toolbar { padding: 3px; }
+  .excel-toolbar button { width: 24px; height: 24px; }
+  .excel-formula-input, .excel-name-box { min-height: 24px !important; font-size: 8px !important; }
+  .word-statusbar { min-height: 26px; font-size: 8px; }
+  .office-ai-launch-button { min-height: 28px !important; }
+}
+
+.powerpoint-editor-page { min-height: 0; }
+.powerpoint-workspace { min-height: 0; display: grid; grid-template-columns: 178px minmax(0,1fr) 250px; gap: 8px; align-items: stretch; }
+.powerpoint-slide-list, .powerpoint-inspector, .powerpoint-stage { min-width: 0; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.powerpoint-slide-list { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.powerpoint-slide-list-head { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.powerpoint-slide-list-head strong { font-size: 10px; }
+.powerpoint-slide-list-head button { width: 23px; height: 23px; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 5px; background: #fff; }
+.powerpoint-thumbnails { min-height: 0; display: grid; align-content: start; gap: 6px; overflow-y: auto; padding: 7px; }
+.powerpoint-thumbnail { position: relative; display: block; padding: 3px; border: 2px solid transparent; border-radius: 7px; background: #eef2f6; text-align: left; }
+.powerpoint-thumbnail > span { position: absolute; z-index: 4; left: 5px; bottom: 4px; min-width: 15px; padding: 1px 3px; border-radius: 3px; color: #fff; background: rgba(15,23,42,.7); font-size: 6px; text-align: center; }
+.powerpoint-thumbnail.is-active { border-color: var(--primary); background: var(--primary-soft); }
+.powerpoint-stage { min-height: 0; display: grid; align-content: start; gap: 7px; overflow: auto; padding: 9px; background: #e8ecf2; }
+.powerpoint-stage-toolbar { display: flex; justify-content: flex-end; gap: 4px; }
+.powerpoint-slide-canvas { --ppt-primary:#0F4C5C;--ppt-accent:#2AA876;--ppt-bg:#F7FAFC;--ppt-text:#172033;--ppt-muted:#5C677D; position: relative; width: min(100%, 1000px); aspect-ratio: 16/9; display: grid; grid-template-columns: minmax(0, 1.58fr) minmax(190px, .85fr); gap: 4%; overflow: hidden; margin: 0 auto; padding: 6.4% 5.5%; color: var(--ppt-text); background: var(--ppt-bg); border: 1px solid rgba(15,23,42,.12); border-radius: 4px; box-shadow: 0 18px 50px rgba(15,23,42,.16); }
+.powerpoint-slide-accent { position: absolute; inset: 0 auto 0 0; width: 1.1%; background: var(--ppt-accent); }
+.powerpoint-slide-copy { min-width: 0; position: relative; z-index: 2; align-self: center; }
+.powerpoint-slide-number { display: inline-block; margin-bottom: 3%; color: var(--ppt-accent); font-size: clamp(7px, .7vw, 11px); font-weight: 800; letter-spacing: .14em; }
+.powerpoint-slide-icon { margin-bottom: 3%; font-size: clamp(20px, 2.3vw, 38px); line-height: 1; }
+.powerpoint-slide-canvas h2 { margin: 0; color: var(--ppt-text); font-size: clamp(18px, 2.5vw, 42px); line-height: 1.05; letter-spacing: -.04em; }
+.powerpoint-slide-canvas p { margin: 4% 0 0; color: var(--ppt-muted); font-size: clamp(9px, 1.1vw, 17px); line-height: 1.45; }
+.powerpoint-slide-canvas ul { display: grid; gap: .55em; margin: 5% 0 0; padding-left: 1.2em; font-size: clamp(8px, 1vw, 15px); line-height: 1.35; }
+.powerpoint-slide-image { min-width: 0; align-self: stretch; overflow: hidden; border: 1px solid color-mix(in srgb, var(--ppt-accent) 42%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--ppt-primary) 8%, white); }
+.powerpoint-slide-image img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.powerpoint-slide-image.is-empty { display: grid; place-items: center; align-content: center; gap: 5px; padding: 12px; color: var(--ppt-muted); text-align: center; }
+.powerpoint-slide-image.is-empty svg { width: 28px; }
+.powerpoint-slide-image.is-empty span { font-size: 8px; }
+.powerpoint-slide-cover .powerpoint-slide-copy, .powerpoint-slide-section .powerpoint-slide-copy, .powerpoint-slide-closing .powerpoint-slide-copy { align-self: center; }
+.powerpoint-slide-quote h2 { font-style: italic; }
+.powerpoint-attribution { position: absolute; right: 2%; bottom: 1.5%; max-width: 40%; overflow: hidden; color: var(--ppt-muted); font-size: 5px; white-space: nowrap; text-overflow: ellipsis; }
+.powerpoint-slide-canvas.is-thumbnail { width: 100%; aspect-ratio: 16/9; grid-template-columns: 1.7fr .75fr; gap: 3%; padding: 7% 6%; border: 0; border-radius: 4px; box-shadow: none; pointer-events: none; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-slide-number, .powerpoint-slide-canvas.is-thumbnail .powerpoint-slide-icon, .powerpoint-slide-canvas.is-thumbnail p, .powerpoint-slide-canvas.is-thumbnail ul, .powerpoint-slide-canvas.is-thumbnail .powerpoint-attribution { display: none; }
+.powerpoint-slide-canvas.is-thumbnail h2 { font-size: 6px; line-height: 1.1; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-slide-image.is-empty span { display: none; }
+.powerpoint-slide-canvas.is-thumbnail .powerpoint-slide-image.is-empty svg { width: 10px; }
+.powerpoint-inspector { min-height: 0; display: grid; align-content: start; gap: 7px; overflow-y: auto; padding: 9px; }
+.powerpoint-inspector header { display: flex; justify-content: space-between; align-items: end; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.powerpoint-inspector header strong { font-size: 10px; }
+.powerpoint-inspector header small { color: var(--muted-foreground); font-size: 7px; }
+.powerpoint-inspector .field textarea { min-height: 48px !important; resize: vertical; }
+.powerpoint-inspector-row { display: grid; grid-template-columns: .65fr 1.35fr; gap: 6px; }
+.powerpoint-image-search { display: grid; grid-template-columns: minmax(0,1fr) 29px; gap: 4px; }
+.powerpoint-image-search button { min-width: 29px; padding: 0 !important; }
+.powerpoint-image-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.powerpoint-source-note { display: flex; align-items: center; gap: 5px; margin: 0; color: var(--muted-foreground); font-size: 7px; }
+.powerpoint-source-note svg { width: 11px; }
+.powerpoint-filebar [data-ppt-export][disabled] svg { animation: office-ai-spin .85s linear infinite; }
+
+@media (max-width: 1180px) {
+  .powerpoint-workspace { grid-template-columns: 145px minmax(0,1fr); }
+  .powerpoint-inspector { grid-column: 1 / -1; max-height: 360px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .powerpoint-inspector header, .powerpoint-inspector .powerpoint-image-actions, .powerpoint-inspector .powerpoint-inspector-row { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .powerpoint-workspace { grid-template-columns: 1fr; }
+  .powerpoint-slide-list { max-height: 170px; }
+  .powerpoint-thumbnails { display: flex; overflow-x: auto; overflow-y: hidden; }
+  .powerpoint-thumbnail { width: 130px; flex: 0 0 130px; }
+  .powerpoint-inspector { max-height: none; grid-template-columns: 1fr; }
+  .powerpoint-inspector header, .powerpoint-inspector .powerpoint-image-actions, .powerpoint-inspector .powerpoint-inspector-row { grid-column: auto; }
+}

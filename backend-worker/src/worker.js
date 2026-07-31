@@ -284,7 +284,7 @@ const PDF_TOOL_TYPES = new Set([
     "resizeA4",
     "metadata",
 ]);
-const AI_ACTIONS = new Set(["assist", "draft", "review", "extract-fields", "office-word", "office-excel"]);
+const AI_ACTIONS = new Set(["assist", "draft", "review", "extract-fields", "office-word", "office-excel", "office-powerpoint"]);
 const AI_DEFAULT_TIMEOUT_MS = 60_000;
 const AI_MAX_PROMPT_LENGTH = 24_000;
 const AI_MAX_HISTORY_MESSAGES = 14;
@@ -4326,9 +4326,9 @@ Arquivos anexados: ${images.map((image, index) => `${index + 1}. ${image.name}`)
                             : prompt,
                     },
                 ],
-                temperature: ["extract-fields", "office-word", "office-excel"].includes(action) ? 0 : 0.2,
+                temperature: ["extract-fields", "office-word", "office-excel", "office-powerpoint"].includes(action) ? 0 : 0.2,
                 max_tokens: action === "extract-fields" ? 5000 : ["office-word", "office-excel"].includes(action) ? 8000 : 6000,
-                ...(["extract-fields", "office-word", "office-excel"].includes(action) ? { response_format: { type: "json_object" } } : {}),
+                ...(["extract-fields", "office-word", "office-excel", "office-powerpoint"].includes(action) ? { response_format: { type: "json_object" } } : {}),
                 stream: false,
             }),
         });
@@ -4483,6 +4483,7 @@ function buildAiSystemPrompt(action, context) {
         review: "Revise o conteúdo, identifique inconsistências, campos ausentes, repetições e problemas de clareza. Não altere silenciosamente dados objetivos.",
         "office-word": "Você é o Assistente Word do DocSpace. Gere conteúdo completo e pronto para ser inserido diretamente no editor Word. Retorne exclusivamente JSON válido no formato {\"title\":\"nome curto do documento\",\"html\":\"conteúdo HTML\",\"summary\":\"resumo curto\"}. No campo html use somente h1, h2, h3, h4, p, strong, em, u, ul, ol, li, blockquote, table, thead, tbody, tr, th, td, hr e br. Não use markdown, cercas de código, scripts, CSS, comentários ou texto fora do JSON. Preserve fatos fornecidos e marque dados essenciais ausentes como [PREENCHER].",
         "office-excel": "Você é o Assistente Excel do DocSpace. Gere uma planilha utilizável diretamente no editor. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto da planilha\",\"columns\":[\"Coluna 1\",\"Coluna 2\"],\"rows\":[[\"valor 1\",\"valor 2\"]],\"summary\":\"resumo curto\"}. columns contém os cabeçalhos e rows contém apenas as linhas de dados. Use fórmulas iniciadas por = quando forem úteis, preferindo SUM, AVERAGE, MIN, MAX e COUNT. Não use markdown, cercas de código, objetos dentro das células nem texto fora do JSON. Não invente dados objetivos que o usuário não forneceu; use exemplos claramente identificáveis ou [PREENCHER].",
+        "office-powerpoint": "Você é o Assistente PowerPoint do DocSpace. Crie uma apresentação profissional, visual e objetiva, pronta para o editor e para exportação .pptx. Retorne exclusivamente JSON válido no formato {\"fileName\":\"nome curto\",\"theme\":\"executive\",\"slides\":[{\"type\":\"cover\",\"title\":\"Título\",\"subtitle\":\"Subtítulo\",\"bullets\":[],\"imageQuery\":\"termos objetivos para buscar uma fotografia\",\"icon\":\"✨\",\"notes\":\"notas do apresentador\"}]}. Use de 5 a 15 slides, salvo quantidade diferente pedida. O primeiro slide deve usar type cover. Os demais podem usar content, section, quote ou closing. Cada slide deve ter no máximo 6 tópicos curtos. imageQuery deve ser específico, factual e adequado para busca no Wikimedia Commons, sem URLs. icon deve ser um único emoji coerente. theme deve ser executive, ocean, dark, warm ou minimal. Não use markdown, cercas de código nem texto fora do JSON. Não invente dados objetivos; use [PREENCHER] quando necessário.",
         "extract-fields": "Faça leitura visual cuidadosa de todos os anexos e extraia somente campos claramente identificáveis. Retorne exclusivamente um objeto JSON no formato {\"fields\":{\"nome_do_campo\":\"valor\"},\"unreadable\":[\"...\"],\"conflicts\":[\"...\"],\"notes\":[\"...\"]}. Use apenas chaves permitidas, valores em texto simples e arrays de strings. Não use markdown, não inclua explicações fora do JSON, não adivinhe dígitos e não troque dados entre pessoas diferentes.",
     };
 
@@ -4521,6 +4522,15 @@ function buildAiSystemPrompt(action, context) {
         try { currentSheet = JSON.stringify(Array.isArray(context.currentSheet) ? context.currentSheet.slice(0, 120) : []).slice(0, 18000); } catch (_) {}
         base.push(`Destino: editor Excel. Operação solicitada: ${operation}. Nome atual: ${currentFileName}.`);
         if (currentSheet && currentSheet !== "[]") base.push(`Dados atuais da planilha, para contexto:\n${currentSheet}`);
+    }
+    if (action === "office-powerpoint") {
+        const operation = String(context.operation || "replace").slice(0, 30);
+        const currentFileName = String(context.currentFileName || "Apresentação").slice(0, 120);
+        let currentSlides = "";
+        try { currentSlides = JSON.stringify(Array.isArray(context.currentSlides) ? context.currentSlides.slice(0, 20) : []).slice(0, 18000); } catch (_) {}
+        base.push(`Destino: editor PowerPoint. Operação solicitada: ${operation}. Nome atual: ${currentFileName}.`);
+        base.push("Crie uma narrativa clara: abertura, contexto, desenvolvimento, evidências ou exemplos, conclusão e chamada para ação quando aplicável.");
+        if (currentSlides && currentSlides !== "[]") base.push(`Slides atuais, para contexto e eventual continuação:\n${currentSlides}`);
     }
     if (context.hasAttachments) base.push(`Existem ${Number(context.imageCount || 0)} imagem(ns) anexada(s). Examine frente e verso, compare informações repetidas entre páginas e preserve exatamente a grafia e os números visíveis. Um CPF ou RG parcialmente oculto deve ser omitido e registrado em unreadable, nunca completado por padrão.`);
     return base.join("\n");
