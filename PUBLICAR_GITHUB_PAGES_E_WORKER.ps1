@@ -4,7 +4,7 @@ $PSNativeCommandUseErrorActionPreference = $false
 $Repositorio = "codebykaua/docspace"
 $RepositorioUrl = "https://github.com/codebykaua/docspace.git"
 $SiteUrl = "https://codebykaua.github.io/docspace/"
-$Versao = "151"
+$Versao = "152"
 $Gh = "$env:ProgramFiles\GitHub CLI\gh.exe"
 $Raiz = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Raiz

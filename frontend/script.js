@@ -8530,7 +8530,7 @@
         refs.content.innerHTML = `
             <article class="panel pdf-hub">
                 <header class="pdf-hub-header">
-                    <div><p class="section-label">Central de processamento</p><h2>Ferramentas PDF</h2><p>${Object.keys(PDF_TOOLS).length} operações organizadas por finalidade.</p></div>
+                    <div><p class="section-label">Central de processamento</p><h2>Ferramentas PDF</h2><p>${Object.keys(PDF_TOOLS).length} operações organizadas por finalidade. Limite por arquivo: até 500 MB.</p></div>
                     <div class="pdf-balance"><small>Saldo disponível</small><strong>${state.pdfToolUsage?.unlimited || isAdmin() ? "∞" : remaining}</strong></div>
                 </header>
                 <div class="pdf-hub-body">
@@ -8814,17 +8814,19 @@
                 showPdfToolProgress(85, "Registrando uso...");
                 await apiRequest("/api/pdf-tools/usage", { method: "POST", body: { toolType: toolId } }).then((r) => { if (r.pdfToolUsage) state.pdfToolUsage = r.pdfToolUsage; }).catch(() => {});
                 showPdfToolProgress(100, "Concluído!");
+                let finalMessage = result?.message || "Arquivo preparado e download iniciado.";
                 if (Array.isArray(result?.files) && result.files.length) {
-                    for (const item of result.files) saveBlob(item.blob, item.fileName);
+                    const packaged = await downloadPdfOutputCollection(result.files, toolId);
+                    finalMessage = `${result.message || `${result.files.length} arquivo(s) gerado(s).`} ${packaged.message}`.trim();
                     const first = result.files[0];
                     if (first?.blob?.type === "application/pdf" || /\.pdf$/i.test(first?.fileName || "")) {
-                        await presentPdfToolBlob(first.blob, first.fileName, { originalBytes: result.originalBytes, message: `${result.message || ""} Primeiro arquivo exibido no preview.` });
+                        await presentPdfToolBlob(first.blob, first.fileName, { originalBytes: result.originalBytes, message: `${finalMessage} Primeiro arquivo exibido no preview.` });
                     }
                 } else if (result?.blob) {
                     saveBlob(result.blob, result.fileName || `${toolId}.pdf`);
                     await presentPdfToolBlob(result.blob, result.fileName || `${toolId}.pdf`, { originalBytes: result.originalBytes, message: result.message });
                 }
-                setMessage(msg, result?.message || "Arquivo preparado e download iniciado.", "success");
+                setMessage(msg, finalMessage, "success");
             }
         } catch (error) {
             console.error(error);
@@ -10886,6 +10888,183 @@
         if (!loading) updateConditionalDocumentFields(form);
     }
     function setMessage(el, text, type) { if (el) { el.textContent = text || ""; el.className = `message ${type || ""}`.trim(); } }
+
+    let PDF_ZIP_CRC_TABLE = null;
+
+    function getPdfZipCrcTable() {
+        if (PDF_ZIP_CRC_TABLE) return PDF_ZIP_CRC_TABLE;
+        const table = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let value = n;
+            for (let bit = 0; bit < 8; bit++) value = (value & 1) ? (0xedb88320 ^ (value >>> 1)) : (value >>> 1);
+            table[n] = value >>> 0;
+        }
+        PDF_ZIP_CRC_TABLE = table;
+        return table;
+    }
+
+    async function calculateBlobCrc32(blob) {
+        const table = getPdfZipCrcTable();
+        let crc = 0xffffffff;
+        const update = (bytes) => {
+            for (let index = 0; index < bytes.length; index++) crc = table[(crc ^ bytes[index]) & 0xff] ^ (crc >>> 8);
+        };
+        if (blob?.stream && typeof blob.stream === "function") {
+            const reader = blob.stream().getReader();
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    update(value);
+                }
+            } finally {
+                try { reader.releaseLock(); } catch (_) {}
+            }
+        } else {
+            update(new Uint8Array(await blob.arrayBuffer()));
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    function getZipDosDateTime(value = new Date()) {
+        const date = value instanceof Date && !Number.isNaN(value.getTime()) ? value : new Date();
+        const year = Math.max(1980, date.getFullYear());
+        return {
+            time: ((date.getHours() & 31) << 11) | ((date.getMinutes() & 63) << 5) | ((Math.floor(date.getSeconds() / 2)) & 31),
+            date: (((year - 1980) & 127) << 9) | (((date.getMonth() + 1) & 15) << 5) | (date.getDate() & 31),
+        };
+    }
+
+    function writeZipUint16(view, offset, value) { view.setUint16(offset, value & 0xffff, true); }
+    function writeZipUint32(view, offset, value) { view.setUint32(offset, value >>> 0, true); }
+
+    function sanitizeZipEntryName(value, fallback) {
+        const clean = String(value || fallback || "arquivo")
+            .replace(/[\\/:*?"<>|]+/g, "-")
+            .replace(/^\.+/, "")
+            .trim();
+        return clean || fallback || "arquivo";
+    }
+
+    async function createPdfOutputZip(files, onProgress) {
+        const valid = (Array.isArray(files) ? files : []).filter((item) => item?.blob instanceof Blob);
+        if (!valid.length) throw new Error("Nenhum arquivo válido foi gerado para o ZIP.");
+        if (valid.length > 65535) throw new Error("Quantidade de arquivos acima do limite suportado pelo ZIP.");
+
+        const encoder = new TextEncoder();
+        const usedNames = new Set();
+        const entries = [];
+        let localOffset = 0;
+
+        for (const [index, item] of valid.entries()) {
+            let name = sanitizeZipEntryName(item.fileName, `parte-${String(index + 1).padStart(3, "0")}.pdf`);
+            if (usedNames.has(name.toLowerCase())) {
+                const dot = name.lastIndexOf(".");
+                const base = dot > 0 ? name.slice(0, dot) : name;
+                const ext = dot > 0 ? name.slice(dot) : "";
+                name = `${base}-${index + 1}${ext}`;
+            }
+            usedNames.add(name.toLowerCase());
+            const nameBytes = encoder.encode(name);
+            const size = Number(item.blob.size || 0);
+            if (size > 0xffffffff) throw new Error(`O arquivo ${name} ultrapassa 4 GB e não cabe no ZIP padrão.`);
+            const crc32 = await calculateBlobCrc32(item.blob);
+            const dos = getZipDosDateTime(item.lastModified ? new Date(item.lastModified) : new Date());
+            entries.push({ blob: item.blob, name, nameBytes, size, crc32, offset: localOffset, dos });
+            localOffset += 30 + nameBytes.length + size;
+            if (localOffset > 0xffffffff) throw new Error("O pacote final ultrapassa 4 GB. Divida o trabalho em grupos menores.");
+            onProgress?.(index + 1, valid.length);
+        }
+
+        const outputParts = [];
+        for (const entry of entries) {
+            const header = new Uint8Array(30 + entry.nameBytes.length);
+            const view = new DataView(header.buffer);
+            writeZipUint32(view, 0, 0x04034b50);
+            writeZipUint16(view, 4, 20);
+            writeZipUint16(view, 6, 0x0800);
+            writeZipUint16(view, 8, 0);
+            writeZipUint16(view, 10, entry.dos.time);
+            writeZipUint16(view, 12, entry.dos.date);
+            writeZipUint32(view, 14, entry.crc32);
+            writeZipUint32(view, 18, entry.size);
+            writeZipUint32(view, 22, entry.size);
+            writeZipUint16(view, 26, entry.nameBytes.length);
+            writeZipUint16(view, 28, 0);
+            header.set(entry.nameBytes, 30);
+            outputParts.push(header, entry.blob);
+        }
+
+        const centralOffset = localOffset;
+        let centralSize = 0;
+        for (const entry of entries) {
+            const header = new Uint8Array(46 + entry.nameBytes.length);
+            const view = new DataView(header.buffer);
+            writeZipUint32(view, 0, 0x02014b50);
+            writeZipUint16(view, 4, 20);
+            writeZipUint16(view, 6, 20);
+            writeZipUint16(view, 8, 0x0800);
+            writeZipUint16(view, 10, 0);
+            writeZipUint16(view, 12, entry.dos.time);
+            writeZipUint16(view, 14, entry.dos.date);
+            writeZipUint32(view, 16, entry.crc32);
+            writeZipUint32(view, 20, entry.size);
+            writeZipUint32(view, 24, entry.size);
+            writeZipUint16(view, 28, entry.nameBytes.length);
+            writeZipUint16(view, 30, 0);
+            writeZipUint16(view, 32, 0);
+            writeZipUint16(view, 34, 0);
+            writeZipUint16(view, 36, 0);
+            writeZipUint32(view, 38, 0);
+            writeZipUint32(view, 42, entry.offset);
+            header.set(entry.nameBytes, 46);
+            outputParts.push(header);
+            centralSize += header.length;
+        }
+
+        const end = new Uint8Array(22);
+        const endView = new DataView(end.buffer);
+        writeZipUint32(endView, 0, 0x06054b50);
+        writeZipUint16(endView, 4, 0);
+        writeZipUint16(endView, 6, 0);
+        writeZipUint16(endView, 8, entries.length);
+        writeZipUint16(endView, 10, entries.length);
+        writeZipUint32(endView, 12, centralSize);
+        writeZipUint32(endView, 16, centralOffset);
+        writeZipUint16(endView, 20, 0);
+        outputParts.push(end);
+
+        return new Blob(outputParts, { type: "application/zip" });
+    }
+
+    function derivePdfOutputZipName(files, toolId) {
+        const first = String(files?.[0]?.fileName || toolId || "docspace");
+        const base = first
+            .replace(/_parte_\d+\.pdf$/i, "")
+            .replace(/-pagina-\d+\.(pdf|png|jpe?g)$/i, "")
+            .replace(/\.[^.]+$/i, "")
+            .replace(/[^a-zA-Z0-9À-ÿ._ -]/g, "-")
+            .trim() || "docspace";
+        return `${base}-todos-os-${files.length}-arquivos.zip`;
+    }
+
+    async function downloadPdfOutputCollection(files, toolId) {
+        const valid = (Array.isArray(files) ? files : []).filter((item) => item?.blob instanceof Blob);
+        if (!valid.length) throw new Error("A ferramenta não retornou arquivos válidos.");
+        if (valid.length === 1) {
+            saveBlob(valid[0].blob, valid[0].fileName || `${toolId || "pdf"}.pdf`);
+            return { message: "Download iniciado." };
+        }
+        showPdfToolProgress(88, `Empacotando ${valid.length} arquivos em um ZIP...`);
+        const zipBlob = await createPdfOutputZip(valid, (done, total) => {
+            const progress = 88 + Math.round((done / Math.max(1, total)) * 10);
+            showPdfToolProgress(Math.min(98, progress), `Incluindo arquivo ${done}/${total} no ZIP...`);
+        });
+        const zipName = derivePdfOutputZipName(valid, toolId);
+        saveBlob(zipBlob, zipName);
+        return { message: `Todas as ${valid.length} partes foram incluídas em “${zipName}”.` };
+    }
+
     function saveBlob(blob, fileName) {
         if (!(blob instanceof Blob)) {
             throw new Error("Arquivo inválido para download.");

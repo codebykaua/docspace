@@ -1,10 +1,10 @@
 (() => {
     "use strict";
 
-    window.DOCSPACE_BUILD = "1.48";
-    document.documentElement.dataset.docspaceBuild = "1.48";
+    window.DOCSPACE_BUILD = "1.52";
+    document.documentElement.dataset.docspaceBuild = "1.52";
 
-    const marker = "docspace-cache-reset-v148";
+    const marker = "docspace-cache-reset-v152";
 
     async function clearLegacyRuntimeCaches() {
         let changed = false;
@@ -37,7 +37,7 @@
         clearLegacyRuntimeCaches().then((changed) => {
             if (!changed) return;
             const url = new URL(window.location.href);
-            url.searchParams.set("build", "146");
+            url.searchParams.set("build", "152");
             window.location.replace(url.toString());
         });
     }
