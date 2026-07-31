@@ -4965,6 +4965,7 @@
         excelStyles: {},
         excelSelectedCell: { row: 0, col: 0 },
         excelZoom: 100,
+        excelFreezeHeader: true,
         wordZoom: 100,
         wordSavedAt: "",
         powerpointFileName: localStorage.getItem("docspace_powerpoint_name") || "Apresentação",
@@ -7848,6 +7849,11 @@
                     <button type="button" data-word-command="italic" title="Itálico"><i data-lucide="italic"></i></button>
                     <button type="button" data-word-command="underline" title="Sublinhado"><i data-lucide="underline"></i></button>
                     <button type="button" data-word-command="strikeThrough" title="Tachado"><i data-lucide="strikethrough"></i></button>
+                    <button type="button" data-word-command="superscript" title="Sobrescrito"><i data-lucide="superscript"></i></button>
+                    <button type="button" data-word-command="subscript" title="Subscrito"><i data-lucide="subscript"></i></button>
+                    <button type="button" data-word-command="outdent" title="Diminuir recuo"><i data-lucide="indent-decrease"></i></button>
+                    <button type="button" data-word-command="indent" title="Aumentar recuo"><i data-lucide="indent-increase"></i></button>
+                    <button type="button" data-word-insert-date title="Inserir data atual"><i data-lucide="calendar-plus"></i></button>
                     <span class="word-toolbar-separator"></span>
                     <button type="button" data-word-block="h1" title="Título 1"><i data-lucide="heading-1"></i></button>
                     <button type="button" data-word-block="h2" title="Título 2"><i data-lucide="heading-2"></i></button>
@@ -7957,6 +7963,13 @@
             editor.focus();
             const block = selectedWordBlock(editor);
             if (block) block.style.lineHeight = String(event.target.value || "1.5");
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        $("[data-word-insert-date]")?.addEventListener("click", () => {
+            const now = new Date();
+            const formatted = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+            editor.focus();
+            document.execCommand("insertText", false, formatted);
             editor.dispatchEvent(new Event("input", { bubbles: true }));
         });
         $("[data-word-page-break]")?.addEventListener("click", () => {
@@ -8107,9 +8120,19 @@
         } catch (_) { return "#ERRO"; }
     }
 
-    function excelDisplayValue(raw) {
+    function excelDisplayValue(raw, row = null, col = null) {
         const value = String(raw ?? "");
-        return value.trim().startsWith("=") ? String(evaluateExcelFormula(value)) : value;
+        const computed = value.trim().startsWith("=") ? evaluateExcelFormula(value) : value;
+        if (row === null || col === null) return String(computed);
+        const format = state.excelStyles[excelCellKey(row, col)]?.numberFormat || "";
+        const numericText = String(computed).trim().replace(/[^0-9+,.-]/g, "");
+        const normalizedNumeric = numericText.includes(",") ? numericText.replace(/\./g, "").replace(",", ".") : numericText;
+        const numeric = typeof computed === "number" ? computed : Number(normalizedNumeric);
+        if (!Number.isFinite(numeric)) return String(computed);
+        if (format === "currency") return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(numeric);
+        if (format === "percent") return new Intl.NumberFormat("pt-BR", { style: "percent", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(numeric);
+        if (format === "number") return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 }).format(numeric);
+        return String(computed);
     }
 
     function excelStyleAttribute(row, col) {
@@ -8135,6 +8158,9 @@
                 if (raw.startsWith("=")) sheet[address] = { t: "n", f: raw.slice(1), v: Number(evaluateExcelFormula(raw)) || 0 };
                 else if (/^-?\d+(?:[.,]\d+)?$/.test(raw.trim())) sheet[address] = { t: "n", v: Number(raw.replace(",", ".")) };
                 else sheet[address] = { t: "s", v: raw };
+                const numberFormat = state.excelStyles[excelCellKey(row, col)]?.numberFormat;
+                if (numberFormat === "currency") sheet[address].z = '"R$" #,##0.00';
+                if (numberFormat === "percent") sheet[address].z = "0.00%";
             }
         }
         sheet["!ref"] = window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows - 1, c: cols - 1 } });
@@ -8168,7 +8194,7 @@
         ensureExcelData();
         const cols = state.excelData[0].length;
         const selected = state.excelSelectedCell || { row: 0, col: 0 };
-        return `<table class="excel-grid" style="zoom:${Number(state.excelZoom || 100) / 100}"><thead><tr><th class="excel-corner"></th>${Array.from({ length: cols }, (_, c) => `<th>${excelColName(c)}</th>`).join("")}</tr></thead><tbody>${state.excelData.map((row, r) => `<tr><th>${r + 1}</th>${row.map((cell, c) => `<td class="${selected.row === r && selected.col === c ? "is-selected" : ""}" style="${escapeAttr(excelStyleAttribute(r, c))}"><input value="${escapeAttr(excelDisplayValue(cell))}" data-excel-raw="${escapeAttr(cell)}" data-excel-row="${r}" data-excel-col="${c}" aria-label="Célula ${excelColName(c)}${r + 1}" title="${escapeAttr(String(cell).startsWith("=") ? `${cell} = ${excelDisplayValue(cell)}` : cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table>`;
+        return `<table class="excel-grid ${state.excelFreezeHeader ? "is-freeze-header" : ""}" style="zoom:${Number(state.excelZoom || 100) / 100}"><thead><tr><th class="excel-corner"></th>${Array.from({ length: cols }, (_, c) => `<th>${excelColName(c)}</th>`).join("")}</tr></thead><tbody>${state.excelData.map((row, r) => `<tr><th>${r + 1}</th>${row.map((cell, c) => `<td class="${selected.row === r && selected.col === c ? "is-selected" : ""}" style="${escapeAttr(excelStyleAttribute(r, c))}"><input value="${escapeAttr(excelDisplayValue(cell, r, c))}" data-excel-raw="${escapeAttr(cell)}" data-excel-row="${r}" data-excel-col="${c}" aria-label="Célula ${excelColName(c)}${r + 1}" title="${escapeAttr(String(cell).startsWith("=") ? `${cell} = ${excelDisplayValue(cell)}` : cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table>`;
     }
 
     function renderExcelEditor() {
@@ -8207,6 +8233,13 @@
                     <button type="button" data-excel-align="center" title="Centralizar"><i data-lucide="align-center"></i></button>
                     <button type="button" data-excel-align="right" title="Alinhar à direita"><i data-lucide="align-right"></i></button>
                     <button type="button" data-excel-sum title="Inserir soma"><i data-lucide="sigma"></i></button>
+                    <button type="button" data-excel-formula="AVERAGE" title="Inserir média"><i data-lucide="chart-no-axes-column-increasing"></i></button>
+                    <button type="button" data-excel-formula="MIN" title="Inserir mínimo"><i data-lucide="chevrons-down"></i></button>
+                    <button type="button" data-excel-formula="MAX" title="Inserir máximo"><i data-lucide="chevrons-up"></i></button>
+                    <button type="button" data-excel-formula="COUNT" title="Contar valores"><i data-lucide="list-ordered"></i></button>
+                    <button type="button" data-excel-number-format="currency" title="Formato moeda"><i data-lucide="badge-dollar-sign"></i></button>
+                    <button type="button" data-excel-number-format="percent" title="Formato porcentagem"><i data-lucide="percent"></i></button>
+                    <button type="button" data-excel-freeze-header title="Fixar ou liberar cabeçalho"><i data-lucide="panel-top"></i></button>
                     <button type="button" data-excel-sort="asc" title="Ordenar coluna crescente"><i data-lucide="arrow-down-a-z"></i></button>
                     <button type="button" data-excel-sort="desc" title="Ordenar coluna decrescente"><i data-lucide="arrow-down-z-a"></i></button>
                     <button type="button" data-excel-insert-row title="Inserir linha acima"><i data-lucide="rows-3"></i></button>
@@ -8249,7 +8282,7 @@
         grid?.addEventListener("focusout", (event) => {
             const input = event.target.closest("[data-excel-row]"); if (!input) return;
             const row = Number(input.dataset.excelRow); const col = Number(input.dataset.excelCol);
-            input.value = excelDisplayValue(state.excelData[row]?.[col] || "");
+            input.value = excelDisplayValue(state.excelData[row]?.[col] || "", row, col);
         });
         $("#excelFormulaInput")?.addEventListener("input", (event) => {
             const { row, col } = state.excelSelectedCell;
@@ -8297,6 +8330,21 @@
         $("[data-excel-sum]")?.addEventListener("click", () => {
             const { row, col } = state.excelSelectedCell;
             state.excelData[row][col] = row > 0 ? `=SUM(${excelCellReference(0, col)}:${excelCellReference(row - 1, col)})` : "=SUM(A1:A1)";
+            renderExcelEditor();
+        });
+        $$("[data-excel-formula]", refs.content).forEach((button) => button.addEventListener("click", () => {
+            const { row, col } = state.excelSelectedCell;
+            const fn = String(button.dataset.excelFormula || "SUM").toUpperCase();
+            const start = excelCellReference(0, col);
+            const end = excelCellReference(Math.max(0, row - 1), col);
+            state.excelData[row][col] = `=${fn}(${start}:${end})`;
+            renderExcelEditor();
+        }));
+        $$("[data-excel-number-format]", refs.content).forEach((button) => button.addEventListener("click", () => {
+            mutateSelectedStyle({ numberFormat: button.dataset.excelNumberFormat || "" });
+        }));
+        $("[data-excel-freeze-header]")?.addEventListener("click", () => {
+            state.excelFreezeHeader = !state.excelFreezeHeader;
             renderExcelEditor();
         });
         $("[data-excel-import]")?.addEventListener("click", () => $("#excelImportInput")?.click());
