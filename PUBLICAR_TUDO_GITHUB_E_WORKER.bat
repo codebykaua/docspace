@@ -1,13 +1,13 @@
-﻿@echo off
+@echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 color 0A
-title DocSpace v1.49 - GitHub Pages + Cloudflare Worker
+title DocSpace v1.51 - GitHub Pages + Cloudflare Worker
 
 set "ROOT=%~dp0"
 set "WORKER_DIR=%ROOT%backend-worker"
 set "FRONTEND_DIR=%ROOT%frontend"
-set "BUILD_VERSION=150"
+set "BUILD_VERSION=151"
 set "DEFAULT_REPO=docspace"
 
 cls
@@ -110,7 +110,7 @@ if defined HAS_REMOTE (
 git add -A
 git diff --cached --quiet
 if errorlevel 1 (
-    git -c user.name="DocSpace Publisher" -c user.email="docspace@users.noreply.github.com" commit -m "DocSpace v1.49 - GitHub Pages responsivo"
+    git -c user.name="DocSpace Publisher" -c user.email="docspace@users.noreply.github.com" commit -m "DocSpace v1.51 - GitHub Pages responsivo"
     if errorlevel 1 goto :git_failed
 ) else (
     echo Nenhuma alteracao nova para commit. Publicando a versao atual.
@@ -261,4 +261,3 @@ echo.
 echo A publicacao foi interrompida. Leia a mensagem acima.
 pause
 exit /b 1
-

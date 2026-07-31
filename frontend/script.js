@@ -4686,8 +4686,8 @@
             console.warn("DocSpace: catálogo expandido não pôde ser carregado.", error);
         }
     }
-    const PDF_MAX_SERVER_BYTES = 45 * 1024 * 1024;
-    const PDF_MAX_LOCAL_BYTES = 150 * 1024 * 1024;
+    const PDF_MAX_SERVER_BYTES = 500 * 1024 * 1024;
+    const PDF_MAX_LOCAL_BYTES = 500 * 1024 * 1024;
     const PDF_CATEGORIES = [
         { id: "todos", label: "Todas" },
         { id: "otimizar", label: "Otimizar" },

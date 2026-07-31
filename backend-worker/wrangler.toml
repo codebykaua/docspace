@@ -1,4 +1,4 @@
-﻿name = "docspace-api"
+name = "docspace-api"
 main = "src/worker.js"
 compatibility_date = "2026-07-29"
 compatibility_flags = ["nodejs_compat"]
@@ -13,11 +13,11 @@ AI_MODEL = "openai/gpt-4.1-mini"
 AI_TIMEOUT_MS = "90000"
 AI_APP_NAME = "DocSpace"
 
-# Aceita o domÃ­nio principal e previews do Cloudflare Pages.
-CORS_ALLOWED_ORIGINS = "https://codebykaua.github.io,https://docspace-web.pages.dev,https://*.pages.dev"
-PUBLIC_APP_URL = "https://codebykaua.github.io/docspace/"
+# Aceita o domínio principal e previews do Cloudflare Pages.
+CORS_ALLOWED_ORIGINS = "https://docspace-web.pages.dev,https://*.docspace-web.pages.dev,https://*.pages.dev,https://*.github.io"
+PUBLIC_APP_URL = "https://codebykaua.github.io/docspace-web/"
 
-# ConfiguraÃ§Ãµes existentes do projeto.
+# Configurações existentes do projeto.
 EMAIL_FROM_NAME = "DocSpace"
 EMAILJS_SERVICE_ID = "service_2x0hqq6"
 EMAILJS_TEMPLATE_ID = "template_7an08gf"
@@ -31,6 +31,3 @@ RENDER_API_URL = "https://gerador-de-documentos-1.onrender.com"
 binding = "DB"
 database_name = "gerador_documentos_rurais"
 database_id = "2f8261c2-0c2f-49c4-8080-6c78320367c1"
-
-
-
