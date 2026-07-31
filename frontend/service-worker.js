@@ -8,7 +8,7 @@
  * - Navegação: network-first com shell offline.
  * - Assets: network-first com cache por pathname (ignora ?v=).
  */
-const CACHE_NAME = "docspace-v154-static";
+const CACHE_NAME = "docspace-v155-static";
 
 const PRECACHE_URLS = [
     "./",

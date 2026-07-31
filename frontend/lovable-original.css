@@ -1368,3 +1368,186 @@ body[data-view="checkout"] { background: #fff; }
   .office-ai-actions { display: grid; grid-template-columns: 1fr; }
   .office-ai-actions button { width: 100%; }
 }
+
+/* =========================================================
+   DocSpace v155 — interface compacta para zoom de navegador em 100%
+   Mantém alvos maiores em telas móveis e reduz densidade somente no desktop.
+   ========================================================= */
+@media (min-width: 901px) {
+  :root { --sidebar-width: 220px; }
+  body { font-size: 12px; }
+
+  .app-sidebar { width: var(--sidebar-width); flex-basis: var(--sidebar-width); }
+  .sidebar-brand { min-height: 66px; gap: 9px; padding: 13px 16px; }
+  .sidebar-brand .brand-symbol { width: 31px; height: 31px; border-radius: 8px; }
+  .sidebar-brand .brand-symbol svg { width: 17px; height: 17px; }
+  .sidebar-brand strong { font-size: 14px; }
+  .sidebar-brand small { font-size: 9px; }
+  .main-nav { padding: 2px 9px 12px; }
+  .sidebar-group { margin-bottom: 15px; }
+  .sidebar-label { padding: 0 9px 5px; font-size: 8px; }
+  .sidebar-change { margin-bottom: 5px; padding: 2px 6px !important; font-size: 8px !important; }
+  .main-nav button { min-height: 34px; gap: 9px; margin: 1px 0; padding: 0 10px; border-radius: 7px; font-size: 12px; }
+  .main-nav button svg { width: 15px; height: 15px; flex-basis: 15px; }
+  .sidebar-user { min-height: 58px; grid-template-columns: 31px minmax(0,1fr) 28px; gap: 8px; margin: 0 9px 8px; padding: 8px; }
+  .sidebar-user .user-avatar { width: 31px; height: 31px; font-size: 10px; }
+  .sidebar-user-copy strong { font-size: 10px; }
+  .sidebar-user-copy small { font-size: 8px; }
+  .sidebar-user-copy em { font-size: 8px; }
+  .sidebar-logout { width: 28px; height: 28px; }
+  .sidebar-logout svg { width: 14px; }
+
+  .area-topbar-inner { min-height: 50px; gap: 13px; padding: 7px 24px; }
+  .active-area-copy { gap: 8px; }
+  .active-area-icon { width: 28px; height: 28px; border-radius: 7px; }
+  .active-area-icon svg { width: 14px; }
+  .active-area-copy small { font-size: 8px; }
+  .active-area-copy strong { font-size: 12px; }
+  .area-switcher { gap: 5px; }
+  .area-switcher button { height: 28px; gap: 5px; padding: 0 10px; font-size: 10px; }
+  .area-switcher button svg { width: 12px; }
+
+  .workspace { max-width: 1440px; padding: 20px 24px 28px; }
+  .page-header { gap: 16px; margin-bottom: 16px; }
+  .page-heading h1, .page-header h1 { font-size: 24px; }
+  .page-heading p, .page-header p { margin-top: 4px; font-size: 12px; }
+  .page-actions { gap: 6px; }
+  .content-area { gap: 10px; }
+  .app-footer { padding: 10px 18px; font-size: 10px; }
+  .command-button-floating { right: 18px; bottom: 18px; width: 36px; height: 36px; }
+
+  .panel, .glass-card, .document-card, .tool-card, .admin-card { border-radius: 10px; }
+  .panel { padding: 15px; }
+  .glass-card, .document-card, .tool-card, .admin-card { padding: 13px; }
+
+  .primary-button, .secondary-button, .ghost-button {
+    min-height: 34px !important;
+    gap: 6px !important;
+    padding: 0 11px !important;
+    border-radius: 7px !important;
+    font-size: 11px !important;
+  }
+  .primary-button svg, .secondary-button svg, .ghost-button svg { width: 14px; height: 14px; }
+  .badge, .chip, .chip-row button, .status-pill { min-height: 24px; padding: 0 8px; font-size: 9px; }
+  .field { gap: 5px; }
+  .field > span { font-size: 11px !important; }
+  .field input, .field textarea, .field select, .search-input {
+    min-height: 36px !important;
+    padding: 7px 10px !important;
+    border-radius: 7px !important;
+    font-size: 12px !important;
+  }
+  .field textarea { min-height: 88px !important; }
+
+  .library-toolbar { gap: 16px; }
+  .library-summary { gap: 10px; }
+  .library-summary-icon { width: 38px; height: 38px; border-radius: 9px; }
+  .library-summary-icon svg { width: 18px; }
+  .library-summary h2 { font-size: 17px; }
+  .library-summary p, .library-count { font-size: 10px; }
+  .library-filter-row { margin-top: 14px; }
+  .document-grid { gap: 10px; margin-top: 15px; }
+  .document-card > button { padding: 14px; }
+  .document-card-icon { width: 36px; height: 36px; border-radius: 9px; }
+  .document-card-icon svg { width: 18px; }
+  .document-card-body { margin-top: 11px; }
+
+  .admin-tabs-v2 { min-height: 40px; gap: 4px; padding: 4px; border-radius: 9px; }
+  .admin-tabs-v2 button { min-height: 31px; gap: 5px; padding: 0 10px; border-radius: 7px; font-size: 10px; }
+  .admin-tabs-v2 button svg { width: 13px; }
+  .admin-overview { gap: 7px; margin-bottom: 9px; }
+  .admin-stat-card { padding: 9px; }
+  .admin-users-count { margin-bottom: 7px; font-size: 11px; }
+  .admin-users-count strong { font-size: 15px; }
+  .admin-users-table { border-radius: 8px; }
+  .admin-users-table table { min-width: 820px; }
+  .admin-users-table th, .admin-users-table td { padding: 7px 8px !important; font-size: 10px; }
+  .actions-cell { gap: 5px !important; }
+  .actions-cell button,
+  .actions-cell .primary-button,
+  .actions-cell .secondary-button,
+  .actions-cell .ghost-button {
+    min-height: 29px !important;
+    padding: 0 8px !important;
+    border-radius: 6px !important;
+    font-size: 9px !important;
+  }
+
+  .admin-user-modal { width: min(880px, 100%); border-radius: 14px; }
+  .admin-user-modal-header { gap: 14px; padding: 15px 18px; }
+  .admin-user-modal-header h2 { font-size: 19px; }
+  .admin-user-modal-header p { font-size: 11px; }
+  .admin-user-wizard-progress { gap: 6px; padding: 11px 18px; }
+  .admin-user-wizard-progress span { gap: 6px; font-size: 9px; }
+  .admin-user-wizard-progress b { width: 23px; height: 23px; flex-basis: 23px; font-size: 9px; }
+  .admin-user-wizard-body { min-height: 300px; padding: 17px 18px; }
+  .admin-user-wizard-actions { padding: 11px 18px; }
+
+  .document-modal { width: min(1120px, calc(100vw - 32px)) !important; }
+  .document-modal-header { padding: 13px 16px !important; }
+  .document-modal-header h2 { font-size: 16px !important; }
+  .document-modal-header p { font-size: 11px !important; }
+  .document-modal-body { padding: 12px !important; }
+  .wizard-shell { grid-template-columns: 220px minmax(0, 1fr) !important; gap: 12px !important; }
+  .wizard-rail, .wizard-main { border-radius: 9px !important; }
+  .wizard-rail-head { padding: 13px !important; }
+  .wizard-rail-head h3 { font-size: 18px !important; }
+  .wizard-rail-head p { font-size: 11px !important; }
+  .wizard-steps li { min-height: 48px !important; padding: 8px 10px !important; font-size: 12px !important; }
+  .wizard-steps li span { font-size: 12px !important; }
+  .wizard-steps b { width: 26px !important; height: 26px !important; font-size: 11px !important; }
+  .wizard-main { padding: 17px !important; }
+  .wizard-step { gap: 11px !important; }
+  .step-head { gap: 9px !important; padding-bottom: 10px !important; }
+  .step-head .eyebrow { font-size: 9px !important; }
+  .step-head h3 { font-size: 29px !important; }
+  .step-head p { margin-top: 5px !important; font-size: 12px !important; }
+  .step-counter { font-size: 10px !important; }
+  .form-grid { gap: 12px 11px !important; }
+  .summary-box, .message, .generate-progress, .pdf-preview-panel { font-size: 12px !important; }
+  .wizard-actions { bottom: -17px !important; margin: 6px -17px -17px !important; padding: 11px 17px !important; }
+
+  .support-contact-row { gap: 8px; }
+  .support-contact-card { padding: 10px; }
+
+  .office-editor-shell { gap: 7px; }
+  .office-sticky-controls { gap: 5px; padding-bottom: 6px; }
+  .office-filebar { gap: 6px; padding: 8px; border-radius: 10px; }
+  .office-file-name { min-height: 32px !important; font-size: 11px !important; }
+  .office-file-actions { gap: 5px; }
+  .office-file-actions .primary-button,
+  .office-file-actions .secondary-button,
+  .office-file-actions .ghost-button { min-height: 32px !important; padding: 0 9px !important; font-size: 10px !important; }
+  .word-toolbar { gap: 2px; padding: 5px; border-radius: 9px; }
+  .word-toolbar button { width: 28px; height: 28px; border-radius: 6px; }
+  .word-toolbar button svg { width: 14px; }
+  .word-toolbar select { min-height: 28px; padding: 0 6px; border-radius: 6px; font-size: 9px; }
+  .word-toolbar-separator { height: 19px; margin: 0 2px; }
+  .excel-toolbar { grid-template-columns: 62px 26px minmax(180px,1fr) repeat(6,29px) 29px auto; gap: 3px; padding: 5px; border-radius: 9px; }
+  .excel-toolbar button { width: 28px; height: 28px; border-radius: 6px; }
+  .excel-toolbar button svg { width: 13px; }
+  .excel-formula-input, .excel-name-box { min-height: 28px !important; font-size: 10px !important; }
+  .word-statusbar { min-height: 31px; padding: 0 10px; font-size: 9px; }
+
+  .office-ai-dialog { width: min(680px, 100%); border-radius: 15px; }
+  .office-ai-dialog-header { grid-template-columns: 38px minmax(0, 1fr) auto; gap: 10px; padding: 15px 17px 13px; }
+  .office-ai-dialog-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .office-ai-dialog-icon svg { width: 18px; }
+  .office-ai-dialog-header small { font-size: 8px; }
+  .office-ai-dialog-header h2 { font-size: 19px; }
+  .office-ai-dialog-header p { font-size: 10px; }
+  .office-ai-close { width: 32px; min-height: 32px !important; }
+  .office-ai-form { gap: 10px; padding: 14px 17px 16px; }
+  .office-ai-form textarea { min-height: 105px !important; }
+  .office-ai-context-note { padding: 8px 9px; border-radius: 8px; font-size: 9px; }
+  .office-ai-examples { gap: 6px; }
+  .office-ai-examples button { min-height: 50px; padding: 8px; border-radius: 8px; font-size: 9px; }
+  .office-ai-actions { gap: 7px; }
+  .office-ai-actions button { min-width: 112px; }
+
+  .ai-intro { gap: 9px; padding: 11px 12px; }
+  .ai-message-list { min-height: 320px; padding: 13px; }
+  .ai-composer { gap: 7px; padding: 10px 12px 12px; }
+  .ai-prompt-field textarea { min-height: 84px !important; }
+}
+

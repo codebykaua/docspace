@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = resolve(root, "frontend");
-const version = "154";
+const version = "155";
 const required = [
   "index.html", "style.css", "lovable-original.css", "script.js", "app-config.js",
   "ai/ai-config.js", "ai/ai-client.js", "assets/LOGO1.png",
@@ -165,8 +165,8 @@ for (const marker of [
 }
 
 const serviceWorker = readFileSync(resolve(frontend, "service-worker.js"), "utf8");
-if (!serviceWorker.includes("docspace-v154-static")) {
-  console.error("Service Worker de contingência não foi atualizado para v154.");
+if (!serviceWorker.includes("docspace-v155-static")) {
+  console.error("Service Worker de contingência não foi atualizado para v155.");
   process.exit(1);
 }
 
@@ -186,4 +186,4 @@ for (const file of ["frontend/script.js", "frontend/docspace-product.js", "front
   }
 }
 
-console.log("OK: frontend v1.54 e Worker passaram nas verificações estáticas.");
+console.log("OK: frontend v1.55 e Worker passaram nas verificações estáticas.");
