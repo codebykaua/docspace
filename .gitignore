@@ -6,3 +6,7 @@ node_modules/
 .wrangler/
 .DS_Store
 *.log
+__pycache__/
+*.pyc
+pdf-server/data/
+.pdf-corrector-secret*

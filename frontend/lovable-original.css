@@ -2464,3 +2464,26 @@ body[data-view="checkout"] { background: #fff; }
   .ghost-button { min-height: 38px !important; font-size: 11px !important; }
 }
 
+
+/* DocSpace v160 — Corretor e Validador de PDFs em lote */
+.pdf-batch-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, #dbe3ee);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 5%, #fff);
+  min-width: 0;
+}
+.pdf-batch-notice > svg { width: 18px; height: 18px; flex: 0 0 18px; margin-top: 2px; color: var(--primary); }
+.pdf-batch-notice > div { min-width: 0; display: grid; gap: 5px; }
+.pdf-batch-notice strong { font-size: 12px; }
+.pdf-batch-notice p { margin: 0; font-size: 11px; line-height: 1.45; color: var(--muted-foreground, #64748b); }
+.pdf-batch-notice button { width: max-content; max-width: 100%; margin-top: 3px; }
+.pdf-file-list { max-height: 260px; overflow: auto; overscroll-behavior: contain; }
+.pdf-tool-card[data-pdf-tool="correctValidate"] { border-color: color-mix(in srgb, var(--primary) 32%, #dbe3ee); }
+@media (max-width: 680px) {
+  .pdf-batch-notice { padding: 10px; }
+  .pdf-batch-notice button { width: 100%; }
+}

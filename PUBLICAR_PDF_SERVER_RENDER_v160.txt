@@ -1,0 +1,34 @@
+PUBLICAR O SERVIÇO PESADO DO DOCSPACE V1.60 NO RENDER
+
+Esta etapa é necessária porque GitHub Pages e Cloudflare Worker não executam OCR, Ghostscript, QPDF, LibreOffice e Tesseract.
+
+No serviço existente "gerador-de-documentos-1":
+
+1. Abra Settings.
+2. Use o repositório: https://github.com/codebykaua/docspace
+3. Defina Root Directory: pdf-server
+4. Runtime: Docker
+5. Dockerfile Path: Dockerfile
+6. Mantenha a variável RENDER_API_SECRET que já é usada pelo Worker.
+7. Adicione:
+   PDF_CORRECTOR_ALLOWED_ORIGINS=https://codebykaua.github.io
+   PDF_CORRECTOR_MAX_FILES=500
+   PDF_CORRECTOR_MAX_FILE_BYTES=524288000
+   PDF_CORRECTOR_MAX_JOB_BYTES=5368709120
+   PDF_CORRECTOR_JOB_TTL_HOURS=24
+8. Use Manual Deploy > Deploy latest commit.
+
+Teste final:
+https://gerador-de-documentos-1.onrender.com/health
+
+A resposta correta deve conter:
+"ok": true
+"version": "1.60.0"
+
+Depois disso, a ferramenta "Corrigir PDFs" funcionará com PDF individual, vários PDFs e ZIP.
+
+IMPORTANTE PARA LOTES DE 300 A 500 PDFs
+----------------------------------------
+O Blueprint configura um disco persistente de 20 GB montado em /data e retenção de 72 horas.
+No painel do Render, aplique/sincronize o render.yaml da raiz. O serviço gratuito não é adequado para esta fila pesada.
+Mantenha uma única instância inicialmente; o processador trabalha arquivo por arquivo para controlar memória e disco.

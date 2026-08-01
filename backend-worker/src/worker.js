@@ -16,6 +16,10 @@ const MAX_SUPPORT_REQUEST_BODY_BYTES = 2200 * 1024;
 const MAX_PREVIEW_DOCX_BASE64_LENGTH = 14 * 1024 * 1024;
 const MAX_PDF_TOOL_BASE64_LENGTH = 70 * 1024 * 1024;
 const SERVER_PDF_TOOL_TYPES = new Set(["compress", "ocr", "wordPdf"]);
+const PDF_CORRECTOR_TOKEN_TTL_SECONDS = 60 * 60 * 72;
+const PDF_CORRECTOR_MAX_FILES = 500;
+const PDF_CORRECTOR_MAX_FILE_BYTES = 500 * 1024 * 1024;
+const PDF_CORRECTOR_MAX_JOB_BYTES = 5 * 1024 * 1024 * 1024;
 const MAX_PROFILE_AVATAR_BYTES = 350 * 1024;
 const DEFAULT_DAILY_DOCUMENT_LIMIT = 30;
 const DEFAULT_DAILY_PDF_TOOL_LIMIT = 5;
@@ -283,6 +287,7 @@ const PDF_TOOL_TYPES = new Set([
     "crop",
     "resizeA4",
     "metadata",
+    "correctValidate",
 ]);
 const AI_ACTIONS = new Set(["assist", "draft", "review", "extract-fields", "office-word", "office-excel", "office-powerpoint"]);
 const AI_DEFAULT_TIMEOUT_MS = 60_000;
@@ -452,6 +457,11 @@ async function handleRequest(request, env) {
     if (request.method === "POST" && match(path, ["pdf-tools", "process"])) {
         const session = await requireSession(request, env);
         return processPdfToolWithRender(request, env, session.user);
+    }
+
+    if (request.method === "POST" && match(path, ["pdf-corrector", "session"])) {
+        const session = await requireSession(request, env);
+        return createPdfCorrectorSession(request, env, session.user);
     }
 
     if (request.method === "POST" && match(path, ["support", "messages"])) {
@@ -1553,6 +1563,82 @@ function assertPdfToolAccessAllowed(user, toolType) {
     }
 }
 
+
+
+async function createPdfCorrectorSession(request, env, user) {
+    const body = await readJson(request);
+    const fileCount = Number(body.fileCount || 1);
+    const totalBytes = Number(body.totalBytes || 0);
+    const mode = ["auto", "preserve", "compatibility"].includes(String(body.mode || "auto"))
+        ? String(body.mode || "auto")
+        : "auto";
+    const language = String(body.language || "por+eng").slice(0, 32);
+
+    assertPdfToolAccessAllowed(user, "correctValidate");
+
+    if (!Number.isInteger(fileCount) || fileCount < 1 || fileCount > PDF_CORRECTOR_MAX_FILES) {
+        throw httpError(400, `Envie entre 1 e ${PDF_CORRECTOR_MAX_FILES} arquivos de entrada.`);
+    }
+    if (!Number.isFinite(totalBytes) || totalBytes < 1 || totalBytes > PDF_CORRECTOR_MAX_JOB_BYTES) {
+        throw httpError(400, "O lote excede o limite total permitido para correção.");
+    }
+
+    const secret = String(env.RENDER_API_SECRET || "").trim();
+    if (!secret) {
+        throw httpError(503, "RENDER_API_SECRET não configurado no Worker.");
+    }
+
+    const serviceUrl = String(env.PDF_CORRECTOR_API_URL || env.RENDER_API_URL || "").trim().replace(/\/+$/, "");
+    if (!serviceUrl) {
+        throw httpError(503, "PDF_CORRECTOR_API_URL não configurada no Worker.");
+    }
+
+    const payload = {
+        uid: user.id,
+        scope: "pdf-corrector",
+        exp: Math.floor(Date.now() / 1000) + PDF_CORRECTOR_TOKEN_TTL_SECONDS,
+        nonce: crypto.randomUUID(),
+        maxFiles: PDF_CORRECTOR_MAX_FILES,
+        maxFileBytes: PDF_CORRECTOR_MAX_FILE_BYTES,
+        maxJobBytes: PDF_CORRECTOR_MAX_JOB_BYTES,
+    };
+    const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+    const signature = await signWithSecret(secret, encodedPayload);
+    const uploadToken = `${encodedPayload}.${signature}`;
+
+    const pdfToolUsage = await consumePdfToolUsageForUser(env, user, "correctValidate", request);
+    await logAction(env, user.id, "process_pdf_tool", user.id, {
+        toolType: "correctValidate",
+        fileCount,
+        totalBytes,
+        mode,
+        language,
+        phase: "session_created",
+    }, request);
+
+    return json({
+        success: true,
+        serviceUrl,
+        uploadToken,
+        expiresIn: PDF_CORRECTOR_TOKEN_TTL_SECONDS,
+        maxFiles: PDF_CORRECTOR_MAX_FILES,
+        maxFileBytes: PDF_CORRECTOR_MAX_FILE_BYTES,
+        maxJobBytes: PDF_CORRECTOR_MAX_JOB_BYTES,
+        pdfToolUsage,
+    });
+}
+
+async function signWithSecret(secret, text) {
+    const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(String(secret || "")),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+    );
+    const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text));
+    return base64UrlEncodeBytes(new Uint8Array(signature));
+}
 
 async function processPdfToolWithRender(request, env, user) {
     const body = await readJson(request);

@@ -4688,6 +4688,9 @@
     }
     const PDF_MAX_SERVER_BYTES = 500 * 1024 * 1024;
     const PDF_MAX_LOCAL_BYTES = 500 * 1024 * 1024;
+    const PDF_CORRECTOR_MAX_FILES = 500;
+    const PDF_CORRECTOR_MAX_JOB_BYTES = 5 * 1024 * 1024 * 1024;
+    const PDF_CORRECTOR_JOB_STORAGE_KEY = "docspace_pdf_corrector_job_v160";
     const PDF_CATEGORIES = [
         { id: "todos", label: "Todas" },
         { id: "otimizar", label: "Otimizar" },
@@ -4701,9 +4704,15 @@
         reverse: "arrow-down-up", rotate: "rotate-cw", blank: "file-plus-2", duplicate: "copy-plus",
         oddEven: "columns-2", images: "images", wordPdf: "file-type-2", ocr: "scan-text",
         number: "list-ordered", watermark: "droplets", stamp: "stamp", headerFooter: "panel-top-bottom-dashed",
-        pdfImages: "image-down", crop: "crop", resizeA4: "scan", metadata: "file-cog",
+        pdfImages: "image-down", crop: "crop", resizeA4: "scan", metadata: "file-cog", correctValidate: "badge-check",
     };
     const PDF_TOOLS = {
+        correctValidate: {
+            category: "otimizar", title: "Corrigir PDFs", icon: "✅", serverBatch: true,
+            description: "Corrige fontes inválidas, aplica OCR, comprime e valida lotes de PDFs antes de devolver um único ZIP.",
+            accept: ".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed", multiple: true, correctOpts: true,
+            hint: "Aceita PDF individual, vários PDFs ou ZIP com até 500 PDFs. O resultado inclui CORRIGIDOS, NAO-CORRIGIDOS e relatório detalhado.",
+        },
         compress: {
             category: "otimizar", title: "Comprimir PDF", icon: "📦", server: true,
             description: "Reduz o tamanho usando o servidor e, se necessário, um modo local de segurança.",
@@ -4936,6 +4945,8 @@
         pdfToolResultBase64: "",
         pdfToolResultFileName: "",
         pdfToolSelectedFiles: [],
+        pdfCorrectionJob: null,
+        pdfCorrectionAbortController: null,
         pendingFormData: null,
         pendingFormStep: null,
         templateSettings: {},
@@ -9473,7 +9484,7 @@
                         <div id="pdfToolStats" class="pdf-tool-stats is-hidden"></div>
                     </div>
                     <div class="field wide action-row">
-                        <button class="primary-button" type="submit" id="pdfProcessButton"><i data-lucide="play"></i> ${escapeHtml(activeId === "compress" ? "Comprimir PDF" : "Processar arquivo")}</button>
+                        <button class="primary-button" type="submit" id="pdfProcessButton"><i data-lucide="play"></i> ${escapeHtml(activeId === "compress" ? "Comprimir PDF" : activeId === "correctValidate" ? "Corrigir e validar lote" : "Processar arquivo")}</button>
                         <button class="ghost-button" type="button" data-pdf-clear-files><i data-lucide="x"></i> Limpar arquivos</button>
                     </div>
                 </form>
@@ -9540,6 +9551,10 @@
             <label class="field"><span>Autor</span><input id="pdfMetadataAuthor" maxlength="120"></label>
             <label class="field"><span>Assunto</span><input id="pdfMetadataSubject" maxlength="160"></label>
             <label class="field wide"><span>Palavras-chave</span><input id="pdfMetadataKeywords" placeholder="contrato, cliente, arquivo" maxlength="240"></label>`);
+        if (active.correctOpts) blocks.push(`
+            <label class="field"><span>Modo de correção</span><select id="pdfCorrectionMode"><option value="auto" selected>Automático</option><option value="preserve">Preservar qualidade</option><option value="compatibility">Compatibilidade máxima</option></select></label>
+            <label class="field"><span>Idioma do OCR</span><select id="pdfCorrectionLanguage"><option value="por+eng" selected>Português + Inglês</option><option value="por">Português</option><option value="eng">Inglês</option></select></label>
+            <div class="pdf-batch-notice wide"><i data-lucide="server-cog"></i><div><strong>Processamento seguro em fila</strong><p>Os arquivos são enviados em blocos, processados um por vez e devolvidos em um ZIP único. Trabalhos interrompidos podem ser retomados pelo serviço.</p><button type="button" class="ghost-button" data-pdf-resume-correction><i data-lucide="history"></i> Retomar último trabalho</button></div></div>`);
         return blocks.join("");
     }
 
@@ -9653,6 +9668,8 @@
             metadataAuthor: $("#pdfMetadataAuthor")?.value || "",
             metadataSubject: $("#pdfMetadataSubject")?.value || "",
             metadataKeywords: $("#pdfMetadataKeywords")?.value || "",
+            correctionMode: $("#pdfCorrectionMode")?.value || "auto",
+            correctionLanguage: $("#pdfCorrectionLanguage")?.value || "por+eng",
         };
     }
 
@@ -9685,6 +9702,8 @@
         try {
             if (toolId === "compress") {
                 await processCompressPdf(files[0], pages);
+            } else if (toolId === "correctValidate") {
+                await processPdfCorrectionBatch(files, options);
             } else if (tool.server) {
                 for (const [index, file] of files.entries()) {
                     showPdfToolProgress(15 + Math.round((index / files.length) * 70), `Enviando ${index + 1}/${files.length} para o servidor...`);
@@ -9727,6 +9746,218 @@
             setFormLoading(form, false);
             setTimeout(() => hidePdfToolProgress(true), 1800);
         }
+    }
+
+
+    function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function pdfCorrectorFetch(serviceUrl, path, token, options = {}) {
+        const headers = new Headers(options.headers || {});
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+        const response = await fetch(`${String(serviceUrl || "").replace(/\/+$/, "")}${path}`, {
+            ...options,
+            headers,
+            cache: "no-store",
+        });
+        if (!response.ok) {
+            let message = `Falha no serviço de correção (${response.status}).`;
+            try {
+                const data = await response.json();
+                message = data.message || data.detail || message;
+            } catch (_) {
+                const text = await response.text().catch(() => "");
+                if (text) message = text.slice(0, 300);
+            }
+            const error = new Error(message);
+            error.status = response.status;
+            throw error;
+        }
+        return response;
+    }
+
+    async function pdfCorrectorJson(serviceUrl, path, token, options = {}) {
+        const headers = new Headers(options.headers || {});
+        if (options.body && typeof options.body !== "string" && !(options.body instanceof Blob) && !(options.body instanceof ArrayBuffer)) {
+            headers.set("Content-Type", "application/json");
+            options = { ...options, body: JSON.stringify(options.body) };
+        }
+        const response = await pdfCorrectorFetch(serviceUrl, path, token, { ...options, headers });
+        return response.json();
+    }
+
+    async function retryPdfCorrectorRequest(operation, attempts = 4) {
+        let lastError = null;
+        for (let index = 0; index < attempts; index += 1) {
+            try {
+                return await operation(index);
+            } catch (error) {
+                lastError = error;
+                if (index >= attempts - 1 || (error?.status >= 400 && error?.status < 500 && error?.status !== 408 && error?.status !== 429)) throw error;
+                await sleep(800 * (index + 1));
+            }
+        }
+        throw lastError || new Error("Falha de comunicação com o corretor de PDFs.");
+    }
+
+    function persistPdfCorrectionJob(job) {
+        state.pdfCorrectionJob = job || null;
+        if (!job) {
+            localStorage.removeItem(PDF_CORRECTOR_JOB_STORAGE_KEY);
+            return;
+        }
+        localStorage.setItem(PDF_CORRECTOR_JOB_STORAGE_KEY, JSON.stringify(job));
+    }
+
+    function readPersistedPdfCorrectionJob() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(PDF_CORRECTOR_JOB_STORAGE_KEY) || "null");
+            if (!parsed?.jobId || !parsed?.serviceUrl || !parsed?.uploadToken) return null;
+            if (Number(parsed.expiresAt || 0) <= Date.now()) {
+                localStorage.removeItem(PDF_CORRECTOR_JOB_STORAGE_KEY);
+                return null;
+            }
+            return parsed;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function downloadPdfCorrectionResult(serviceUrl, jobId, downloadKey, fileName = "RESULTADO-CORRECAO-PDFS.zip") {
+        if (!serviceUrl || !jobId || !downloadKey) throw new Error("Link do resultado incompleto.");
+        const url = `${String(serviceUrl).replace(/\/+$/, "")}/api/public/jobs/${encodeURIComponent(jobId)}/download?key=${encodeURIComponent(downloadKey)}`;
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.rel = "noopener noreferrer";
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+    }
+
+    async function pollPdfCorrectionJob(job) {
+        const msg = $("#pdfMessage");
+        while (true) {
+            const data = await retryPdfCorrectorRequest(() => pdfCorrectorJson(job.serviceUrl, `/api/jobs/${encodeURIComponent(job.jobId)}`, job.uploadToken));
+            const serviceProgress = Math.max(0, Math.min(100, Number(data.progress || 0)));
+            const mapped = 42 + Math.round(serviceProgress * 0.56);
+            showPdfToolProgress(Math.min(98, mapped), data.message || "Processando PDFs...");
+            if (data.status === "done") {
+                showPdfToolProgress(100, "ZIP final pronto!");
+                showPdfToolStats({
+                    originalBytes: job.totalBytes,
+                    outputBytes: data.resultBytes,
+                    strategy: job.mode === "compatibility" ? "compatibilidade máxima" : job.mode === "preserve" ? "preservar qualidade" : "automático",
+                    message: `${Number(data.correctedPdfs || 0)} corrigido(s)/validado(s) · ${Number(data.failedPdfs || 0)} não corrigido(s) · ${Number(data.totalPdfs || 0)} PDF(s) analisado(s).`,
+                });
+                downloadPdfCorrectionResult(job.serviceUrl, job.jobId, data.downloadKey, data.resultFileName || "RESULTADO-CORRECAO-PDFS.zip");
+                setMessage(msg, `Processamento concluído. O ZIP contém todos os resultados e o RELATORIO-DE-CORRECAO.txt.`, "success");
+                persistPdfCorrectionJob(null);
+                return data;
+            }
+            if (data.status === "failed") {
+                persistPdfCorrectionJob(null);
+                throw new Error(data.message || "O serviço não conseguiu concluir o lote.");
+            }
+            if (data.status === "cancelled") {
+                persistPdfCorrectionJob(null);
+                throw new Error("O processamento foi cancelado.");
+            }
+            setMessage(msg, data.message || "Processando lote...", "");
+            await sleep(2500);
+        }
+    }
+
+    async function processPdfCorrectionBatch(files, options = {}) {
+        const msg = $("#pdfMessage");
+        const list = Array.from(files || []);
+        if (!list.length) throw new Error("Selecione um PDF, vários PDFs ou um ZIP.");
+        if (list.length > PDF_CORRECTOR_MAX_FILES) throw new Error(`O limite é de ${PDF_CORRECTOR_MAX_FILES} arquivos de entrada por trabalho.`);
+        const invalid = list.find((file) => !/\.(pdf|zip)$/i.test(file.name || ""));
+        if (invalid) throw new Error(`O arquivo “${invalid.name}” não é PDF nem ZIP.`);
+        const totalBytes = list.reduce((total, file) => total + Number(file.size || 0), 0);
+        if (totalBytes > PDF_CORRECTOR_MAX_JOB_BYTES) throw new Error("O lote excede 5 GB. Divida-o em dois trabalhos.");
+
+        showPdfToolProgress(3, "Autorizando o processamento em lote...");
+        const session = await apiRequest("/api/pdf-corrector/session", {
+            method: "POST",
+            body: {
+                fileCount: list.length,
+                totalBytes,
+                mode: options.correctionMode || "auto",
+                language: options.correctionLanguage || "por+eng",
+            },
+        });
+        if (session.pdfToolUsage) state.pdfToolUsage = session.pdfToolUsage;
+        const serviceUrl = String(session.serviceUrl || "").replace(/\/+$/, "");
+        const uploadToken = String(session.uploadToken || "");
+        if (!serviceUrl || !uploadToken) throw new Error("O Worker não retornou a conexão do corretor de PDFs.");
+
+        const created = await pdfCorrectorJson(serviceUrl, "/api/jobs", uploadToken, {
+            method: "POST",
+            body: {
+                mode: options.correctionMode || "auto",
+                language: options.correctionLanguage || "por+eng",
+                expectedFiles: list.length,
+                expectedBytes: totalBytes,
+            },
+        });
+        const chunkBytes = Math.max(1024 * 1024, Number(created.chunkBytes || 8 * 1024 * 1024));
+        const job = {
+            jobId: created.jobId,
+            serviceUrl,
+            uploadToken,
+            expiresAt: Date.now() + Number(session.expiresIn || 259200) * 1000,
+            totalBytes,
+            mode: options.correctionMode || "auto",
+        };
+        // O navegador não consegue reconstruir os objetos File após recarregar a página.
+        // Por isso, o trabalho só fica disponível para retomada depois que todo o upload termina.
+
+        let sentBytes = 0;
+        for (const [fileIndex, file] of list.entries()) {
+            showPdfToolProgress(5 + Math.round((sentBytes / Math.max(1, totalBytes)) * 35), `Preparando ${fileIndex + 1}/${list.length}: ${file.name}`);
+            const initialized = await pdfCorrectorJson(serviceUrl, `/api/jobs/${encodeURIComponent(job.jobId)}/files/init`, uploadToken, {
+                method: "POST",
+                body: { name: file.name, size: file.size, type: file.type || "application/octet-stream" },
+            });
+            const chunks = Math.ceil(file.size / chunkBytes);
+            for (let index = 0; index < chunks; index += 1) {
+                const start = index * chunkBytes;
+                const end = Math.min(file.size, start + chunkBytes);
+                const chunk = file.slice(start, end);
+                await retryPdfCorrectorRequest(() => pdfCorrectorFetch(
+                    serviceUrl,
+                    `/api/jobs/${encodeURIComponent(job.jobId)}/files/${encodeURIComponent(initialized.fileId)}/chunks/${index}`,
+                    uploadToken,
+                    { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: chunk },
+                ));
+                sentBytes += chunk.size;
+                const uploadProgress = 5 + Math.round((sentBytes / Math.max(1, totalBytes)) * 35);
+                showPdfToolProgress(Math.min(40, uploadProgress), `Enviando ${fileIndex + 1}/${list.length}: ${file.name} · bloco ${index + 1}/${chunks}`);
+            }
+            await pdfCorrectorJson(serviceUrl, `/api/jobs/${encodeURIComponent(job.jobId)}/files/${encodeURIComponent(initialized.fileId)}/complete`, uploadToken, {
+                method: "POST",
+                body: { chunks },
+            });
+        }
+
+        showPdfToolProgress(41, "Todos os arquivos enviados. Adicionando à fila...");
+        await pdfCorrectorJson(serviceUrl, `/api/jobs/${encodeURIComponent(job.jobId)}/start`, uploadToken, { method: "POST" });
+        job.resumeReady = true;
+        persistPdfCorrectionJob(job);
+        setMessage(msg, "Upload concluído. O servidor está analisando, corrigindo, aplicando OCR e validando os PDFs.", "");
+        return pollPdfCorrectionJob(job);
+    }
+
+    async function resumePdfCorrectionJob() {
+        const job = readPersistedPdfCorrectionJob();
+        if (!job) throw new Error("Não existe trabalho recente disponível para retomar.");
+        persistPdfCorrectionJob(job);
+        showPdfToolProgress(42, "Retomando o último trabalho...");
+        return pollPdfCorrectionJob(job);
     }
 
     async function processCompressPdf(file, pagesText = "") {
@@ -10796,6 +11027,12 @@
                 state.pdfToolSelectedFiles = (state.pdfToolSelectedFiles || []).filter((_, i) => i !== index);
                 assignPdfFiles(state.pdfToolSelectedFiles);
             }
+            return;
+        }
+        const resumePdfCorrection = event.target.closest("[data-pdf-resume-correction]");
+        if (resumePdfCorrection) {
+            resumePdfCorrection.disabled = true;
+            resumePdfCorrectionJob().catch((error) => setMessage($("#pdfMessage"), translateError(error), "error")).finally(() => { resumePdfCorrection.disabled = false; });
             return;
         }
         const pdfToolDownload = event.target.closest("[data-pdf-tool-download]");

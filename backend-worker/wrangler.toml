@@ -26,6 +26,7 @@ SUPPORT_ADMIN_EMAIL = "kaua.dev@outlook.com.br"
 MERCADO_PAGO_PUBLIC_KEY = "APP_USR-b73bcfd2-e773-4819-a006-08239308e311"
 MERCADO_PAGO_WEBHOOK_URL = "https://docspace-api.kaualucas9773.workers.dev/api/billing/mercadopago/webhook"
 RENDER_API_URL = "https://gerador-de-documentos-1.onrender.com"
+PDF_CORRECTOR_API_URL = "https://gerador-de-documentos-1.onrender.com"
 
 [[d1_databases]]
 binding = "DB"

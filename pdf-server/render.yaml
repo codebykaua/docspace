@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: gerador-de-documentos-1
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: docspace-pdf-jobs
+      mountPath: /data
+      sizeGB: 20
+    envVars:
+      - key: RENDER_API_SECRET
+        sync: false
+      - key: PDF_CORRECTOR_ALLOWED_ORIGINS
+        value: https://codebykaua.github.io
+      - key: PDF_CORRECTOR_MAX_FILES
+        value: "500"
+      - key: PDF_CORRECTOR_MAX_FILE_BYTES
+        value: "524288000"
+      - key: PDF_CORRECTOR_MAX_JOB_BYTES
+        value: "5368709120"
+      - key: PDF_CORRECTOR_JOB_TTL_HOURS
+        value: "72"

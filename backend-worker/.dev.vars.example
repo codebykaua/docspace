@@ -2,3 +2,8 @@
 AI_API_KEY=cole_a_chave_apenas_no_backend
 # OPENROUTER_API_KEY=chave_antiga_tambem_aceita
 # OPENAI_API_KEY=chave_openai_direta_tambem_aceita
+
+# Mesmo segredo configurado no serviço pesado do Render.
+RENDER_API_SECRET=gere_um_segredo_longo_e_aleatorio
+
+# O servidor Render mantém os resultados por 72 horas.

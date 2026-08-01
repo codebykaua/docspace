@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = resolve(root, "frontend");
-const version = "159";
+const version = "160";
 const required = [
   "index.html", "style.css", "lovable-original.css", "script.js", "app-config.js",
   "ai/ai-config.js", "ai/ai-client.js", "assets/LOGO1.png",
@@ -111,6 +111,9 @@ for (const marker of [
   "renderPowerpointEditor",
   "PptxGenJS",
   "office-sticky-controls",
+  "correctValidate",
+  "processPdfCorrectionBatch",
+  "PDF_CORRECTOR_JOB_STORAGE_KEY",
 ]) {
   if (!script.includes(marker)) {
     console.error(`Recurso esperado não encontrado no frontend: ${marker}`);
@@ -160,6 +163,9 @@ for (const marker of [
   "resetDocumentQuota",
   "ip_address",
   "user_agent",
+  'match(path, ["pdf-corrector", "session"])',
+  "createPdfCorrectorSession",
+  "RENDER_API_SECRET",
 ]) {
   if (!worker.includes(marker)) {
     console.error(`Recurso esperado não encontrado no Worker: ${marker}`);
@@ -168,8 +174,8 @@ for (const marker of [
 }
 
 const serviceWorker = readFileSync(resolve(frontend, "service-worker.js"), "utf8");
-if (!serviceWorker.includes("docspace-v159-static")) {
-  console.error("Service Worker de contingência não foi atualizado para v159.");
+if (!serviceWorker.includes("docspace-v160-static")) {
+  console.error("Service Worker de contingência não foi atualizado para v160.");
   process.exit(1);
 }
 
@@ -189,4 +195,4 @@ for (const file of ["frontend/script.js", "frontend/docspace-product.js", "front
   }
 }
 
-console.log("OK: frontend v1.59 e Worker passaram nas verificações estáticas.");
+console.log("OK: frontend v1.60 e Worker passaram nas verificações estáticas.");
