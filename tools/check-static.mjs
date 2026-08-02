@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = resolve(root, "frontend");
-const version = "163";
+const version = "164";
 const required = [
   "index.html", "style.css", "lovable-original.css", "script.js", "app-config.js",
   "ai/ai-config.js", "ai/ai-client.js", "assets/LOGO1.png",
@@ -116,6 +116,7 @@ for (const marker of [
   "PDF_CORRECTOR_JOB_STORAGE_KEY",
   "ensurePdfProcessingVisible",
   "A chave RENDER_API_SECRET precisa ser igual",
+  "resetPdfToolsViewport",
 ]) {
   if (!script.includes(marker)) {
     console.error(`Recurso esperado não encontrado no frontend: ${marker}`);
@@ -170,6 +171,7 @@ for (const marker of [
   "RENDER_API_SECRET",
   "O servidor de conversão recusou a autenticação",
   '"X-Render-Secret": renderSecret',
+  "https://gerador-de-documentos-3a8t.onrender.com",
 ]) {
   if (!worker.includes(marker)) {
     console.error(`Recurso esperado não encontrado no Worker: ${marker}`);
@@ -178,7 +180,7 @@ for (const marker of [
 }
 
 const serviceWorker = readFileSync(resolve(frontend, "service-worker.js"), "utf8");
-if (!serviceWorker.includes("docspace-v163-static")) {
+if (!serviceWorker.includes("docspace-v164-static")) {
   console.error("Service Worker de contingência não foi atualizado para v163.");
   process.exit(1);
 }
@@ -188,6 +190,7 @@ for (const marker of [
   "DocSpace v162 — rolagem real",
   "grid-template-rows: auto minmax(0, 1fr) auto",
   "overflow-y: auto !important",
+  "DocSpace v164 — central PDF sempre visível",
 ]) {
   if (!responsiveCss.includes(marker)) {
     console.error(`Correção responsiva v162 ausente: ${marker}`);
@@ -211,4 +214,4 @@ for (const file of ["frontend/script.js", "frontend/docspace-product.js", "front
   }
 }
 
-console.log("OK: frontend v1.63 e Worker passaram nas verificações estáticas.");
+console.log("OK: frontend v1.64, Worker e correções da central PDF passaram nas verificações estáticas.");

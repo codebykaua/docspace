@@ -293,7 +293,7 @@ async def lifespan(_: FastAPI):
     worker_tasks.clear()
 
 
-app = FastAPI(title="DocSpace PDF Corrector", version="1.61.0", lifespan=lifespan)
+app = FastAPI(title="DocSpace PDF Corrector", version="1.64.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -309,9 +309,19 @@ async def http_error_handler(_: Request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"success": False, "message": exc.detail})
 
 
-@app.get("/health")
-async def health():
-    dependencies = {
+@app.get("/")
+async def root():
+    return {
+        "ok": True,
+        "service": "docspace-pdf-corrector",
+        "version": "1.64.0",
+        "health": "/health",
+        "readiness": "/ready",
+    }
+
+
+def dependency_status() -> dict[str, bool]:
+    return {
         "libreoffice": bool(shutil.which("libreoffice")),
         "ghostscript": bool(shutil.which("gs") or shutil.which("gswin64c")),
         "qpdf": bool(shutil.which("qpdf")),
@@ -319,20 +329,46 @@ async def health():
         "tesseract": bool(shutil.which("tesseract")),
         "pdftotext": bool(shutil.which("pdftotext")),
     }
-    ok = all(dependencies.values()) and bool(SECRET) and bool(RENDER_SECRET)
+
+
+@app.get("/health")
+async def health():
+    # Liveness: se o FastAPI respondeu, o processo está vivo. O Render precisa
+    # receber 2xx aqui para não bloquear um deploy por dependência opcional.
+    dependencies = dependency_status()
+    missing = [name for name, available in dependencies.items() if not available]
+    ready = not missing and bool(RENDER_SECRET)
+    return {
+        "ok": True,
+        "ready": ready,
+        "service": "docspace-pdf-corrector",
+        "version": "1.64.0",
+        "dependencies": dependencies,
+        "missingDependencies": missing,
+        "secretConfigured": bool(RENDER_SECRET),
+        "renderSecretConfigured": bool(RENDER_SECRET),
+        "maxFiles": MAX_FILES,
+        "maxFileBytes": MAX_FILE_BYTES,
+        "maxJobBytes": MAX_JOB_BYTES,
+        "chunkBytes": CHUNK_BYTES,
+    }
+
+
+@app.get("/ready")
+async def ready():
+    dependencies = dependency_status()
+    missing = [name for name, available in dependencies.items() if not available]
+    is_ready = not missing and bool(RENDER_SECRET)
     return JSONResponse(
-        status_code=200 if ok else 503,
+        status_code=200 if is_ready else 503,
         content={
-            "ok": ok,
+            "ok": is_ready,
+            "ready": is_ready,
             "service": "docspace-pdf-corrector",
-            "version": "1.63.0",
+            "version": "1.64.0",
             "dependencies": dependencies,
-            "secretConfigured": bool(SECRET),
+            "missingDependencies": missing,
             "renderSecretConfigured": bool(RENDER_SECRET),
-            "maxFiles": MAX_FILES,
-            "maxFileBytes": MAX_FILE_BYTES,
-            "maxJobBytes": MAX_JOB_BYTES,
-            "chunkBytes": CHUNK_BYTES,
         },
     )
 

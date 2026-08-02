@@ -9432,6 +9432,25 @@
         });
     }
 
+    function resetPdfToolsViewport() {
+        requestAnimationFrame(() => {
+            const content = refs.content;
+            if (content) {
+                try { content.scrollTo({ top: 0, left: 0, behavior: "auto" }); }
+                catch (_) { content.scrollTop = 0; }
+            }
+            const workspace = content?.closest?.(".workspace");
+            if (workspace) {
+                const style = window.getComputedStyle(workspace);
+                if (/(auto|scroll)/.test(style.overflowY)) workspace.scrollTop = 0;
+            }
+            if (window.innerWidth <= 1100) {
+                const hub = content?.querySelector?.(".pdf-hub");
+                if (hub) hub.scrollIntoView({ block: "start", behavior: "auto" });
+            }
+        });
+    }
+
     function renderPdfTools() {
         const activeId = state.activePdfTool in PDF_TOOLS ? state.activePdfTool : "compress";
         state.activePdfTool = activeId;
@@ -9516,6 +9535,7 @@
             </section>`;
         bindPdfToolUi();
         initIcons();
+        resetPdfToolsViewport();
     }
 
     function renderPdfToolOptions(active) {

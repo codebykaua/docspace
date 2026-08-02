@@ -1664,7 +1664,7 @@ async function processPdfToolWithRender(request, env, user) {
 
     assertPdfToolAccessAllowed(user, toolType);
 
-    const renderApiUrl = env.RENDER_API_URL || "https://gerador-de-documentos-1.onrender.com";
+    const renderApiUrl = env.RENDER_API_URL || "https://gerador-de-documentos-3a8t.onrender.com";
     const renderPath = toolType === "compress"
         ? "/api/pdf/compress"
         : toolType === "ocr"
@@ -1768,7 +1768,7 @@ async function previewDocumentAsPdf(request, env, user) {
 
     await assertDocumentUsageAvailable(env, user, templatePath);
 
-    const renderApiUrl = env.RENDER_API_URL || "https://gerador-de-documentos-1.onrender.com";
+    const renderApiUrl = env.RENDER_API_URL || "https://gerador-de-documentos-3a8t.onrender.com";
 
     try {
         const headers = { "Content-Type": "application/json" };
@@ -4398,7 +4398,7 @@ async function exportAiDocumentPdf(request, env, user) {
     if (!docxBase64) throw httpError(400, "Envie o documento Word para conversão.");
     if (docxBase64.length > MAX_PREVIEW_DOCX_BASE64_LENGTH) throw httpError(413, "O documento ficou grande demais para conversão.");
 
-    const renderApiUrl = String(env.RENDER_API_URL || "https://gerador-de-documentos-1.onrender.com").replace(/\/+$/, "");
+    const renderApiUrl = String(env.RENDER_API_URL || "https://gerador-de-documentos-3a8t.onrender.com").replace(/\/+$/, "");
     const renderSecret = String(env.RENDER_API_SECRET || "").trim();
     if (!renderSecret) {
         throw httpError(503, "RENDER_API_SECRET não configurado no Worker. A conversão para PDF está temporariamente indisponível.");

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: gerador-de-documentos-1
+    name: gerador-de-documentos-3a8t
     runtime: docker
     rootDir: pdf-server
     dockerfilePath: ./Dockerfile
