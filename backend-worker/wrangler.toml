@@ -3,7 +3,6 @@ main = "src/worker.js"
 compatibility_date = "2026-07-29"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
-account_id = "3f72c0cbfa4a3afde1c87e411a4a20da"
 
 [vars]
 AI_ENABLED = "true"
