@@ -4399,34 +4399,93 @@ async function exportAiDocumentPdf(request, env, user) {
     if (docxBase64.length > MAX_PREVIEW_DOCX_BASE64_LENGTH) throw httpError(413, "O documento ficou grande demais para conversão.");
 
     const renderApiUrl = String(env.RENDER_API_URL || "https://gerador-de-documentos-1.onrender.com").replace(/\/+$/, "");
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120_000);
-    try {
-        const response = await fetch(`${renderApiUrl}/api/convert-docx-to-pdf`, {
-            method: "POST",
-            signal: controller.signal,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ docxBase64, fileName: safeName }),
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data?.pdfBase64) {
-            const detail = String(data?.message || data?.error || "").trim();
-            throw httpError(502, detail ? `Falha ao gerar PDF: ${detail}` : "O conversor de documentos não retornou o PDF.");
-        }
-        const outputName = String(data.fileName || safeName.replace(/\.docx$/i, ".pdf"));
-        await logAction(env, user.id, "ai_export_pdf", null, { fileName: outputName }, request);
-        return json({
-            success: true,
-            pdfBase64: data.pdfBase64,
-            fileName: outputName,
-            protected: data.protected === true,
-        });
-    } catch (error) {
-        if (error?.name === "AbortError") throw httpError(504, "A conversão para PDF demorou demais.");
-        throw error;
-    } finally {
-        clearTimeout(timeout);
+    const renderSecret = String(env.RENDER_API_SECRET || "").trim();
+    if (!renderSecret) {
+        throw httpError(503, "RENDER_API_SECRET não configurado no Worker. A conversão para PDF está temporariamente indisponível.");
     }
+
+    const endpoint = `${renderApiUrl}/api/convert-docx-to-pdf`;
+    const requestBody = JSON.stringify({ docxBase64, fileName: safeName });
+    const retryableStatus = new Set([429, 502, 503, 504]);
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 150_000);
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                signal: controller.signal,
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Render-Secret": renderSecret,
+                    "X-Request-Id": crypto.randomUUID(),
+                },
+                body: requestBody,
+            });
+
+            const responseText = await response.text().catch(() => "");
+            let data = {};
+            try {
+                data = responseText ? JSON.parse(responseText) : {};
+            } catch (_) {
+                data = { message: responseText };
+            }
+
+            if (response.ok && data?.pdfBase64) {
+                const outputName = String(data.fileName || safeName.replace(/\.docx$/i, ".pdf"));
+                await logAction(env, user.id, "ai_export_pdf", null, {
+                    fileName: outputName,
+                    attempts: attempt,
+                    outputBytes: Number(data.outputBytes || 0) || null,
+                }, request);
+                return json({
+                    success: true,
+                    pdfBase64: data.pdfBase64,
+                    fileName: outputName,
+                    protected: data.protected === true,
+                });
+            }
+
+            const detail = String(data?.detail || data?.message || data?.error || responseText || "").trim();
+            if (response.status === 401 || response.status === 403) {
+                throw httpError(502, "O servidor de conversão recusou a autenticação. Verifique o RENDER_API_SECRET no Worker e no Render.");
+            }
+            if (response.status === 404) {
+                throw httpError(502, "A rota de conversão DOCX para PDF não está disponível no servidor Render publicado.");
+            }
+
+            lastError = httpError(
+                retryableStatus.has(response.status) ? 503 : 502,
+                detail ? `Falha ao gerar PDF: ${detail}` : `O conversor retornou HTTP ${response.status} sem gerar o PDF.`,
+            );
+
+            if (!retryableStatus.has(response.status) || attempt === 3) {
+                throw lastError;
+            }
+        } catch (error) {
+            if (error?.status && ![503, 504].includes(Number(error.status))) {
+                throw error;
+            }
+            if (error?.name === "AbortError") {
+                lastError = httpError(504, "A conversão para PDF demorou demais no servidor.");
+            } else if (!error?.status) {
+                lastError = httpError(503, `Não foi possível conectar ao conversor de PDF${error?.message ? `: ${error.message}` : "."}`);
+            } else {
+                lastError = error;
+            }
+
+            if (attempt === 3) {
+                throw lastError;
+            }
+        } finally {
+            clearTimeout(timeout);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, attempt * 2500));
+    }
+
+    throw lastError || httpError(502, "O conversor de documentos não retornou o PDF.");
 }
 
 async function processAiAction(request, env, user) {

@@ -12430,8 +12430,20 @@
         if (/Modelo não encontrado|Modelo Word não configurado/i.test(text)) {
             return text;
         }
-        if (/convers[aã]o|Render|preview-pdf|502|503/i.test(text)) {
-            return "Falha na conversão para PDF no servidor. O Word ainda pode ser gerado; tente o PDF em instantes.";
+        if (/RENDER_API_SECRET|recusou a autentica[cç][aã]o|Acesso negado|HTTP 401|HTTP 403/i.test(text)) {
+            return "O servidor de PDF não está autorizado. A chave RENDER_API_SECRET precisa ser igual no Cloudflare Worker e no Render.";
+        }
+        if (/rota de convers[aã]o DOCX|HTTP 404/i.test(text)) {
+            return "A conversão DOCX para PDF ainda não está publicada no servidor Render.";
+        }
+        if (/demorou demais|tempo limite|HTTP 504/i.test(text)) {
+            return "O servidor demorou para gerar o PDF. O DocSpace tentou novamente automaticamente; tente mais uma vez em instantes.";
+        }
+        if (/Falha ao gerar PDF:/i.test(text)) {
+            return text;
+        }
+        if (/convers[aã]o|Render|preview-pdf|HTTP 502|HTTP 503/i.test(text)) {
+            return "Falha na conversão para PDF no servidor. O Word ainda pode ser gerado; verifique se o Render está ativo e tente novamente.";
         }
         return text;
     }

@@ -325,7 +325,7 @@ async def health():
         content={
             "ok": ok,
             "service": "docspace-pdf-corrector",
-            "version": "1.61.0",
+            "version": "1.63.0",
             "dependencies": dependencies,
             "secretConfigured": bool(SECRET),
             "renderSecretConfigured": bool(RENDER_SECRET),

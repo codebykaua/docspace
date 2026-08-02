@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = resolve(root, "frontend");
-const version = "162";
+const version = "163";
 const required = [
   "index.html", "style.css", "lovable-original.css", "script.js", "app-config.js",
   "ai/ai-config.js", "ai/ai-client.js", "assets/LOGO1.png",
@@ -115,6 +115,7 @@ for (const marker of [
   "processPdfCorrectionBatch",
   "PDF_CORRECTOR_JOB_STORAGE_KEY",
   "ensurePdfProcessingVisible",
+  "A chave RENDER_API_SECRET precisa ser igual",
 ]) {
   if (!script.includes(marker)) {
     console.error(`Recurso esperado não encontrado no frontend: ${marker}`);
@@ -167,6 +168,8 @@ for (const marker of [
   'match(path, ["pdf-corrector", "session"])',
   "createPdfCorrectorSession",
   "RENDER_API_SECRET",
+  "O servidor de conversão recusou a autenticação",
+  '"X-Render-Secret": renderSecret',
 ]) {
   if (!worker.includes(marker)) {
     console.error(`Recurso esperado não encontrado no Worker: ${marker}`);
@@ -175,8 +178,8 @@ for (const marker of [
 }
 
 const serviceWorker = readFileSync(resolve(frontend, "service-worker.js"), "utf8");
-if (!serviceWorker.includes("docspace-v162-static")) {
-  console.error("Service Worker de contingência não foi atualizado para v162.");
+if (!serviceWorker.includes("docspace-v163-static")) {
+  console.error("Service Worker de contingência não foi atualizado para v163.");
   process.exit(1);
 }
 
@@ -208,4 +211,4 @@ for (const file of ["frontend/script.js", "frontend/docspace-product.js", "front
   }
 }
 
-console.log("OK: frontend v1.62 e Worker passaram nas verificações estáticas.");
+console.log("OK: frontend v1.63 e Worker passaram nas verificações estáticas.");
