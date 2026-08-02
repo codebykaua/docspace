@@ -1,0 +1,25 @@
+RELATÓRIO DE VALIDAÇÃO - MODELOS DOCSPACE
+
+Total de modelos DOCX: 76
+Total de páginas renderizadas: 76
+Total de chaves únicas no conjunto: 618
+
+Modelos por categoria:
+- 01_Declaracoes: 11
+- 02_Procuracoes: 10
+- 03_Documentos_Rurais: 15
+- 04_Previdenciarios: 11
+- 05_Requerimentos_Oficios: 13
+- 06_Recibos_Termos_Autorizacoes: 16
+
+Validações executadas:
+- Integridade ZIP/OOXML de cada DOCX.
+- Presença e equilíbrio dos delimitadores {{chave}}.
+- Confirmação de que as chaves não estão divididas entre nós de texto do Word.
+- Renderização de todos os documentos com LibreOffice.
+- Inspeção visual de todas as 76 páginas renderizadas.
+- Confirmação de uma página por modelo, sem cortes, sobreposição ou páginas em branco.
+
+RESULTADO: APROVADO - nenhuma falha estrutural ou visual encontrada.
+
+Observação: os modelos são bases editáveis e devem ser revisados conforme o caso concreto e as exigências do órgão destinatário.
