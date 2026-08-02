@@ -2999,373 +2999,143 @@ body[data-view="pdf"] .pdf-tool-form {
   body[data-view="pdf"] .pdf-tool-grid { grid-template-columns: 1fr !important; max-height: 300px !important; }
 }
 
-/* DOCSPACE V165 - CENTRAL PDF VISIVEL EM 100% */
+/* DOCSPACE V167 - LAYOUT PDF NATURAL EM ZOOM 100% */
 
 /*
-  A biblioteca de ferramentas PDF nÃ£o pode herdar alturas pequenas
-  das versÃµes anteriores. Ela possui altura prÃ³pria e rolagem interna.
+  Regra definitiva:
+  nÃ£o usar altura fixa na biblioteca PDF.
+  A pÃ¡gina rola naturalmente e todas as ferramentas aparecem.
 */
-.pdf-tools-library,
-.pdf-tools-catalog,
-.pdf-tools-panel,
-.pdf-tools-shell,
-.pdf-tool-library,
-[data-pdf-tools-library] {
-  display: block !important;
-  position: relative !important;
-  height: clamp(250px, 34vh, 390px) !important;
-  min-height: 250px !important;
-  max-height: 390px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  opacity: 1 !important;
-  visibility: visible !important;
-  clip-path: none !important;
-  contain: none !important;
-}
-
-/* O cabeÃ§alho azul nÃ£o pode ocupar sozinho toda a altura da biblioteca. */
-.pdf-tools-library > .pdf-hero,
-.pdf-tools-catalog > .pdf-hero,
-.pdf-tools-panel > .pdf-hero,
-.pdf-tools-shell > .pdf-hero,
-.pdf-tool-library > .pdf-hero,
-.pdf-tools-hero,
-.pdf-hero {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 4 !important;
-  min-height: 92px !important;
-  height: auto !important;
-  margin: 0 0 10px !important;
-}
-
-/* Filtros visÃ­veis logo abaixo do cabeÃ§alho. */
-.pdf-tool-filters,
-.pdf-tools-filters,
-[data-pdf-tool-filters] {
-  position: sticky !important;
-  top: 92px !important;
-  z-index: 5 !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 7px !important;
-  padding: 8px 10px !important;
-  margin: 0 !important;
-  background: var(--surface, #fff) !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Grade completa e rolÃ¡vel. */
-.pdf-tool-grid,
-.pdf-tools-grid,
-[data-pdf-tools-grid] {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(145px, 1fr)) !important;
-  gap: 9px !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  height: auto !important;
-  min-height: max-content !important;
-  max-height: none !important;
-  overflow: visible !important;
-  padding: 8px 10px 14px !important;
-  margin: 0 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* CartÃµes compactos para caberem em zoom 100%. */
-.pdf-tool-card,
-.pdf-tools-card,
-[data-pdf-tool] {
-  display: flex !important;
-  min-width: 0 !important;
-  min-height: 88px !important;
-  height: auto !important;
-  padding: 10px !important;
-  overflow: hidden !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* O formulÃ¡rio da ferramenta fica abaixo e a pÃ¡gina pode rolar normalmente. */
-.pdf-tool-workspace,
-.pdf-workspace,
-.pdf-operation-panel,
-.pdf-tool-operation,
-[data-pdf-workspace] {
-  position: relative !important;
-  z-index: 1 !important;
+body[data-view="pdf"] .content-area,
+body[data-view="pdf"] .main-content,
+body[data-view="pdf"] .workspace-main {
   display: block !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  overflow: visible !important;
-  margin-top: 14px !important;
-}
-
-/* Ãrea central do aplicativo deve permitir rolagem vertical. */
-.app-main,
-.main-content,
-.workspace-main,
-.content-area,
-.page-content,
-[data-main-content] {
-  min-height: 0 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
 }
 
-/* Telas mÃ©dias. */
-@media (max-width: 1280px) {
-  .pdf-tool-grid,
-  .pdf-tools-grid,
-  [data-pdf-tools-grid] {
-    grid-template-columns: repeat(4, minmax(140px, 1fr)) !important;
-  }
-}
-
-/* Telas menores e notebooks baixos. */
-@media (max-width: 980px), (max-height: 760px) {
-  .pdf-tools-library,
-  .pdf-tools-catalog,
-  .pdf-tools-panel,
-  .pdf-tools-shell,
-  .pdf-tool-library,
-  [data-pdf-tools-library] {
-    height: clamp(220px, 36vh, 310px) !important;
-    min-height: 220px !important;
-  }
-
-  .pdf-tool-grid,
-  .pdf-tools-grid,
-  [data-pdf-tools-grid] {
-    grid-template-columns: repeat(3, minmax(135px, 1fr)) !important;
-  }
-}
-
-/* Celular e tablet. */
-@media (max-width: 720px) {
-  .pdf-tools-library,
-  .pdf-tools-catalog,
-  .pdf-tools-panel,
-  .pdf-tools-shell,
-  .pdf-tool-library,
-  [data-pdf-tools-library] {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  .pdf-tools-library > .pdf-hero,
-  .pdf-tools-catalog > .pdf-hero,
-  .pdf-tools-panel > .pdf-hero,
-  .pdf-tools-shell > .pdf-hero,
-  .pdf-tool-library > .pdf-hero,
-  .pdf-tools-hero,
-  .pdf-hero,
-  .pdf-tool-filters,
-  .pdf-tools-filters,
-  [data-pdf-tool-filters] {
-    position: relative !important;
-    top: auto !important;
-  }
-
-  .pdf-tool-grid,
-  .pdf-tools-grid,
-  [data-pdf-tools-grid] {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    padding-inline: 0 !important;
-  }
-}
-
-@media (max-width: 460px) {
-  .pdf-tool-grid,
-  .pdf-tools-grid,
-  [data-pdf-tools-grid] {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* FIM DOCSPACE V165 */
-
-/* DOCSPACE V166 - PDF HUB CORRIGIDO */
-
-/*
-  CorreÃ§Ã£o definitiva da central de ferramentas PDF:
-  - o cabeÃ§alho azul fica no topo;
-  - filtros e cartÃµes permanecem visÃ­veis;
-  - a rolagem acontece dentro da biblioteca;
-  - a ferramenta aberta fica abaixo, sem sobreposiÃ§Ã£o.
-*/
 body[data-view="pdf"] .pdf-hub {
-  display: flex !important;
-  flex-direction: column !important;
+  display: block !important;
   position: relative !important;
-  isolation: isolate !important;
   width: 100% !important;
-  min-width: 0 !important;
-  height: clamp(320px, 43vh, 460px) !important;
-  min-height: 320px !important;
-  max-height: 460px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 0 14px !important;
   padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  visibility: visible !important;
+  overflow: visible !important;
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
 body[data-view="pdf"] .pdf-hub-header {
-  position: relative !important;
-  z-index: 3 !important;
-  flex: 0 0 auto !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
+  gap: 12px !important;
+  position: relative !important;
   width: 100% !important;
-  min-height: 84px !important;
   height: auto !important;
-  padding: 16px 18px !important;
+  min-height: 78px !important;
+  max-height: none !important;
+  padding: 14px 16px !important;
   overflow: visible !important;
 }
 
 body[data-view="pdf"] .pdf-hub-body {
-  position: relative !important;
-  z-index: 2 !important;
-  flex: 1 1 auto !important;
   display: block !important;
+  position: relative !important;
   width: 100% !important;
-  min-width: 0 !important;
-  min-height: 220px !important;
   height: auto !important;
+  min-height: 0 !important;
   max-height: none !important;
-  padding: 12px 14px 14px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  overscroll-behavior: contain !important;
-  scrollbar-gutter: stable !important;
-  visibility: visible !important;
+  padding: 10px 12px 14px !important;
+  overflow: visible !important;
   opacity: 1 !important;
+  visibility: visible !important;
   background: var(--surface, #fff) !important;
 }
 
 body[data-view="pdf"] .pdf-category-chips {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 5 !important;
   display: flex !important;
   flex-wrap: wrap !important;
-  gap: 7px !important;
+  gap: 6px !important;
+  position: relative !important;
+  top: auto !important;
   width: 100% !important;
   margin: 0 0 10px !important;
-  padding: 2px 0 8px !important;
-  background: var(--surface, #fff) !important;
-  visibility: visible !important;
+  padding: 0 !important;
+  background: transparent !important;
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
 body[data-view="pdf"] .pdf-tool-grid {
   display: grid !important;
-  grid-template-columns: repeat(5, minmax(135px, 1fr)) !important;
-  grid-auto-rows: minmax(72px, auto) !important;
+  grid-template-columns: repeat(5, minmax(130px, 1fr)) !important;
+  grid-auto-rows: minmax(68px, auto) !important;
   gap: 8px !important;
   position: relative !important;
   width: 100% !important;
-  min-width: 0 !important;
   height: auto !important;
-  min-height: 160px !important;
+  min-height: 0 !important;
   max-height: none !important;
-  padding: 0 2px 8px 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
   overflow: visible !important;
   align-content: start !important;
-  visibility: visible !important;
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
 body[data-view="pdf"] .pdf-tool-card {
   display: grid !important;
   min-width: 0 !important;
-  min-height: 72px !important;
+  min-height: 68px !important;
   height: auto !important;
-  padding: 9px !important;
+  padding: 8px !important;
   overflow: hidden !important;
-  visibility: visible !important;
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
 body[data-view="pdf"] .pdf-workbench {
   display: block !important;
   position: relative !important;
-  z-index: 1 !important;
   clear: both !important;
   width: 100% !important;
-  min-width: 0 !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  margin: 14px 0 18px !important;
+  margin: 14px 0 20px !important;
   overflow: visible !important;
   transform: none !important;
 }
 
-body[data-view="pdf"] .content-area {
-  display: block !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  scroll-behavior: auto !important;
-}
-
-@media (min-width: 1450px) {
+@media (min-width: 1500px) {
   body[data-view="pdf"] .pdf-tool-grid {
-    grid-template-columns: repeat(6, minmax(130px, 1fr)) !important;
+    grid-template-columns: repeat(6, minmax(125px, 1fr)) !important;
   }
 }
 
 @media (max-width: 1250px) {
   body[data-view="pdf"] .pdf-tool-grid {
-    grid-template-columns: repeat(4, minmax(130px, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(125px, 1fr)) !important;
   }
 }
 
-@media (max-width: 900px) {
-  body[data-view="pdf"] .pdf-hub {
-    height: clamp(300px, 46vh, 410px) !important;
-    min-height: 300px !important;
-  }
-
+@media (max-width: 920px) {
   body[data-view="pdf"] .pdf-tool-grid {
     grid-template-columns: repeat(3, minmax(120px, 1fr)) !important;
   }
 }
 
 @media (max-width: 680px) {
-  body[data-view="pdf"] .pdf-hub {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
   body[data-view="pdf"] .pdf-hub-header {
     grid-template-columns: 1fr !important;
-  }
-
-  body[data-view="pdf"] .pdf-hub-body {
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  body[data-view="pdf"] .pdf-category-chips {
-    position: relative !important;
-    top: auto !important;
   }
 
   body[data-view="pdf"] .pdf-tool-grid {
@@ -3379,4 +3149,4 @@ body[data-view="pdf"] .content-area {
   }
 }
 
-/* FIM DOCSPACE V166 */
+/* FIM DOCSPACE V167 */
