@@ -9433,6 +9433,21 @@
     }
 
     function resetPdfToolsViewport() {
+        const forcePdfTop = () => {
+            const content = refs.content;
+            if (content) {
+                content.scrollTop = 0;
+                content.scrollLeft = 0;
+            }
+            const workspace = content?.closest?.(".workspace");
+            if (workspace) workspace.scrollTop = 0;
+            const hub = content?.querySelector?.(".pdf-hub");
+            if (hub) {
+                const body = hub.querySelector(".pdf-hub-body");
+                if (body) body.scrollTop = 0;
+            }
+        };
+        forcePdfTop();
         requestAnimationFrame(() => {
             const content = refs.content;
             if (content) {
