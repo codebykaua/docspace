@@ -2711,3 +2711,183 @@ body[data-view="checkout"] { background: #fff; }
   .pdf-tool-grid { grid-template-columns: 1fr !important; max-height: 238px !important; }
   .pdf-category-chips { overflow-x: auto !important; flex-wrap: nowrap !important; }
 }
+
+
+/* =========================================================
+   DocSpace v162 — rolagem real, redimensionamento e acesso ao processamento
+   Corrige o shell travado em 100% de zoom. No desktop, somente o conteúdo
+   central rola; em tablets/celulares, a página usa rolagem natural.
+   ========================================================= */
+
+/* Elementos longos nunca podem aumentar a largura da tela. */
+.app-main,
+.workspace,
+.content-area,
+.pdf-hub,
+.pdf-hub-body,
+.pdf-workbench,
+.pdf-tool-form,
+.pdf-file-list,
+.generate-progress {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Desktop: três faixas verdadeiras — topo, conteúdo rolável e rodapé. */
+@media (min-width: 1101px) {
+  html,
+  body {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) {
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .app-sidebar {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    flex: 0 0 var(--sidebar-width) !important;
+    overflow: hidden !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .app-main {
+    width: auto !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    overflow: hidden !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .area-topbar {
+    position: relative !important;
+    top: auto !important;
+    grid-row: 1 !important;
+    min-height: 0 !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .workspace {
+    grid-row: 2 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 auto !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .page-header {
+    flex: 0 0 auto !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .content-area {
+    width: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    align-content: start !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    scrollbar-gutter: stable !important;
+    scroll-padding-top: 12px;
+    scroll-padding-bottom: 40px;
+    padding-right: 8px !important;
+    padding-bottom: max(42px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) .app-footer {
+    position: relative !important;
+    inset: auto !important;
+    grid-row: 3 !important;
+    min-height: 36px !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* A biblioteca ocupa menos altura em telas baixas e o formulário fica alcançável. */
+  .pdf-tool-grid {
+    max-height: clamp(148px, 25dvh, 226px) !important;
+  }
+  .pdf-workbench {
+    overflow: visible !important;
+    margin-bottom: 20px !important;
+  }
+  .pdf-tool-form,
+  .pdf-dropzone,
+  .generate-progress,
+  .pdf-file-list {
+    overflow: visible;
+  }
+}
+
+/* Tablet e celular: rolagem natural do documento, sem contêiner travado. */
+@media (max-width: 1100px) {
+  html {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+  body:not(.modal-open) {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+  body.modal-open { overflow: hidden !important; }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden),
+  body:not([data-view="dashboard"]) .app-main,
+  body:not([data-view="dashboard"]) .workspace,
+  body:not([data-view="dashboard"]) .content-area {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:not([data-view="dashboard"]) .app-view:not(.is-hidden) {
+    min-height: 100dvh !important;
+  }
+  body:not([data-view="dashboard"]) .app-main {
+    min-height: calc(100dvh - 56px) !important;
+  }
+  body:not([data-view="dashboard"]) .workspace {
+    display: block !important;
+    flex: 0 0 auto !important;
+  }
+  body:not([data-view="dashboard"]) .content-area {
+    display: block !important;
+    padding-bottom: max(34px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .pdf-hub,
+  .pdf-hub-body,
+  .pdf-workbench,
+  .pdf-tool-form {
+    height: auto !important;
+    max-height: none !important;
+  }
+  .pdf-workbench { margin-bottom: 18px !important; overflow: visible !important; }
+  .pdf-tool-grid { max-height: min(42dvh, 270px) !important; }
+}
+
+@media (max-width: 640px) {
+  .pdf-tool-grid { max-height: min(40dvh, 245px) !important; }
+  .pdf-workbench-head { align-items: flex-start !important; }
+  .pdf-tool-form { padding-bottom: 18px !important; }
+  .generate-progress { scroll-margin-top: 108px; }
+}

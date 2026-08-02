@@ -8969,6 +8969,7 @@
         const track = box?.querySelector?.('[role="progressbar"]');
 
         if (box) box.classList.remove("is-hidden");
+        if (wasHidden && value <= 12) ensurePdfProcessingVisible();
         if (bar) {
             bar.style.width = `${value}%`;
             bar.dataset.pct = String(value);
@@ -10517,8 +10518,34 @@
         return new Blob([bytes], { type: "application/pdf" });
     }
 
+    function ensurePdfProcessingVisible() {
+        const progress = $("#pdfToolProgress");
+        const workbench = progress?.closest?.(".pdf-workbench");
+        if (!workbench) return;
+
+        requestAnimationFrame(() => {
+            const scroller = workbench.closest(".content-area");
+            if (scroller) {
+                const style = window.getComputedStyle(scroller);
+                const canScrollInside = /(auto|scroll)/.test(style.overflowY) && scroller.scrollHeight > scroller.clientHeight;
+                if (canScrollInside) {
+                    const scrollerRect = scroller.getBoundingClientRect();
+                    const targetRect = workbench.getBoundingClientRect();
+                    const outside = targetRect.top < scrollerRect.top || targetRect.bottom > scrollerRect.bottom;
+                    if (outside) {
+                        const nextTop = Math.max(0, scroller.scrollTop + targetRect.top - scrollerRect.top - 12);
+                        scroller.scrollTo({ top: nextTop, behavior: "smooth" });
+                    }
+                    return;
+                }
+            }
+            workbench.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }
+
     function showPdfToolProgress(pct, text) {
         const box = $("#pdfToolProgress");
+        const wasHidden = Boolean(box?.classList.contains("is-hidden"));
         const bar = $("#pdfToolProgressBar");
         const label = $("#pdfToolProgressLabel");
         const percent = $("#pdfToolProgressPct");
