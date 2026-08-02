@@ -293,7 +293,7 @@ async def lifespan(_: FastAPI):
     worker_tasks.clear()
 
 
-app = FastAPI(title="DocSpace PDF Corrector", version="1.60.0", lifespan=lifespan)
+app = FastAPI(title="DocSpace PDF Corrector", version="1.61.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -325,7 +325,7 @@ async def health():
         content={
             "ok": ok,
             "service": "docspace-pdf-corrector",
-            "version": "1.60.0",
+            "version": "1.61.0",
             "dependencies": dependencies,
             "secretConfigured": bool(SECRET),
             "renderSecretConfigured": bool(RENDER_SECRET),

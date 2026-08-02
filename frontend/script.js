@@ -4690,7 +4690,7 @@
     const PDF_MAX_LOCAL_BYTES = 500 * 1024 * 1024;
     const PDF_CORRECTOR_MAX_FILES = 500;
     const PDF_CORRECTOR_MAX_JOB_BYTES = 5 * 1024 * 1024 * 1024;
-    const PDF_CORRECTOR_JOB_STORAGE_KEY = "docspace_pdf_corrector_job_v160";
+    const PDF_CORRECTOR_JOB_STORAGE_KEY = "docspace_pdf_corrector_job_v161";
     const PDF_CATEGORIES = [
         { id: "todos", label: "Todas" },
         { id: "otimizar", label: "Otimizar" },
@@ -8018,7 +8018,12 @@
             localStorage.removeItem("docspace_word_name");
             renderWordEditor();
         });
-        $("[data-word-import]")?.addEventListener("click", () => $("#wordImportInput")?.click());
+        $("[data-word-import]")?.addEventListener("click", () => {
+            const input = $("#wordImportInput");
+            if (!input) return;
+            input.value = "";
+            input.click();
+        });
         $("#wordImportInput")?.addEventListener("change", async (event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
@@ -8358,7 +8363,12 @@
             state.excelFreezeHeader = !state.excelFreezeHeader;
             renderExcelEditor();
         });
-        $("[data-excel-import]")?.addEventListener("click", () => $("#excelImportInput")?.click());
+        $("[data-excel-import]")?.addEventListener("click", () => {
+            const input = $("#excelImportInput");
+            if (!input) return;
+            input.value = "";
+            input.click();
+        });
         $("#excelImportInput")?.addEventListener("change", async (event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
@@ -9465,12 +9475,14 @@
                 <form id="pdfToolForm" class="form-grid pdf-tool-form">
                     <div class="field wide">
                         <div id="pdfDropZone" class="pdf-dropzone" tabindex="0" role="button" aria-label="Selecionar arquivos">
-                            <strong>Selecione ou arraste o arquivo</strong>
-                            <span>${active.multiple ? "É possível escolher vários arquivos" : "Escolha um arquivo para processar"}</span>
+                            <span class="pdf-dropzone-icon" aria-hidden="true"><i data-lucide="upload-cloud"></i></span>
+                            <strong>Selecione ou arraste os arquivos</strong>
+                            <span>${active.multiple ? "Escolha vários arquivos de uma vez ou adicione em etapas" : "Escolha um arquivo para processar"}</span>
                             <span class="pdf-dropzone-accept">Formatos aceitos: ${escapeHtml(active.accept)}</span>
+                            <button type="button" class="secondary-button pdf-select-files-button" data-pdf-open-picker><i data-lucide="folder-open"></i> Escolher arquivos</button>
                             <input id="pdfFiles" type="file" accept="${escapeAttr(active.accept)}" ${active.multiple ? "multiple" : ""} hidden>
                         </div>
-                        <div id="pdfFileList" class="pdf-file-list"></div>
+                        <div id="pdfFileList" class="pdf-file-list" aria-live="polite"></div>
                     </div>
                     ${active.pages ? `<label class="field wide"><span>${escapeHtml(active.pages)}</span><input id="pdfPages" type="text" placeholder="Ex.: 1,3-5" ${active.requiredPages ? "required" : ""} autocomplete="off"></label>` : ""}
                     ${renderPdfToolOptions(active)}
@@ -9561,10 +9573,26 @@
     function bindPdfToolUi() {
         const input = $("#pdfFiles");
         const zone = $("#pdfDropZone");
+        const pickerButton = $("[data-pdf-open-picker]", zone || refs.content);
         if (!input || !zone) return;
 
-        const openPicker = () => input.click();
-        zone.addEventListener("click", openPicker);
+        const openPicker = () => {
+            // Limpa o valor nativo para permitir selecionar novamente o mesmo arquivo.
+            input.value = "";
+            input.click();
+        };
+
+        pickerButton?.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openPicker();
+        });
+
+        input.addEventListener("click", (event) => event.stopPropagation());
+        zone.addEventListener("click", (event) => {
+            if (event.target === input || event.target.closest("[data-pdf-open-picker]")) return;
+            openPicker();
+        });
         zone.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
@@ -9575,63 +9603,115 @@
         ["dragenter", "dragover"].forEach((type) => {
             zone.addEventListener(type, (event) => {
                 event.preventDefault();
+                event.stopPropagation();
+                if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
                 zone.classList.add("is-dragover");
             });
         });
         ["dragleave", "drop"].forEach((type) => {
             zone.addEventListener(type, (event) => {
                 event.preventDefault();
+                event.stopPropagation();
                 zone.classList.remove("is-dragover");
             });
         });
         zone.addEventListener("drop", (event) => {
             const files = Array.from(event.dataTransfer?.files || []);
             if (!files.length) return;
-            assignPdfFiles(files);
+            assignPdfFiles(files, { append: Boolean(PDF_TOOLS[state.activePdfTool]?.multiple) });
         });
 
-        input.addEventListener("change", () => {
-            assignPdfFiles(Array.from(input.files || []));
+        input.addEventListener("change", (event) => {
+            const files = Array.from(event.currentTarget.files || []);
+            if (!files.length) return;
+            assignPdfFiles(files, { append: Boolean(PDF_TOOLS[state.activePdfTool]?.multiple) });
         });
 
         renderPdfFileList();
     }
 
-    function assignPdfFiles(files) {
+    function isPdfToolFileAccepted(file, tool) {
+        const name = String(file?.name || "").toLowerCase();
+        const type = String(file?.type || "").toLowerCase();
+        const accept = String(tool?.accept || "").toLowerCase().split(",").map((value) => value.trim()).filter(Boolean);
+        if (!accept.length) return true;
+        return accept.some((rule) => {
+            if (rule.startsWith(".")) return name.endsWith(rule);
+            if (rule.endsWith("/*")) return type.startsWith(rule.slice(0, -1));
+            return type === rule;
+        });
+    }
+
+    function assignPdfFiles(files, { append = false } = {}) {
         const tool = PDF_TOOLS[state.activePdfTool];
-        const list = tool?.multiple ? files : files.slice(0, 1);
+        const incoming = Array.from(files || []).filter(Boolean);
+        const accepted = [];
+        const rejected = [];
+
+        for (const file of incoming) {
+            if (!isPdfToolFileAccepted(file, tool)) rejected.push(`${file.name}: formato não aceito`);
+            else if (file.size > PDF_MAX_LOCAL_BYTES) rejected.push(`${file.name}: maior que 500 MB`);
+            else accepted.push(file);
+        }
+
+        const previous = append && tool?.multiple ? Array.from(state.pdfToolSelectedFiles || []) : [];
+        const unique = new Map();
+        [...previous, ...accepted].forEach((file) => {
+            const key = `${file.name}::${file.size}::${file.lastModified || 0}`;
+            if (!unique.has(key)) unique.set(key, file);
+        });
+
+        let list = Array.from(unique.values());
+        if (!tool?.multiple) list = list.slice(-1);
+        if (state.activePdfTool === "correctValidate" && list.length > PDF_CORRECTOR_MAX_FILES) {
+            rejected.push(`${list.length - PDF_CORRECTOR_MAX_FILES} arquivo(s) excederam o limite de ${PDF_CORRECTOR_MAX_FILES}`);
+            list = list.slice(0, PDF_CORRECTOR_MAX_FILES);
+        }
+
         state.pdfToolSelectedFiles = list;
         const input = $("#pdfFiles");
-        if (input) {
-            try {
-                const dt = new DataTransfer();
-                list.forEach((file) => dt.items.add(file));
-                input.files = dt.files;
-            } catch (_) {
-                // Alguns browsers não permitem setar files; a lista em state cobre o fluxo.
-            }
-        }
+        if (input) input.value = "";
         renderPdfFileList();
-        setMessage($("#pdfMessage"), "", "");
+
+        const totalBytes = list.reduce((sum, file) => sum + Number(file.size || 0), 0);
+        const messages = [];
+        if (list.length) messages.push(`${list.length} arquivo(s) carregado(s) · ${formatBytes(totalBytes)}.`);
+        if (rejected.length) messages.push(`Ignorados: ${rejected.slice(0, 4).join("; ")}${rejected.length > 4 ? `; e mais ${rejected.length - 4}` : ""}.`);
+        if (state.activePdfTool === "correctValidate" && totalBytes > PDF_CORRECTOR_MAX_JOB_BYTES) {
+            messages.push("O lote ultrapassa 5 GB; divida-o antes de processar.");
+        }
+        setMessage($("#pdfMessage"), messages.join(" "), rejected.length ? "error" : (list.length ? "success" : ""));
     }
 
     function renderPdfFileList() {
         const box = $("#pdfFileList");
         if (!box) return;
-        const files = state.pdfToolSelectedFiles || [];
+        const files = Array.from(state.pdfToolSelectedFiles || []);
         if (!files.length) {
-            box.innerHTML = `<p class="message">Nenhum arquivo selecionado.</p>`;
+            box.innerHTML = `<p class="message pdf-empty-file-message">Nenhum arquivo selecionado.</p>`;
             return;
         }
-        box.innerHTML = files.map((file, index) => `
-            <div class="pdf-file-item">
-                <div>
-                    <strong>${escapeHtml(file.name)}</strong>
-                    <small>${formatBytes(file.size)} · ${escapeHtml(file.type || "arquivo")}</small>
-                </div>
-                <button type="button" class="ghost-button" data-pdf-remove-file="${index}">Remover</button>
+
+        const totalBytes = files.reduce((sum, file) => sum + Number(file.size || 0), 0);
+        const visibleLimit = 150;
+        const visible = files.slice(0, visibleLimit);
+        box.innerHTML = `
+            <div class="pdf-file-summary">
+                <div><strong>${files.length} arquivo(s) pronto(s)</strong><small>${formatBytes(totalBytes)} no total</small></div>
+                <span>${files.length > visibleLimit ? `Mostrando os primeiros ${visibleLimit}` : "Lista completa"}</span>
             </div>
-        `).join("");
+            <div class="pdf-file-scroll">
+                ${visible.map((file, index) => `
+                    <div class="pdf-file-item">
+                        <div>
+                            <strong>${escapeHtml(file.name)}</strong>
+                            <small>${formatBytes(file.size)} · ${escapeHtml(file.type || "tipo identificado pela extensão")}</small>
+                        </div>
+                        <button type="button" class="ghost-button" data-pdf-remove-file="${index}">Remover</button>
+                    </div>
+                `).join("")}
+                ${files.length > visibleLimit ? `<p class="message">Mais ${files.length - visibleLimit} arquivo(s) permanecem carregados e serão processados.</p>` : ""}
+            </div>`;
     }
 
     function collectPdfToolOptions() {
@@ -9881,15 +9961,23 @@
         if (totalBytes > PDF_CORRECTOR_MAX_JOB_BYTES) throw new Error("O lote excede 5 GB. Divida-o em dois trabalhos.");
 
         showPdfToolProgress(3, "Autorizando o processamento em lote...");
-        const session = await apiRequest("/api/pdf-corrector/session", {
-            method: "POST",
-            body: {
-                fileCount: list.length,
-                totalBytes,
-                mode: options.correctionMode || "auto",
-                language: options.correctionLanguage || "por+eng",
-            },
-        });
+        let session;
+        try {
+            session = await apiRequest("/api/pdf-corrector/session", {
+                method: "POST",
+                body: {
+                    fileCount: list.length,
+                    totalBytes,
+                    mode: options.correctionMode || "auto",
+                    language: options.correctionLanguage || "por+eng",
+                },
+            });
+        } catch (error) {
+            if ([404, 502, 503].includes(Number(error?.status || 0))) {
+                throw new Error("Os arquivos foram carregados, mas o serviço Corretor de PDFs ainda não está ativo no Worker/Render. Publique o backend da v1.61 e tente novamente; sua seleção continuará na tela.");
+            }
+            throw error;
+        }
         if (session.pdfToolUsage) state.pdfToolUsage = session.pdfToolUsage;
         const serviceUrl = String(session.serviceUrl || "").replace(/\/+$/, "");
         const uploadToken = String(session.uploadToken || "");
@@ -11005,9 +11093,11 @@
         }
         const pdfTool = event.target.closest("[data-pdf-tool]");
         if (pdfTool) {
+            const nextTool = pdfTool.dataset.pdfTool;
+            if (nextTool === state.activePdfTool) return;
             clearPdfToolResult();
             state.pdfToolSelectedFiles = [];
-            state.activePdfTool = pdfTool.dataset.pdfTool;
+            state.activePdfTool = nextTool;
             renderPdfTools();
             return;
         }

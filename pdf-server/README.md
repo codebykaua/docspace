@@ -1,4 +1,4 @@
-# DocSpace PDF Corrector v1.60
+# DocSpace PDF Corrector v1.61
 
 Serviço Python/FastAPI para o módulo **Corrigir PDFs** do DocSpace.
 
